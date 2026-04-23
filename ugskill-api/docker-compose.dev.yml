@@ -1,0 +1,61 @@
+# ──────────────────────────────────────────────────────────────
+#  UGSkill API — Local Dev Only docker-compose
+#
+#  Use this when:
+#    - You want MongoDB + Redis in Docker
+#    - You run the API with: npm run dev (outside Docker)
+#    - Connects to MongoDB Compass on host at localhost:27017
+#
+#  Usage:
+#    docker compose -f docker-compose.dev.yml up -d
+#    docker compose -f docker-compose.dev.yml down -v
+# ──────────────────────────────────────────────────────────────
+
+services:
+
+  # ── MongoDB 7 ─────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: ugskill-mongo-dev
+    restart: unless-stopped
+    ports:
+      - '27017:27017'         # Compass connects here
+    volumes:
+      - mongo-dev-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping').ok", '--quiet']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ugskill-dev-net
+
+  # ── Redis 7 ───────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ugskill-redis-dev
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - ugskill-dev-net
+
+volumes:
+  mongo-dev-data:
+    driver: local
+
+networks:
+  ugskill-dev-net:
+    driver: bridge

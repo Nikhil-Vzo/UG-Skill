@@ -1,5 +1,7 @@
-# railway.toml — Railway deployment config for ugskill-api
-# Docs: https://docs.railway.app/reference/config-as-code
+# ──────────────────────────────────────────────────────────────
+#  UGSkill API — Railway Deployment Config
+#  Docs: https://docs.railway.app/reference/config-as-code
+# ──────────────────────────────────────────────────────────────
 
 [build]
   builder = "DOCKERFILE"
@@ -8,6 +10,12 @@
 [deploy]
   startCommand = "node dist/server.js"
   restartPolicyType = "ON_FAILURE"
-  restartPolicyMaxRetries = 3
+  restartPolicyMaxRetries = 5
   healthcheckPath = "/api/v1/health"
-  healthcheckTimeout = 30
+  healthcheckTimeout = 60
+
+[environments.production]
+  [environments.production.deploy]
+    numReplicas = 1
+    restartPolicyType = "ON_FAILURE"
+    restartPolicyMaxRetries = 5

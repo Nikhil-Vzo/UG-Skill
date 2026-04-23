@@ -1,0 +1,103 @@
+# ──────────────────────────────────────────────────────────────
+#  UGSkill — Root docker-compose (Full-Stack Local Dev)
+#
+#  Starts: MongoDB · Redis · API · Web (nginx)
+#  Use this when you want the entire stack in one command.
+#
+#  Usage:
+#    docker compose up -d          # start all services
+#    docker compose logs -f api    # tail API logs
+#    docker compose down -v        # stop + remove volumes
+# ──────────────────────────────────────────────────────────────
+
+services:
+
+  # ── MongoDB 7 ─────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: ugskill-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'         # expose for MongoDB Compass on host
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping').ok", '--quiet']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ugskill-net
+
+  # ── Redis 7 ───────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ugskill-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - ugskill-net
+
+  # ── API (Node.js / Express) ───────────────────────────────────
+  api:
+    build:
+      context: ./ugskill-api
+      dockerfile: Dockerfile
+      target: runner
+    container_name: ugskill-api
+    restart: unless-stopped
+    ports:
+      - '4000:4000'
+    env_file:
+      - ./ugskill-api/.env
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      # Override to use docker service hostnames (not localhost)
+      MONGO_URI: mongodb://mongo:27017/ugskill
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ugskill-net
+
+  # ── Web (Vite → nginx) ────────────────────────────────────────
+  web:
+    build:
+      context: ./ugskill-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:4000/api/v1
+        VITE_SOCKET_URL: http://localhost:4000
+    container_name: ugskill-web
+    restart: unless-stopped
+    ports:
+      - '3000:80'             # app available at http://localhost:3000
+    depends_on:
+      - api
+    networks:
+      - ugskill-net
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  ugskill-net:
+    driver: bridge
