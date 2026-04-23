@@ -1,0 +1,41 @@
+.skeleton-base {
+  display: block;
+  background: var(--surface-container-high);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 
+ * The .animate-shimmer class is globally defined in index.css:
+ * .animate-shimmer {
+ *   background: linear-gradient(
+ *     90deg,
+ *     var(--surface-container-high) 25%,
+ *     var(--surface-bright) 50%,
+ *     var(--surface-container-high) 75%
+ *   );
+ *   background-size: 200% 100%;
+ *   animation: shimmer 1.5s infinite linear;
+ * }
+ */
+
+.skeleton-rectangular {
+  border-radius: 0;
+}
+
+.skeleton-circular {
+  border-radius: 50%;
+}
+
+.skeleton-rounded {
+  border-radius: 8px; /* Standard Stitch UI sharpness */
+}
+
+.skeleton-text {
+  border-radius: 4px;
+  height: 1.2em; /* Emulates a standard line of text */
+  margin-top: 0;
+  margin-bottom: 0;
+  transform-origin: 0 55%;
+  transform: scale(1, 0.60);
+}

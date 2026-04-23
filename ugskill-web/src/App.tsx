@@ -1,0 +1,121 @@
+import { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { DashboardLayout } from './layouts/DashboardLayout';
+import { Dashboard } from './pages/Dashboard';
+import { Discover } from './pages/Discover';
+import { Courses } from './pages/Courses';
+import { Showcase } from './pages/Showcase';
+import { Login } from './pages/Login';
+import { Signup } from './pages/Signup';
+import { AdminLogin } from './pages/AdminLogin';
+import { HRLogin } from './pages/HRLogin';
+import { LandingPage } from './pages/LandingPage';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { CourseLanding } from './pages/CourseLanding';
+const VideoPlayer = lazy(() => import('./pages/VideoPlayer').then(m => ({ default: m.VideoPlayer })));
+import { AssignmentSubmit } from './pages/AssignmentSubmit';
+import { PlacementsHub } from './pages/PlacementsHub';
+import { CompanyDetail } from './pages/CompanyDetail';
+import { Community } from './pages/Community';
+import { Exams } from './pages/Exams';
+const ExamInterface = lazy(() => import('./pages/ExamInterface').then(m => ({ default: m.ExamInterface })));
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { InterviewPrep } from './pages/InterviewPrep';
+import { ReadinessAnalytics } from './pages/ReadinessAnalytics';
+import { ExamPreFlight } from './pages/ExamPreFlight';
+import { LiveGD } from './pages/LiveGD';
+import { Leaderboards } from './pages/Leaderboards';
+import { HRDashboard } from './pages/hr/HRDashboard';
+
+// Admin Pages
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+import { UserDirectory } from './pages/admin/UserDirectory';
+import { BatchManagement } from './pages/admin/BatchManagement';
+const CourseBuilder = lazy(() => import('./pages/admin/CourseBuilder').then(m => ({ default: m.CourseBuilder })));
+const QuizBuilder = lazy(() => import('./pages/admin/QuizBuilder').then(m => ({ default: m.QuizBuilder })));
+import { PlacementsConfig } from './pages/admin/PlacementsConfig';
+import { ExamOps } from './pages/admin/ExamOps';
+
+const PageFallback = () => (
+  <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ width: 40, height: 40, border: '3px solid var(--surface-highest)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+  </div>
+);
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <Toaster position="top-right" toastOptions={{ style: { background: 'var(--surface-well)', color: 'var(--text-high)', border: '1px solid var(--surface-highest)' } }} />
+      <BrowserRouter>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            {/* ── Public Marketing Routes ─────────────────────────────── */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* ── Admin Portal ─────────────────────────────────────────── */}
+            <Route path="/admin" element={<AdminLogin />} />
+
+            {/* ── HR / Recruiter Portal ────────────────────────────────── */}
+            <Route path="/hr" element={<HRLogin />} />
+            <Route
+              path="/hr/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['hr', 'admin']}>
+                  <HRDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ── Student / App Routes ─────────────────────────────────── */}
+            <Route path="/app" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+              <Route index element={<Dashboard />} />
+              <Route path="discover" element={<Discover />} />
+              <Route path="showcase" element={<Showcase />} />
+              <Route path="courses" element={<Courses />} />
+              <Route path="courses/:courseId" element={<CourseLanding />} />
+              <Route path="courses/:courseId/assignments/:assignmentId" element={<AssignmentSubmit />} />
+              <Route path="placements" element={<PlacementsHub />} />
+              <Route path="placements/prep" element={<InterviewPrep />} />
+              <Route path="placements/analytics" element={<ReadinessAnalytics />} />
+              <Route path="placements/:driveId" element={<CompanyDetail />} />
+              <Route path="community" element={<Community />} />
+              <Route path="exams" element={<Exams />} />
+              <Route path="live-gd" element={<LiveGD />} />
+              <Route path="leaderboards" element={<Leaderboards />} />
+
+              {/* Admin Routes */}
+              <Route path="admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><Outlet /></ProtectedRoute>}>
+                <Route path="analytics" element={<AdminDashboard />} />
+                <Route path="users" element={<UserDirectory />} />
+                <Route path="batches" element={<BatchManagement />} />
+                <Route path="placements" element={<PlacementsConfig />} />
+                <Route path="exams" element={<ExamOps />} />
+                <Route path="courses/builder" element={<CourseBuilder />} />
+                <Route path="quizzes/builder" element={<QuizBuilder />} />
+              </Route>
+
+              <Route path="*" element={<Navigate to="/app" replace />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+
+            {/* ── Full-screen Routes ───────────────────────────────────── */}
+            <Route path="/app/courses/:courseId/player" element={<ProtectedRoute><VideoPlayer /></ProtectedRoute>} />
+            <Route path="/app/courses/:courseId/player/:lectureId" element={<ProtectedRoute><VideoPlayer /></ProtectedRoute>} />
+            <Route path="/app/exams/:examId/pre-flight" element={<ProtectedRoute><ExamPreFlight /></ProtectedRoute>} />
+            <Route path="/app/exams/:examId" element={<ProtectedRoute><ExamInterface /></ProtectedRoute>} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
+  );
+}
+
+export default App;

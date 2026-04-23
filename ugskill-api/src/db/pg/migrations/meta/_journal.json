@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1776335372064,
+      "tag": "0000_panoramic_doctor_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776769610370,
+      "tag": "0001_outstanding_madrox",
+      "breakpoints": true
+    }
+  ]
+}

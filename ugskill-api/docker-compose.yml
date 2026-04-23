@@ -1,0 +1,82 @@
+# ──────────────────────────────────────────────────────────────
+#  UGSkill API — Local Development docker-compose
+#  Spins up: API + MongoDB + Redis
+#  For production, only MongoDB & Redis run here;
+#  the API itself is deployed on Railway.
+# ──────────────────────────────────────────────────────────────
+
+services:
+
+  # ── API (Node.js / Express) ───────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner           # use the final prod stage
+    container_name: ugskill-api
+    restart: unless-stopped
+    ports:
+      - '4000:4000'
+    env_file:
+      - .env                   # load all secrets from .env
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      MONGO_URI: mongodb://mongo:27017/ugskill
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ugskill-net
+    volumes:
+      - ./src:/app/src:ro      # hot-reload support in dev
+
+  # ── MongoDB 7 ─────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: ugskill-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'          # expose for MongoDB Compass
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping').ok", '--quiet']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ugskill-net
+
+  # ── Redis 7 ───────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ugskill-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - ugskill-net
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  ugskill-net:
+    driver: bridge

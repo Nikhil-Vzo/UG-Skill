@@ -1,0 +1,110 @@
+.base-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-family: var(--font-body);
+  font-weight: 500;
+  border-radius: 8px; /* Sharp 8px */
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  border: none;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+
+.base-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.btn-sm { padding: 0.5rem 0.75rem; font-size: 0.75rem; }
+.btn-md { padding: 0.625rem 1rem; font-size: 0.875rem; }
+.btn-lg { padding: 0.75rem 1.5rem; font-size: 1rem; }
+
+/* Variants */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+  color: var(--primary-fg);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 15px var(--border-neon);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: rgba(41, 47, 76, 0.4);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  backdrop-filter: blur(8px);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(41, 47, 76, 0.6);
+  border-color: var(--outline);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--outline-variant);
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--on-surface-variant);
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--on-surface);
+  background: var(--surface-container-high);
+}
+
+/* Loading state */
+.btn-loading {
+  pointer-events: none;
+}
+
+.btn-spinner {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin-slow 0.8s linear infinite;
+}
+
+.opacity-0 { opacity: 0; }
+
+.btn-tertiary {
+  background: transparent;
+  color: var(--primary);
+}
+
+.btn-tertiary:hover:not(:disabled) {
+  background: var(--surface-container-low);
+}
+
+/* Full width */
+.btn-full-width {
+  width: 100%;
+}
+
+/* Icon layout */
+.btn-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+}
+
+.btn-icon-left,
+.btn-icon-right {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}

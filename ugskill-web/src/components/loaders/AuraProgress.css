@@ -1,0 +1,73 @@
+.aura-progress-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.aura-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+}
+
+.aura-progress-label {
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+.aura-progress-value {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.aura-progress-track {
+  position: relative;
+  background-color: var(--surface-container-high);
+  border-radius: 9999px; /* Pill shape */
+  overflow: visible; /* Important: allow glow to overflow */
+}
+
+.aura-progress-fill {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+  border-radius: 9999px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+/* The aura glow */
+.aura-progress-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 9999px;
+  filter: blur(8px);
+  opacity: 0.5;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* Sizes */
+.aura-progress-sm .aura-progress-track {
+  height: 4px;
+}
+.aura-progress-sm .aura-progress-glow {
+  filter: blur(4px);
+}
+
+.aura-progress-md .aura-progress-track {
+  height: 8px;
+}
+
+.aura-progress-lg .aura-progress-track {
+  height: 12px;
+}
+.aura-progress-lg .aura-progress-glow {
+  filter: blur(12px);
+}

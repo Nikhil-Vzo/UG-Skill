@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LMS User-Based Panels — Expanded</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-sans,'Inter',sans-serif);background:var(--color-background-secondary,#f5f5f5);color:var(--color-text-primary,#111);}
+.wrap{padding:1rem 0 2rem;}
+
+/* ── Role tabs ── */
+.roles-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;}
+.role-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--border-radius-lg,10px);border:1px solid var(--color-border-tertiary,#ddd);background:var(--color-background-primary,#fff);cursor:pointer;transition:all .15s;flex:1;min-width:140px;}
+.role-btn:hover{border-color:var(--color-border-secondary,#aaa);background:var(--color-background-secondary,#f5f5f5);}
+.role-btn.active{border-width:1.5px;}
+.role-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.role-info{flex:1;}
+.role-name{font-size:12px;font-weight:600;color:var(--color-text-primary,#111);}
+.role-desc{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:1px;}
+
+/* ── Stats bar ── */
+.stats-bar{display:flex;gap:8px;margin-bottom:1.25rem;}
+.stat-chip{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,#ddd);border-radius:var(--border-radius-md,8px);padding:8px 14px;flex:1;text-align:center;}
+.stat-v{font-size:18px;font-weight:600;color:var(--color-text-primary,#111);}
+.stat-l{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:1px;}
+
+/* ── Section label ── */
+.section-title{font-size:10px;font-weight:600;color:var(--color-text-tertiary,#888);text-transform:uppercase;letter-spacing:.08em;margin:1.25rem 0 8px;}
+.section-title:first-child{margin-top:0;}
+
+/* ── Panel grid ── */
+.panels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:.5rem;}
+
+/* ── Panel card ── */
+.panel-card{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,#ddd);border-radius:var(--border-radius-lg,10px);overflow:hidden;transition:border-color .15s;}
+.panel-card:hover{border-color:var(--color-border-secondary,#aaa);}
+
+/* card header */
+.pc-head{padding:10px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;user-select:none;}
+.pc-icon{width:32px;height:32px;border-radius:var(--border-radius-md,8px);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:1px;}
+.pc-meta{flex:1;}
+.pc-name{font-size:12px;font-weight:600;color:var(--color-text-primary,#111);line-height:1.3;}
+.pc-desc{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:3px;line-height:1.4;}
+.pc-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.pill{font-size:10px;padding:1px 7px;border-radius:8px;font-weight:500;}
+.pill-lms{background:rgba(24,95,165,.1);color:#185FA5;}
+.pill-ai{background:rgba(186,117,23,.12);color:#854F0B;}
+.pc-chevron{font-size:10px;color:var(--color-text-tertiary,#888);transition:transform .2s;margin-top:3px;flex-shrink:0;}
+.panel-card.open .pc-chevron{transform:rotate(180deg);}
+
+/* card body */
+.pc-body{display:none;border-top:0.5px solid var(--color-border-tertiary,#ddd);}
+.panel-card.open .pc-body{display:block;}
+
+/* ── Feature row (parent, e.g. 13.1) ── */
+.feat-row{border-bottom:0.5px solid var(--color-border-tertiary,#ddd);}
+.feat-row:last-child{border-bottom:none;}
+.feat-header{display:flex;gap:8px;padding:7px 12px;cursor:pointer;align-items:flex-start;transition:background .1s;user-select:none;}
+.feat-header:hover{background:var(--color-background-secondary,#f5f5f5);}
+.feat-num{font-size:10px;font-weight:600;color:var(--color-text-tertiary,#888);min-width:36px;padding-top:1px;flex-shrink:0;}
+.feat-title-wrap{flex:1;}
+.feat-title{font-size:11px;font-weight:600;color:var(--color-text-primary,#111);}
+.feat-summary{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:2px;line-height:1.4;}
+.feat-arrow{font-size:9px;color:var(--color-text-tertiary,#888);transition:transform .2s;margin-top:2px;flex-shrink:0;}
+.feat-row.fopen .feat-arrow{transform:rotate(90deg);}
+
+/* ── Sub-items (e.g. 13.1.1) ── */
+.sub-list{display:none;background:var(--color-background-secondary,#f5f5f5);border-top:0.5px solid var(--color-border-tertiary,#ddd);}
+.feat-row.fopen .sub-list{display:block;}
+.sub-item{display:flex;gap:8px;padding:5px 12px 5px 56px;border-bottom:0.5px solid var(--color-border-tertiary,#ddd);}
+.sub-item:last-child{border-bottom:none;}
+.sub-num{font-size:10px;color:var(--color-text-tertiary,#888);min-width:40px;flex-shrink:0;padding-top:1px;}
+.sub-body{flex:1;}
+.sub-name{font-size:11px;font-weight:500;color:var(--color-text-secondary,#444);}
+.sub-desc{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:2px;line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// DATA — LMS-only, fully expanded with sub-points
+// ─────────────────────────────────────────────────────────────
+const data = [
+  {
+    key:'student', icon:'🎓', name:'Student', desc:'Learner / Candidate',
+    color:'#185FA5', bg:'rgba(24,95,165,.12)',
+    sections:[
+      {
+        label:'🎓 Learning — LMS',
+        panels:[
+          {
+            icon:'🔍', name:'Discover & Explore',
+            desc:'Entry point for finding courses and learning paths.',
+            ai:false,
+            features:[
+              {
+                num:'13.1', name:'Course Browsing',
+                summary:'Displays the full catalog of available courses in a browsable format.',
+                subs:[
+                  {num:'13.1.1', name:'Course Catalog Grid/List View', desc:'Toggle between grid (thumbnail-based) and list (compact row) layouts for the course catalog.'},
+                  {num:'13.1.2', name:'Course Thumbnail & Preview', desc:'Hover or tap to see a short animated preview clip and key metadata (duration, lectures, rating).'},
+                  {num:'13.1.3', name:'Course Overview Page', desc:'Dedicated detail page showing syllabus sections, instructor bio, total duration, enrolled count, and last updated date.'},
+                  {num:'13.1.4', name:'Free / Paid Tagging', desc:'Visual badge indicating whether a course is free or paid, with price displayed where applicable.'},
+                  {num:'13.1.5', name:'Enrollment CTA Button', desc:'Prominent "Enroll Now" or "Start Learning" button available directly from the browse card and course overview page.'},
+                ]
+              },
+              {
+                num:'13.2', name:'Roadmap Browsing',
+                summary:'Allows students to explore structured multi-course learning paths.',
+                subs:[
+                  {num:'13.2.1', name:'Roadmap Listing Page', desc:'Dedicated page listing all available roadmaps with title, description, number of stages, and estimated duration.'},
+                  {num:'13.2.2', name:'Roadmap Detail View', desc:'Expanded view showing all stages, the courses within each stage, and stage prerequisites.'},
+                  {num:'13.2.3', name:'Stage Preview with Lock State', desc:'Locked stages are visually greyed out with a lock icon; unlocked stages are accessible and highlighted.'},
+                  {num:'13.2.4', name:'Estimated Completion Time', desc:'Displays total hours or weeks to complete the roadmap based on average lecture durations.'},
+                ]
+              },
+              {
+                num:'13.3', name:'Search Functionality',
+                summary:'Real-time search across the entire course and roadmap catalog.',
+                subs:[
+                  {num:'13.3.1', name:'Full-Text Search Bar', desc:'Persistent search input in the header supporting keyboard shortcut (Ctrl/Cmd+K) to focus.'},
+                  {num:'13.3.2', name:'Live Search Suggestions', desc:'Dropdown of matching course titles, roadmaps, and instructor names as the user types.'},
+                  {num:'13.3.3', name:'Multi-Field Search', desc:'Searches across course title, description, instructor name, and topic tags simultaneously.'},
+                  {num:'13.3.4', name:'Search Result Ranking', desc:'Results ranked by relevance score, with enrolled/popular courses boosted in ranking.'},
+                ]
+              },
+              {
+                num:'13.4', name:'Filtering',
+                summary:'Narrow the catalog based on specific criteria.',
+                subs:[
+                  {num:'13.4.1', name:'Filter by Category', desc:'Multi-select category filter (e.g., Programming, Design, Data Science) applied to the catalog.'},
+                  {num:'13.4.2', name:'Filter by Difficulty Level', desc:'Dropdown or chip-based filter for Beginner, Intermediate, and Advanced courses.'},
+                  {num:'13.4.3', name:'Filter by Duration', desc:'Range filter (e.g., under 5 hours, 5–20 hours, 20+ hours) to surface courses matching the student\'s time availability.'},
+                  {num:'13.4.4', name:'Filter by Language', desc:'Select one or more content languages to exclude courses outside the preferred language.'},
+                  {num:'13.4.5', name:'Multi-Filter Combination', desc:'Filters can be combined simultaneously; active filters shown as removable chips above the results.'},
+                ]
+              },
+              {
+                num:'13.5', name:'Sorting',
+                summary:'Order catalog results based on a chosen metric.',
+                subs:[
+                  {num:'13.5.1', name:'Sort by Popularity', desc:'Orders courses by total enrollment count (most enrolled first).'},
+                  {num:'13.5.2', name:'Sort by Rating', desc:'Orders courses by average student rating (highest rated first).'},
+                  {num:'13.5.3', name:'Sort by Newest', desc:'Orders courses by creation or last-updated date (newest first).'},
+                  {num:'13.5.4', name:'Sort by Price', desc:'Sorts free courses first or paid courses first based on selection.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'📋', name:'Enrollment',
+            desc:'Manages all aspects of a student joining a course or roadmap.',
+            ai:false,
+            features:[
+              {
+                num:'6.1', name:'Course Enrollment',
+                summary:'Core flow for a student to register and gain access to a course.',
+                subs:[
+                  {num:'6.1.1', name:'Enroll Button on Course Page', desc:'Single-click enroll button visible on the course overview page for unenrolled students.'},
+                  {num:'6.1.2', name:'Enrollment Confirmation Screen', desc:'Post-enrollment modal or page confirming successful enrollment with a "Go to Course" CTA.'},
+                  {num:'6.1.3', name:'Access Activation Post-Enrollment', desc:'Lecture content becomes immediately accessible after enrollment is recorded.'},
+                  {num:'6.1.4', name:'Enrollment Limit Handling', desc:'Displays "Seats Full" or "Waitlist" state when a batch-limited course reaches its maximum capacity.'},
+                ]
+              },
+              {
+                num:'6.2', name:'Roadmap Enrollment',
+                summary:'Allows a student to enroll in an entire roadmap in one action.',
+                subs:[
+                  {num:'6.2.1', name:'Enroll to Full Roadmap', desc:'"Enroll in Roadmap" button on the roadmap detail page that registers the student for the entire path.'},
+                  {num:'6.2.2', name:'Roadmap Access Grant', desc:'Student gains access to Stage 1 courses immediately; subsequent stages unlock progressively.'},
+                  {num:'6.2.3', name:'First Stage Auto-Unlock on Enrollment', desc:'Stage 1 is automatically unlocked and accessible the moment roadmap enrollment is confirmed.'},
+                ]
+              },
+              {
+                num:'6.3', name:'Auto-Enrollment via Roadmap',
+                summary:'Automatically enrolls the student in courses as they progress through a roadmap.',
+                subs:[
+                  {num:'6.3.1', name:'Auto-Enroll in Roadmap Courses', desc:'When a student enrolls in a roadmap, they are auto-enrolled in all courses within Stage 1 without manual action.'},
+                  {num:'6.3.2', name:'Enrollment Trigger on Stage Completion', desc:'Completing all required courses in a stage triggers auto-enrollment in the courses of the next stage.'},
+                  {num:'6.3.3', name:'Notification on Auto-Enrollment', desc:'Student receives an in-app and email notification whenever they are auto-enrolled in a new course.'},
+                ]
+              },
+              {
+                num:'6.4', name:'Enrollment Tracking',
+                summary:'Provides a clear view of the student\'s enrolled courses history.',
+                subs:[
+                  {num:'6.4.1', name:'Enrolled Courses List', desc:'"My Courses" page listing all courses the student is currently enrolled in, with progress indicators.'},
+                  {num:'6.4.2', name:'Enrollment Date & History', desc:'Displays the date of enrollment per course; supports exporting the enrollment history.'},
+                  {num:'6.4.3', name:'Enrollment Status Tags', desc:'Each course tagged as Active, Completed, or Dropped, allowing filtering by status.'},
+                ]
+              },
+              {
+                num:'6.5', name:'Access Validation',
+                summary:'Ensures content is only accessible to enrolled, eligible students.',
+                subs:[
+                  {num:'6.5.1', name:'Check Enrollment Before Content Access', desc:'Server-side validation of enrollment status before serving any lecture video or resource.'},
+                  {num:'6.5.2', name:'Redirect Unenrolled Users', desc:'Unenrolled visitors viewing a locked lecture are redirected to the course overview page with an enroll prompt.'},
+                  {num:'6.5.3', name:'Expiry-Based Access Control', desc:'For time-limited enrollments, access is automatically revoked after the expiry date with a renewal prompt.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'▶️', name:'Learning Experience',
+            desc:'The core video and content consumption interface for students.',
+            ai:false,
+            features:[
+              {
+                num:'7.1', name:'Video Player',
+                summary:'Embedded adaptive video player for watching lecture content.',
+                subs:[
+                  {num:'7.1.1', name:'HLS/Adaptive Bitrate Streaming', desc:'Serves video using HLS protocol, automatically adjusting quality based on the student\'s network speed.'},
+                  {num:'7.1.2', name:'Manual Quality Selector', desc:'Dropdown to manually select 360p, 480p, 720p, or 1080p quality.'},
+                  {num:'7.1.3', name:'Fullscreen & Theatre Mode', desc:'Toggle between fullscreen, theatre (expanded), and default modes.'},
+                  {num:'7.1.4', name:'Keyboard Shortcuts', desc:'Space to play/pause, arrow keys to seek, M to mute, F for fullscreen, and number keys to jump to % of video.'},
+                ]
+              },
+              {
+                num:'7.2', name:'Resume Playback',
+                summary:'Saves and restores the student\'s last watched position in a lecture.',
+                subs:[
+                  {num:'7.2.1', name:'Auto-Save Playback Position', desc:'Saves the last watched timestamp every 5 seconds to the server.'},
+                  {num:'7.2.2', name:'Resume Prompt on Re-open', desc:'"Resume from 3:42?" prompt appears when the student re-opens a partially watched lecture.'},
+                  {num:'7.2.3', name:'Cross-Device Progress Sync', desc:'Resume position is synced to the account so the student can continue on any device.'},
+                ]
+              },
+              {
+                num:'7.3', name:'Lecture Completion Marking',
+                summary:'Tracks and displays whether a lecture has been completed.',
+                subs:[
+                  {num:'7.3.1', name:'Auto-Mark on Video End', desc:'Lecture is automatically marked complete when the video reaches 90%+ of its duration.'},
+                  {num:'7.3.2', name:'Manual Mark as Complete', desc:'"Mark as Complete" button lets students mark a lecture done even before the video ends.'},
+                  {num:'7.3.3', name:'Completion Checkmark in Sidebar', desc:'A green checkmark appears next to the lecture title in the course sidebar upon completion.'},
+                ]
+              },
+              {
+                num:'7.4', name:'Playback Speed Control',
+                summary:'Allows students to adjust how fast or slow the video plays.',
+                subs:[
+                  {num:'7.4.1', name:'Speed Options', desc:'Supports 0.5×, 0.75×, 1×, 1.25×, 1.5×, 1.75×, and 2× playback speeds.'},
+                  {num:'7.4.2', name:'Saved Speed Preference', desc:'Selected speed is saved per user and applied automatically to subsequent lectures.'},
+                ]
+              },
+              {
+                num:'7.5', name:'Subtitles / Transcripts',
+                summary:'Provides text-based companion content for accessibility and study.',
+                subs:[
+                  {num:'7.5.1', name:'Auto-Generated Subtitles Toggle', desc:'AI-generated closed captions that can be toggled on/off with font-size control.'},
+                  {num:'7.5.2', name:'Manual Subtitle Upload', desc:'Creators can upload SRT or VTT subtitle files that override auto-generated captions.'},
+                  {num:'7.5.3', name:'Transcript Panel', desc:'Scrollable transcript panel shown alongside the video, auto-scrolling in sync with playback.'},
+                  {num:'7.5.4', name:'Searchable Transcript', desc:'Ctrl+F within the transcript panel highlights and jumps to the searched term in the video.'},
+                ]
+              },
+              {
+                num:'7.6', name:'Notes Alongside Video',
+                summary:'Lets students take timestamped notes while watching.',
+                subs:[
+                  {num:'7.6.1', name:'In-Video Timestamped Notes', desc:'Notes are tagged with the current video timestamp, creating a clickable study timeline.'},
+                  {num:'7.6.2', name:'Notes Panel Alongside Player', desc:'Collapsible side panel for writing notes without leaving the video page.'},
+                  {num:'7.6.3', name:'Export Notes as PDF', desc:'"Export Notes" button generates a formatted PDF of all notes for the course, grouped by lecture.'},
+                  {num:'7.6.4', name:'Search Within Notes', desc:'Global search across all notes in a course, with results linked to the originating lecture timestamp.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🗺️', name:'Roadmap & Learning Path',
+            desc:'Guides students through a structured, staged learning journey.',
+            ai:false,
+            features:[
+              {
+                num:'4.6', name:'Roadmap Enrollment (Student View)',
+                summary:'Student-facing enrollment entry point for a roadmap.',
+                subs:[
+                  {num:'4.6.1', name:'My Roadmaps Dashboard', desc:'"My Roadmaps" section listing all enrolled roadmaps with stage and overall progress.'},
+                  {num:'4.6.2', name:'Roadmap Progress Card', desc:'Visual card per roadmap showing % completion, current stage, and estimated completion date.'},
+                  {num:'4.6.3', name:'Continue Roadmap CTA', desc:'"Continue" button that drops the student directly into their current active lecture.'},
+                ]
+              },
+              {
+                num:'4.7', name:'Stage Unlocking Logic',
+                summary:'Controls when subsequent stages become available to the student.',
+                subs:[
+                  {num:'4.7.1', name:'Stage Locked Until Prerequisites Met', desc:'A stage remains locked and inaccessible until all required courses in the preceding stage are completed.'},
+                  {num:'4.7.2', name:'Visual Lock / Unlock Indicator', desc:'Locked stages show a padlock icon and greyed-out state; unlocked stages have a highlighted, clickable card.'},
+                  {num:'4.7.3', name:'Trigger Unlock on Course Completion', desc:'Stage unlocks automatically and immediately when the last required course is completed without page refresh.'},
+                  {num:'4.7.4', name:'Admin Manual Override Unlock', desc:'Admins can manually unlock a stage for a specific student regardless of completion status.'},
+                ]
+              },
+              {
+                num:'4.8', name:'Roadmap Progress Tracking',
+                summary:'Visual and metric representation of roadmap advancement.',
+                subs:[
+                  {num:'4.8.1', name:'Overall Roadmap % Completion', desc:'Single percentage figure representing completed lectures across all roadmap courses.'},
+                  {num:'4.8.2', name:'Stage-by-Stage Progress View', desc:'Each stage shows its own % completion bar, letting students see exactly where they stand per stage.'},
+                  {num:'4.8.3', name:'Visual Timeline / Stepper', desc:'Horizontal or vertical stepper UI showing completed, in-progress, and upcoming stages at a glance.'},
+                ]
+              },
+              {
+                num:'5.1', name:'Guided Learning Sequence',
+                summary:'Enforces an intentional order of learning within a roadmap.',
+                subs:[
+                  {num:'5.1.1', name:'Ordered Course List Within Roadmap', desc:'Courses within each stage are listed in a defined sequence set by the creator.'},
+                  {num:'5.1.2', name:'"Next Up" Recommendation CTA', desc:'A persistent "Next Up" card on the roadmap page that points to the student\'s next recommended course or lecture.'},
+                  {num:'5.1.3', name:'Linear Progression Enforcement', desc:'Optional setting where the next course in a stage cannot be started until the prior one is completed.'},
+                ]
+              },
+              {
+                num:'5.4', name:'Prerequisite Enforcement',
+                summary:'Prevents students from skipping required foundational content.',
+                subs:[
+                  {num:'5.4.1', name:'Block Access to Locked Content', desc:'Clicking a locked course shows a tooltip listing which prerequisite courses must be finished first.'},
+                  {num:'5.4.2', name:'Show Prerequisite Requirements', desc:'Course detail page clearly lists all prerequisites with their completion status (done/pending).'},
+                  {num:'5.4.3', name:'Prerequisite Completion Check Before Enrollment', desc:'System validates prerequisite completion before allowing manual enrollment in an advanced course.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'📊', name:'My Progress',
+            desc:'Centralised tracking of all learning activity and advancement.',
+            ai:false,
+            features:[
+              {
+                num:'8.1', name:'Lecture Completion Tracking',
+                summary:'Per-lecture completion records across all enrolled courses.',
+                subs:[
+                  {num:'8.1.1', name:'Completed / Incomplete Flag per Lecture', desc:'Each lecture has a boolean completion state stored and reflected immediately in the sidebar.'},
+                  {num:'8.1.2', name:'Completion Timestamp Log', desc:'Records the exact date and time each lecture was completed for the student\'s history.'},
+                  {num:'8.1.3', name:'Last Accessed Lecture', desc:'Highlights the most recently accessed lecture on the course page for quick navigation.'},
+                ]
+              },
+              {
+                num:'8.2', name:'Course Progress',
+                summary:'Aggregated progress metric across all lectures in a course.',
+                subs:[
+                  {num:'8.2.1', name:'Percentage Lectures Completed', desc:'(Completed lectures / Total lectures) × 100 displayed as a progress bar on the course card.'},
+                  {num:'8.2.2', name:'Total Time Spent on Course', desc:'Cumulative video watch time tracked and displayed on the student\'s progress page.'},
+                  {num:'8.2.3', name:'Course Completion Badge Trigger', desc:'100% completion triggers the certificate generation workflow and displays a "Completed" badge.'},
+                ]
+              },
+              {
+                num:'8.3', name:'Roadmap Progress',
+                summary:'High-level progress view across a full roadmap journey.',
+                subs:[
+                  {num:'8.3.1', name:'Stages Completed vs. Total Stages', desc:'Fraction display (e.g., 2/5 Stages) showing how far along the roadmap the student is.'},
+                  {num:'8.3.2', name:'Courses Completed Within Roadmap', desc:'Count of fully completed courses across all roadmap stages.'},
+                  {num:'8.3.3', name:'Overall Roadmap Progress Bar', desc:'Single visual bar representing total completion across all stages and courses in the roadmap.'},
+                ]
+              },
+              {
+                num:'8.4', name:'Stage Progress',
+                summary:'Granular progress tracking at the roadmap stage level.',
+                subs:[
+                  {num:'8.4.1', name:'Stage-Level Completion %', desc:'Individual % completion bar shown on each stage card within the roadmap view.'},
+                  {num:'8.4.2', name:'Locked Stages Shown as Greyed', desc:'Upcoming stages are visually dimmed until unlocked, preventing false progress confusion.'},
+                  {num:'8.4.3', name:'Stage Completion Trigger Logic', desc:'Stage marked complete only when all required (non-optional) courses in it are 100% done.'},
+                ]
+              },
+              {
+                num:'8.5', name:'Completion Percentage',
+                summary:'Real-time aggregate percentage shown across the platform.',
+                subs:[
+                  {num:'8.5.1', name:'Real-Time % Recalculation', desc:'% updates instantly when a lecture is marked complete, no page reload required.'},
+                  {num:'8.5.2', name:'% Displayed on Dashboard Card', desc:'Course cards on the "My Courses" dashboard always show the current completion %.'},
+                  {num:'8.5.3', name:'"Almost There" Indicator', desc:'Special highlight (e.g., orange progress bar) kicks in when the student reaches ≥80% completion.'},
+                ]
+              },
+              {
+                num:'8.6', name:'Learning Pace Tracking',
+                summary:'Measures and visualises the student\'s learning speed over time.',
+                subs:[
+                  {num:'8.6.1', name:'Daily & Weekly Learning Hours', desc:'Bar chart or timeline showing hours spent learning per day and week.'},
+                  {num:'8.6.2', name:'Pace vs. Estimated Completion Date', desc:'Compares current pace against the expected completion date and shows if the student is on track, ahead, or behind.'},
+                  {num:'8.6.3', name:'Pace Alerts', desc:'Notification triggered when the student has not made progress in 3+ days, suggesting getting back on track.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🔥', name:'Engagement & Streaks',
+            desc:'Gamification layer to keep students consistently active.',
+            ai:false,
+            features:[
+              {
+                num:'9.1', name:'Daily Streak Tracking',
+                summary:'Rewards students for logging in and learning on consecutive days.',
+                subs:[
+                  {num:'9.1.1', name:'Streak Counter', desc:'Consecutive active days counter displayed prominently on the dashboard with a flame icon.'},
+                  {num:'9.1.2', name:'Streak Freeze / Grace Day Logic', desc:'Student can earn or purchase a streak freeze that protects their streak for one missed day.'},
+                  {num:'9.1.3', name:'Streak Milestone Badges', desc:'Special badges awarded at 7, 30, 60, and 100-day streak milestones.'},
+                ]
+              },
+              {
+                num:'9.2', name:'Activity Logging',
+                summary:'Records all learning events to build a comprehensive history.',
+                subs:[
+                  {num:'9.2.1', name:'Log Each Lecture View Event', desc:'Every time a lecture is opened, a timestamped event is recorded in the activity log.'},
+                  {num:'9.2.2', name:'Log Quiz Attempts', desc:'All quiz attempts are logged with score, timestamp, and course context.'},
+                  {num:'9.2.3', name:'Daily Activity Heatmap Calendar', desc:'GitHub-style contribution heatmap showing activity intensity for each day of the year.'},
+                ]
+              },
+              {
+                num:'9.3', name:'Engagement Score',
+                summary:'Composite metric reflecting overall platform engagement.',
+                subs:[
+                  {num:'9.3.1', name:'Score Calculation Formula', desc:'Score derived from weighted combination of lectures completed, quizzes taken, notes made, and days active.'},
+                  {num:'9.3.2', name:'Weekly Engagement Score Display', desc:'Score shown on the dashboard with a delta vs. last week (e.g., +12 from last week).'},
+                  {num:'9.3.3', name:'Score Trend Chart', desc:'Line chart showing engagement score trend over the last 4 weeks.'},
+                ]
+              },
+              {
+                num:'9.5', name:'Session Tracking',
+                summary:'Measures the depth and duration of each learning session.',
+                subs:[
+                  {num:'9.5.1', name:'Track Session Start/End Time', desc:'A session is initiated on login/page-load and ended on logout or 15-minute inactivity timeout.'},
+                  {num:'9.5.2', name:'Total Session Duration Per Day', desc:'Cumulative session minutes for each day displayed in the learning stats panel.'},
+                  {num:'9.5.3', name:'Average Session Length', desc:'Rolling 7-day average session duration shown to encourage longer focused study blocks.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'📝', name:'Assessments',
+            desc:'Quizzes and assignments embedded within the learning flow.',
+            ai:false,
+            features:[
+              {
+                num:'10.2', name:'Quiz Attempts',
+                summary:'Manages how students interact with quiz assessments.',
+                subs:[
+                  {num:'10.2.1', name:'Multiple Attempt Support', desc:'Students can retake a quiz multiple times up to the configured attempt limit.'},
+                  {num:'10.2.2', name:'Attempt History Log', desc:'Each attempt is recorded with score, timestamp, and time taken, visible in the student\'s quiz history.'},
+                  {num:'10.2.3', name:'Best Score Tracking', desc:'Highest score across all attempts is displayed as the "Best Score" on the course progress page.'},
+                  {num:'10.2.4', name:'Attempt Limit Enforcement', desc:'Once the configured maximum attempts is reached, the "Retake" button is disabled with an explanatory message.'},
+                ]
+              },
+              {
+                num:'10.3', name:'Auto Evaluation',
+                summary:'Instant, automatic grading of objective quiz questions.',
+                subs:[
+                  {num:'10.3.1', name:'MCQ Instant Grading', desc:'Score is calculated and displayed immediately upon quiz submission with no manual step.'},
+                  {num:'10.3.2', name:'Score Display on Submission', desc:'Results screen shows total score, percentage, and pass/fail status prominently.'},
+                  {num:'10.3.3', name:'Correct/Incorrect Answer Reveal', desc:'Each question shows the student\'s answer alongside the correct answer after submission.'},
+                  {num:'10.3.4', name:'Explanation Per Question', desc:'Creator-written explanation shown beneath each question on the results screen.'},
+                ]
+              },
+              {
+                num:'10.4', name:'Assignment Submission',
+                summary:'Enables students to submit work for creator review.',
+                subs:[
+                  {num:'10.4.1', name:'File Upload Submission', desc:'Students can upload PDF, ZIP, or other allowed file types as assignment deliverables.'},
+                  {num:'10.4.2', name:'Text-Based Submission', desc:'Rich-text editor for assignments that require written responses instead of file uploads.'},
+                  {num:'10.4.3', name:'Submission Deadline Enforcement', desc:'Submit button is disabled and a "Deadline Passed" message is shown after the due date.'},
+                  {num:'10.4.4', name:'Resubmission Support', desc:'If allowed by the creator, students can resubmit before the deadline to update their work.'},
+                ]
+              },
+              {
+                num:'10.6', name:'Topic-wise Accuracy Tracking',
+                summary:'Breaks down quiz performance by topic or concept.',
+                subs:[
+                  {num:'10.6.1', name:'Per-Topic Accuracy %', desc:'Shows the student\'s correct answer rate for each topic tag that appears in quiz questions.'},
+                  {num:'10.6.2', name:'Weak Topic Flagging', desc:'Topics with < 60% accuracy are flagged with a warning icon, suggesting review.'},
+                  {num:'10.6.3', name:'Accuracy Trend Across Attempts', desc:'Line chart per topic showing accuracy improvement or decline across multiple quiz attempts.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'💡', name:'Recommendations',
+            desc:'AI-driven suggestions to personalise the learning journey.',
+            ai:true,
+            features:[
+              {
+                num:'12.1', name:'Continue Learning Suggestions',
+                summary:'Proactively surfaces incomplete content the student should return to.',
+                subs:[
+                  {num:'12.1.1', name:'Last Incomplete Lecture CTA', desc:'Dashboard card showing the last in-progress lecture with a "Continue" button and progress bar.'},
+                  {num:'12.1.2', name:'Resume Card on Home Page', desc:'Persistent "Pick up where you left off" section at the top of the student dashboard.'},
+                  {num:'12.1.3', name:'Time-Based Nudge Notification', desc:'Push/email notification sent after 24–48 hours of inactivity reminding the student to continue.'},
+                ]
+              },
+              {
+                num:'12.2', name:'Next Lecture Recommendation',
+                summary:'Automatically queues the logical next lecture after completion.',
+                subs:[
+                  {num:'12.2.1', name:'Auto-Queue Next Lecture', desc:'After a lecture ends, the next lecture in sequence begins a 10-second countdown before auto-play.'},
+                  {num:'12.2.2', name:'Sequence-Based Recommendation', desc:'Next lecture is determined by the creator\'s defined course order, not random selection.'},
+                ]
+              },
+              {
+                num:'12.3', name:'Next Course Recommendation',
+                summary:'Suggests new courses to enroll in after completing a course.',
+                subs:[
+                  {num:'12.3.1', name:'Topic-Affinity Based Suggestions', desc:'Recommends courses that share topic tags with the completed course using a content-similarity model.'},
+                  {num:'12.3.2', name:'"Students Like You Also Enrolled"', desc:'Collaborative filtering based on enrollment patterns of students with similar histories.'},
+                  {num:'12.3.3', name:'Post-Completion Course Suggestion Modal', desc:'After the final lecture, a modal appears suggesting 2–3 related courses.'},
+                ]
+              },
+              {
+                num:'12.4', name:'Revision Suggestions',
+                summary:'Identifies content the student should revisit to reinforce memory.',
+                subs:[
+                  {num:'12.4.1', name:'Flag Lectures Not Revisited in X Days', desc:'Lectures not opened in 7+ days are surfaced in a "Review These" section on the dashboard.'},
+                  {num:'12.4.2', name:'Spaced Repetition Logic', desc:'Review intervals increase exponentially after each successful recall, following SM-2 algorithm principles.'},
+                  {num:'12.4.3', name:'Revision Reminder Notification', desc:'In-app or email notification listing specific lectures due for review.'},
+                ]
+              },
+              {
+                num:'12.5', name:'Practice Suggestions',
+                summary:'Recommends targeted practice activities for weak areas.',
+                subs:[
+                  {num:'12.5.1', name:'Suggest Quizzes for Weak Topics', desc:'Topics below the accuracy threshold are surfaced with a "Practice Now" prompt linking to relevant quizzes.'},
+                  {num:'12.5.2', name:'Practice Prompt After Failed Quiz', desc:'On scoring below the pass threshold, an AI-generated list of recommended review lectures is displayed.'},
+                  {num:'12.5.3', name:'AI-Generated Practice Questions', desc:'On-demand generation of 5–10 additional MCQs on a chosen topic for extra practice.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🤖', name:'AI Tutor',
+            desc:'Conversational AI assistant embedded within the learning interface.',
+            ai:true,
+            features:[
+              {
+                num:'16.1', name:'Lecture Explanation',
+                summary:'AI answers student questions in the context of the current lecture.',
+                subs:[
+                  {num:'16.1.1', name:'Ask AI About Current Lecture', desc:'Chat interface anchored to the current lecture that only draws context from that lecture\'s content.'},
+                  {num:'16.1.2', name:'Context-Aware Responses', desc:'AI responses reference specific lecture segments, e.g., "At 4:32, the instructor explains…".'},
+                  {num:'16.1.3', name:'Linked to Lecture Timestamp', desc:'AI can cite a timestamp and clicking it seeks the video to that point.'},
+                ]
+              },
+              {
+                num:'16.2', name:'Content Summarization',
+                summary:'Automatically condenses lecture content into study-friendly formats.',
+                subs:[
+                  {num:'16.2.1', name:'Auto-Summarize Lecture Transcript', desc:'One-click generation of a concise summary of the full lecture using the transcript.'},
+                  {num:'16.2.2', name:'Key Points Bullet Extraction', desc:'AI extracts 5–10 key takeaway bullets from the lecture and displays them in a structured list.'},
+                  {num:'16.2.3', name:'Summary Download/Copy', desc:'Students can copy or download the generated summary as plain text or PDF.'},
+                ]
+              },
+              {
+                num:'16.3', name:'Doubt Solving',
+                summary:'Free-form question-and-answer session for resolving conceptual doubts.',
+                subs:[
+                  {num:'16.3.1', name:'Free-Text Doubt Input', desc:'Text input field within the AI panel where students type their question in natural language.'},
+                  {num:'16.3.2', name:'AI Response with Examples', desc:'Responses include analogies, code snippets, or step-by-step examples where applicable.'},
+                  {num:'16.3.3', name:'Follow-Up Question Support', desc:'Conversational thread that maintains context across multiple questions in a session.'},
+                  {num:'16.3.4', name:'Doubt History Log', desc:'All past doubts and responses stored per course, searchable for future reference.'},
+                ]
+              },
+              {
+                num:'16.6', name:'Semantic Search',
+                summary:'Allows students to search course content by concept, not just keyword.',
+                subs:[
+                  {num:'16.6.1', name:'Search by Concept / Meaning', desc:'Embedding-based search that finds relevant lectures even when the exact keyword isn\'t used.'},
+                  {num:'16.6.2', name:'Returns Relevant Lecture Segments', desc:'Search results link to the specific segment (timestamp) within a lecture that best matches the query.'},
+                  {num:'16.6.3', name:'Highlight Matching Content in Transcript', desc:'Matching phrases are highlighted in the transcript panel when navigating to a search result.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'⭐', name:'Reviews & Ratings',
+            desc:'Community feedback mechanism for course quality assurance.',
+            ai:false,
+            features:[
+              {
+                num:'14.1', name:'Course Rating (1–5)',
+                summary:'Allows enrolled students to rate a course on a 5-star scale.',
+                subs:[
+                  {num:'14.1.1', name:'5-Star Rating Input', desc:'Interactive star selector (1–5) displayed on the course page for enrolled students only.'},
+                  {num:'14.1.2', name:'Enrollment-Gated Rating', desc:'Rating option is hidden from unenrolled visitors to ensure only genuine learners can rate.'},
+                  {num:'14.1.3', name:'Average Rating Display', desc:'Weighted average rating displayed on the course card and course overview page.'},
+                  {num:'14.1.4', name:'Rating Update Option', desc:'Student can change their rating at any time; the average is recalculated immediately.'},
+                ]
+              },
+              {
+                num:'14.2', name:'Written Reviews',
+                summary:'Allows students to leave detailed text-based feedback.',
+                subs:[
+                  {num:'14.2.1', name:'Text Review Submission', desc:'Open-text field (min 20, max 1000 characters) for a written course review.'},
+                  {num:'14.2.2', name:'Review Moderation Queue', desc:'All reviews enter a moderation queue before appearing publicly; admins approve or reject.'},
+                  {num:'14.2.3', name:'Helpful / Not Helpful Voting', desc:'Other students can upvote reviews as helpful, surfacing the most useful reviews to the top.'},
+                  {num:'14.2.4', name:'Display Reviews on Course Page', desc:'Approved reviews displayed with student name, rating, date, and helpful vote count.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🏆', name:'Certifications',
+            desc:'Issues verifiable digital certificates upon course and roadmap completion.',
+            ai:false,
+            features:[
+              {
+                num:'22.1', name:'Course Completion Certificate',
+                summary:'Auto-generated certificate awarded for 100% course completion.',
+                subs:[
+                  {num:'22.1.1', name:'Auto-Generate on 100% Completion', desc:'Certificate is generated automatically the moment the student completes the final lecture and marks it done.'},
+                  {num:'22.1.2', name:'Student Name & Course Name on Certificate', desc:'Certificate displays the student\'s full name as entered in their profile and the official course title.'},
+                  {num:'22.1.3', name:'Completion Date', desc:'Date of final lecture completion is printed on the certificate.'},
+                  {num:'22.1.4', name:'Download as PDF', desc:'Student can download a high-resolution PDF version of the certificate from the certificates page.'},
+                ]
+              },
+              {
+                num:'22.2', name:'Roadmap Certificate',
+                summary:'Certificate issued upon completing all stages of a roadmap.',
+                subs:[
+                  {num:'22.2.1', name:'Generated on All Stages Completed', desc:'Roadmap certificate triggers only when every required course in every stage is fully completed.'},
+                  {num:'22.2.2', name:'Roadmap Name & Completion Date', desc:'Certificate reflects the roadmap title and the exact completion date.'},
+                  {num:'22.2.3', name:'Download as PDF', desc:'Same PDF download functionality as course certificates, with a distinct roadmap certificate template.'},
+                ]
+              },
+              {
+                num:'22.3', name:'Certificate Verification',
+                summary:'Enables third parties to verify the authenticity of a certificate.',
+                subs:[
+                  {num:'22.3.1', name:'Unique Certificate ID / QR Code', desc:'Each certificate carries a UUID and a QR code that encodes the verification URL.'},
+                  {num:'22.3.2', name:'Public Verification URL', desc:'A shareable URL that anyone can visit to confirm the certificate\'s legitimacy and details.'},
+                  {num:'22.3.3', name:'Employer-Shareable Link', desc:'Student can copy a clean shareable link to include in LinkedIn profiles, resumes, or emails.'},
+                ]
+              },
+            ]
+          },
+        ]
+      }
+    ]
+  },
+
+  // ─── CREATOR ────────────────────────────────────────────────
+  {
+    key:'creator', icon:'🧑‍💻', name:'Creator', desc:'Instructor / Educator',
+    color:'#3B6D11', bg:'rgba(59,109,17,.12)',
+    sections:[
+      {
+        label:'📚 Course Building — LMS',
+        panels:[
+          {
+            icon:'🧑‍💻', name:'Creator Onboarding',
+            desc:'Sets up the creator\'s profile and introduces the content creation workflow.',
+            ai:false,
+            features:[
+              {
+                num:'15.1', name:'Creator Onboarding',
+                summary:'Step-by-step wizard that brings a new creator to their first published course.',
+                subs:[
+                  {num:'15.1.1', name:'Creator Profile Setup', desc:'Guided form collecting full name, professional bio, areas of expertise, and profile photo.'},
+                  {num:'15.1.2', name:'Social & Portfolio Links', desc:'Optional fields for LinkedIn, GitHub, or personal website to be shown on the creator profile page.'},
+                  {num:'15.1.3', name:'Creator Agreement Acceptance', desc:'In-line display of content guidelines and terms; creator must accept before proceeding.'},
+                  {num:'15.1.4', name:'Onboarding Checklist Wizard', desc:'Progress checklist (e.g., "Complete profile → Create first course → Add first lecture") guiding the creator step by step.'},
+                ]
+              },
+              {
+                num:'15.5', name:'Draft & Publish Flow',
+                summary:'Controls the lifecycle of a course from creation to live availability.',
+                subs:[
+                  {num:'15.5.1', name:'Save Course as Draft', desc:'All course edits auto-save as draft; creator can explicitly save and exit without publishing.'},
+                  {num:'15.5.2', name:'Preview Before Publishing', desc:'"Preview as Student" mode lets the creator view the course exactly as a student would see it.'},
+                  {num:'15.5.3', name:'Submit for Admin Approval', desc:'"Submit for Review" button sends the course to the admin moderation queue.'},
+                  {num:'15.5.4', name:'Publish / Unpublish Toggle', desc:'Approved courses can be toggled live or taken offline by the creator at any time.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'📚', name:'Course Management',
+            desc:'Full CRUD and lifecycle management for courses.',
+            ai:false,
+            features:[
+              {
+                num:'2.1', name:'Course Creation',
+                summary:'Initial setup of a new course with its core metadata.',
+                subs:[
+                  {num:'2.1.1', name:'Course Title & Description Input', desc:'Rich-text description editor and a title field with character counter.'},
+                  {num:'2.1.2', name:'Thumbnail Image Upload', desc:'Upload and crop a 1280×720 thumbnail image; preview shown before saving.'},
+                  {num:'2.1.3', name:'Course Language Selection', desc:'Dropdown to set the primary language of instruction for the course.'},
+                  {num:'2.1.4', name:'Target Audience Definition', desc:'Free-text field describing who the course is designed for (shown on the course overview page).'},
+                ]
+              },
+              {
+                num:'2.2', name:'Course Editing',
+                summary:'Modify existing course content and metadata at any time.',
+                subs:[
+                  {num:'2.2.1', name:'Edit Course Metadata', desc:'Title, description, thumbnail, difficulty, and category are all editable post-creation.'},
+                  {num:'2.2.2', name:'Edit Sections & Lectures', desc:'Rename, add, delete, or reorder sections and individual lectures within the course editor.'},
+                  {num:'2.2.3', name:'Drag-and-Drop Reorder', desc:'Sections and lectures can be reordered via drag-and-drop in the curriculum editor.'},
+                  {num:'2.2.4', name:'Bulk Lecture Operations', desc:'Select multiple lectures to batch-delete, batch-tag, or batch-move to another section.'},
+                ]
+              },
+              {
+                num:'2.3', name:'Publishing / Approval',
+                summary:'Workflow for taking a course from draft to student-accessible.',
+                subs:[
+                  {num:'2.3.1', name:'Submit for Review', desc:'"Submit for Review" button triggers a notification to the admin and locks further edits until a decision is made.'},
+                  {num:'2.3.2', name:'Admin Review Workflow', desc:'Admin can approve, reject with comments, or request changes before the course goes live.'},
+                  {num:'2.3.3', name:'Rejection with Feedback', desc:'Rejected courses return to draft status with a comment thread explaining required changes.'},
+                  {num:'2.3.4', name:'Auto-Publish for Trusted Creators', desc:'Admin can grant a "Trusted Creator" flag, allowing auto-publish without review.'},
+                ]
+              },
+              {
+                num:'2.4', name:'Section Management',
+                summary:'Organises lectures into logical content groupings.',
+                subs:[
+                  {num:'2.4.1', name:'Create / Rename / Delete Sections', desc:'Full CRUD for sections within the curriculum editor.'},
+                  {num:'2.4.2', name:'Reorder Sections', desc:'Drag-and-drop or up/down arrows to change the sequence of sections.'},
+                  {num:'2.4.3', name:'Section Description', desc:'Optional description field per section visible to students in the course sidebar.'},
+                ]
+              },
+              {
+                num:'2.5', name:'Lecture Management',
+                summary:'Full control over individual lecture content and settings.',
+                subs:[
+                  {num:'2.5.1', name:'Add Lectures to Sections', desc:'"+ Add Lecture" button within any section to create a new lecture entry.'},
+                  {num:'2.5.2', name:'Lecture Title & Description', desc:'Each lecture has a title and optional summary description for student context.'},
+                  {num:'2.5.3', name:'Free Preview Tagging', desc:'Creator can mark select lectures as free preview, visible to unenrolled visitors.'},
+                  {num:'2.5.4', name:'Lecture Reordering', desc:'Drag handles allow changing the order of lectures within or across sections.'},
+                ]
+              },
+              {
+                num:'2.6', name:'Difficulty Tagging',
+                summary:'Labels the course with an appropriate difficulty level.',
+                subs:[
+                  {num:'2.6.1', name:'Beginner / Intermediate / Advanced Tag', desc:'Single-select tag applied at the course level during creation or editing.'},
+                  {num:'2.6.2', name:'Tag Displayed in Course Listing', desc:'Difficulty badge shown on course cards in the catalog.'},
+                  {num:'2.6.3', name:'Filter Compatibility', desc:'Difficulty tag is indexed and used by the student-side difficulty filter.'},
+                ]
+              },
+              {
+                num:'2.7', name:'Categorization',
+                summary:'Places the course within the platform\'s content taxonomy.',
+                subs:[
+                  {num:'2.7.1', name:'Primary Category Selection', desc:'Creator selects from a defined list of primary categories (e.g., Development, Design, Business).'},
+                  {num:'2.7.2', name:'Sub-Category', desc:'Optional second-level category for more precise classification (e.g., Web Development under Development).'},
+                  {num:'2.7.3', name:'Tags / Keywords', desc:'Free-form tags (up to 10) to improve discoverability via search and recommendation algorithms.'},
+                ]
+              },
+              {
+                num:'2.8', name:'Versioning',
+                summary:'Tracks changes to a course over its lifetime.',
+                subs:[
+                  {num:'2.8.1', name:'Version History Log', desc:'Each major save or publish action creates a version entry with a timestamp and change summary.'},
+                  {num:'2.8.2', name:'Rollback to Previous Version', desc:'Creator or admin can restore any prior version of the course curriculum.'},
+                  {num:'2.8.3', name:'Version Notes', desc:'Optional free-text note per version (e.g., "Updated Section 3 for 2025 APIs").'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🎬', name:'Content Upload',
+            desc:'Handles all media and resource uploads for course lectures.',
+            ai:false,
+            features:[
+              {
+                num:'3.1', name:'Video Upload & Streaming',
+                summary:'Manages the upload and delivery pipeline for lecture videos.',
+                subs:[
+                  {num:'3.1.1', name:'Upload MP4 / MOV Files', desc:'Drag-and-drop or browse upload accepting MP4 and MOV formats up to the configured file size limit.'},
+                  {num:'3.1.2', name:'HLS Transcoding Pipeline', desc:'Uploaded video is automatically transcoded into multiple HLS quality tiers (360p, 720p, 1080p).'},
+                  {num:'3.1.3', name:'Upload Progress Indicator', desc:'Real-time upload progress bar with estimated time remaining displayed in the lecture editor.'},
+                  {num:'3.1.4', name:'Multi-Quality Video Processing', desc:'Processing status shown (Pending → Processing → Ready); lecture is only published once processing is complete.'},
+                ]
+              },
+              {
+                num:'3.2', name:'Document Upload (PDF)',
+                summary:'Allows attaching PDF resources or slides to a lecture.',
+                subs:[
+                  {num:'3.2.1', name:'PDF / PPT Upload', desc:'Supports PDF and exported PPT-as-PDF uploads as lecture resources or standalone content.'},
+                  {num:'3.2.2', name:'Embedded Document Viewer', desc:'PDF renders inline in the lecture page using an embedded viewer rather than forcing a download.'},
+                  {num:'3.2.3', name:'File Size Limit Enforcement', desc:'Upload blocked with a clear error if the file exceeds the platform\'s configured document size limit.'},
+                ]
+              },
+              {
+                num:'3.3', name:'External Resource Links',
+                summary:'Attaches curated external URLs to a lecture as supplementary material.',
+                subs:[
+                  {num:'3.3.1', name:'Add External URL as Lecture Resource', desc:'Creator pastes a URL and a title; it appears in the lecture\'s "Resources" tab for students.'},
+                  {num:'3.3.2', name:'Resource Type Tagging', desc:'Each link is tagged by type (Article, Video, GitHub Repo, Tool, Documentation) for student clarity.'},
+                  {num:'3.3.3', name:'Link Validation', desc:'Platform checks URL reachability at save time and flags broken links.'},
+                ]
+              },
+              {
+                num:'3.4', name:'Content Tagging',
+                summary:'Associates semantic tags with individual lectures for search and analytics.',
+                subs:[
+                  {num:'3.4.1', name:'Topic / Concept Tags per Lecture', desc:'Creator adds up to 5 topic tags per lecture (e.g., "React Hooks", "useState").'},
+                  {num:'3.4.2', name:'Tag-Based Searchability', desc:'Tags are indexed and used for AI semantic search and recommendation queries.'},
+                  {num:'3.4.3', name:'Tag Suggestions', desc:'Platform suggests relevant tags based on the lecture title and description using NLP.'},
+                ]
+              },
+              {
+                num:'3.5', name:'Content Metadata',
+                summary:'Stores descriptive metadata for each piece of uploaded content.',
+                subs:[
+                  {num:'3.5.1', name:'Lecture Duration Auto-Detected', desc:'Video duration is extracted automatically from the uploaded file and stored.'},
+                  {num:'3.5.2', name:'Lecture Description', desc:'Optional short description field for each lecture visible to students before they click in.'},
+                  {num:'3.5.3', name:'Estimated Watch/Read Time', desc:'Displayed on the lecture entry to help students plan their learning session.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🗺️', name:'Roadmap / Path Design',
+            desc:'Tools for creating structured, multi-stage learning journeys.',
+            ai:false,
+            features:[
+              {
+                num:'4.1', name:'Roadmap Creation',
+                summary:'Initial scaffolding of a new learning path.',
+                subs:[
+                  {num:'4.1.1', name:'Roadmap Title & Description', desc:'Name and describe the roadmap\'s overall goal and target audience.'},
+                  {num:'4.1.2', name:'Roadmap Goal Statement', desc:'Single-sentence "By completing this roadmap, you will be able to…" statement shown to students.'},
+                  {num:'4.1.3', name:'Target Role / Skill Definition', desc:'Creator specifies the job role or skill outcome (e.g., "Full Stack Developer") the roadmap prepares for.'},
+                  {num:'4.1.4', name:'Roadmap Thumbnail', desc:'Custom thumbnail image for the roadmap, distinct from individual course thumbnails.'},
+                ]
+              },
+              {
+                num:'4.2', name:'Stage Creation',
+                summary:'Divides the roadmap into sequenced phases.',
+                subs:[
+                  {num:'4.2.1', name:'Add Named Stages', desc:'"+ Add Stage" button creates a new phase with a title (e.g., "Stage 1: Fundamentals").'},
+                  {num:'4.2.2', name:'Stage Description & Goals', desc:'Each stage has a description and a list of learning goals displayed to enrolled students.'},
+                  {num:'4.2.3', name:'Stage Ordering', desc:'Stages are displayed and enforced in the order they are created, with drag-to-reorder support.'},
+                ]
+              },
+              {
+                num:'4.3', name:'Course-to-Stage Mapping',
+                summary:'Assigns existing courses to their respective stages.',
+                subs:[
+                  {num:'4.3.1', name:'Assign Courses to Stages', desc:'Search-and-add interface to assign any published course to a stage.'},
+                  {num:'4.3.2', name:'Multiple Courses per Stage', desc:'A stage can contain one or many courses; all must be completed to unlock the next stage (if enforced).'},
+                  {num:'4.3.3', name:'Required vs. Optional Course Flag', desc:'Mark each course within a stage as Required (blocks stage completion if incomplete) or Optional.'},
+                ]
+              },
+              {
+                num:'4.4', name:'Prerequisite Mapping',
+                summary:'Defines dependencies between stages or courses.',
+                subs:[
+                  {num:'4.4.1', name:'Define Prerequisite Stages', desc:'A stage can be set to require completion of one or more prior stages before unlocking.'},
+                  {num:'4.4.2', name:'Define Prerequisite Courses', desc:'Individual courses within a stage can require specific prior courses to be completed.'},
+                  {num:'4.4.3', name:'Visual Prerequisite Graph', desc:'Creator-side graph view showing the dependency relationships across all stages and courses.'},
+                ]
+              },
+              {
+                num:'4.5', name:'Stage Sequencing',
+                summary:'Controls the order and flexibility of how stages are accessed.',
+                subs:[
+                  {num:'4.5.1', name:'Linear vs. Flexible Sequence Option', desc:'Creator chooses whether stages must be taken in strict order or can be accessed freely after enrollment.'},
+                  {num:'4.5.2', name:'Drag-and-Drop Stage Reorder', desc:'Stages can be reordered at any time before publishing, and reorder propagates to all enrolled students.'},
+                  {num:'4.5.3', name:'Stage Dependency Validation', desc:'System warns if a reorder would create a circular prerequisite dependency.'},
+                ]
+              },
+            ]
+          },
+        ]
+      },
+
+      {
+        label:'📝 Assessment Tools — LMS',
+        panels:[
+          {
+            icon:'📝', name:'Quiz & Assignment Creation',
+            desc:'Creator-side tools for building course assessments.',
+            ai:false,
+            features:[
+              {
+                num:'10.1', name:'Quiz Creation',
+                summary:'Build structured quizzes attached to lectures or sections.',
+                subs:[
+                  {num:'10.1.1', name:'MCQ Question Builder', desc:'Creator adds questions with 2–6 answer options, marking one or more as correct.'},
+                  {num:'10.1.2', name:'True/False Questions', desc:'Simplified two-option question type for quick comprehension checks.'},
+                  {num:'10.1.3', name:'Attach Quiz to Lecture/Section', desc:'Quiz can be attached at the lecture level (appears after the lecture) or section level (appears at section end).'},
+                  {num:'10.1.4', name:'Passing Score Threshold', desc:'Creator sets the minimum % required to "pass" the quiz; pass state shown on student results.'},
+                ]
+              },
+              {
+                num:'10.3', name:'Auto Evaluation Setup',
+                summary:'Configures the automatic grading behaviour of a quiz.',
+                subs:[
+                  {num:'10.3.1', name:'Mark Correct Answers', desc:'Creator designates the correct option(s) for each question in the quiz builder.'},
+                  {num:'10.3.2', name:'Partial Scoring Option', desc:'For multi-correct MCQs, enable partial credit for getting some but not all correct answers.'},
+                  {num:'10.3.3', name:'Explanation Per Answer', desc:'Free-text explanation field per question displayed to students after submission.'},
+                ]
+              },
+              {
+                num:'10.4', name:'Assignment Creation',
+                summary:'Defines the parameters of a student assignment.',
+                subs:[
+                  {num:'10.4.1', name:'Assignment Prompt / Description', desc:'Rich-text field for the assignment brief, including any rubric or instructions.'},
+                  {num:'10.4.2', name:'Accepted File Types', desc:'Configurable allowed file types (e.g., PDF only, or PDF + ZIP) for submissions.'},
+                  {num:'10.4.3', name:'Submission Deadline Setting', desc:'Date/time picker to set the assignment due date and time.'},
+                  {num:'10.4.4', name:'Max Score Setting', desc:'Creator defines the maximum possible score (e.g., 100) for the assignment.'},
+                ]
+              },
+              {
+                num:'10.5', name:'Assignment Grading',
+                summary:'Creator reviews and scores submitted student assignments.',
+                subs:[
+                  {num:'10.5.1', name:'Submission Review View', desc:'List of all student submissions with student name, submission time, and file download link.'},
+                  {num:'10.5.2', name:'Score Input by Creator', desc:'Numeric score input field next to each submission for the creator to enter the awarded mark.'},
+                  {num:'10.5.3', name:'Feedback Comment', desc:'Text field for the creator to leave personalised written feedback for the student.'},
+                  {num:'10.5.4', name:'Grade Publishing', desc:'"Publish Grade" button releases the score and feedback to the student; score remains hidden until published.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🤖', name:'AI Content Tools',
+            desc:'AI-powered assistants that speed up and enhance content creation.',
+            ai:true,
+            features:[
+              {
+                num:'16.4', name:'Quiz Generation',
+                summary:'Automatically generates quiz questions from lecture content.',
+                subs:[
+                  {num:'16.4.1', name:'Auto-Generate MCQs from Lecture Content', desc:'AI reads the lecture transcript/description and generates a set of relevant MCQ questions.'},
+                  {num:'16.4.2', name:'Difficulty Level Selection', desc:'Creator selects Easy, Medium, or Hard; AI adjusts question complexity accordingly.'},
+                  {num:'16.4.3', name:'Review & Edit Before Save', desc:'Generated questions are shown in an editable preview; creator can modify, delete, or add before saving.'},
+                ]
+              },
+              {
+                num:'16.5', name:'Course Outline Generation',
+                summary:'Generates a full course curriculum structure from a topic prompt.',
+                subs:[
+                  {num:'16.5.1', name:'AI-Generated Section/Lecture Structure', desc:'Creator enters a topic or goal; AI returns a proposed course outline with sections and lecture titles.'},
+                  {num:'16.5.2', name:'Edit Generated Outline', desc:'Fully editable before applying; creator can add, remove, or rename sections and lectures.'},
+                  {num:'16.5.3', name:'Apply Outline to New Course', desc:'"Use This Outline" button populates the course curriculum editor with the generated structure.'},
+                ]
+              },
+              {
+                num:'16.2', name:'Content Summarization',
+                summary:'Condenses existing lecture content into shorter study aids.',
+                subs:[
+                  {num:'16.2.1', name:'Summarize Lecture Transcript', desc:'AI generates a concise paragraph summary of the lecture for the creator to review.'},
+                  {num:'16.2.2', name:'Generate Key Takeaways', desc:'Extracts 5–7 bullet-point key takeaways from the lecture content.'},
+                  {num:'16.2.3', name:'Use Summary as Lecture Description', desc:'"Use as Description" button auto-fills the lecture description field with the AI-generated summary.'},
+                ]
+              },
+            ]
+          },
+        ]
+      },
+
+      {
+        label:'📊 Analytics & Performance — LMS',
+        panels:[
+          {
+            icon:'📈', name:'Course Analytics',
+            desc:'Data insights for creators to understand how their courses perform.',
+            ai:false,
+            features:[
+              {
+                num:'15.4', name:'Course Performance Analytics',
+                summary:'Top-level metrics for each published course.',
+                subs:[
+                  {num:'15.4.1', name:'Total Enrollments', desc:'Count of students who have enrolled, with a trend chart showing growth over time.'},
+                  {num:'15.4.2', name:'Completion Rate', desc:'Percentage of enrolled students who have reached 100% course completion.'},
+                  {num:'15.4.3', name:'Drop-Off Lecture Identification', desc:'Highlights the specific lecture where the largest number of students stopped progressing.'},
+                  {num:'15.4.4', name:'Average Rating Trend', desc:'Line chart showing how the course\'s average rating has changed over time.'},
+                ]
+              },
+              {
+                num:'11.5', name:'Course Effectiveness Analysis',
+                summary:'Measures how much students actually learn from the course.',
+                subs:[
+                  {num:'11.5.1', name:'Pre/Post Assessment Score Comparison', desc:'Compares average quiz scores at the start vs. end of the course to measure knowledge gain.'},
+                  {num:'11.5.2', name:'Knowledge Gain Metric', desc:'A derived "Learning Gain" score displayed on the analytics dashboard.'},
+                  {num:'11.5.3', name:'Effectiveness Score', desc:'Composite score blending completion rate, knowledge gain, and average rating.'},
+                ]
+              },
+              {
+                num:'11.6', name:'Class-Level Insights',
+                summary:'Aggregated analytics for a specific batch or cohort of students.',
+                subs:[
+                  {num:'11.6.1', name:'Batch/Group Progress View', desc:'Progress view filtered to a specific admin-defined batch, showing each student\'s individual completion %.'},
+                  {num:'11.6.2', name:'Class Average Score', desc:'Mean quiz score across all students in the batch for a given course.'},
+                  {num:'11.6.3', name:'Engagement Rate', desc:'Percentage of batch students who have been active in the past 7 days.'},
+                ]
+              },
+              {
+                num:'11.3', name:'Performance Trends',
+                summary:'Time-series view of course metrics over weeks and months.',
+                subs:[
+                  {num:'11.3.1', name:'Weekly Enrollment Trends', desc:'Bar chart of new enrollments per week over the past 12 weeks.'},
+                  {num:'11.3.2', name:'Completion Trends Over Time', desc:'Line chart of cumulative completions showing course lifecycle momentum.'},
+                  {num:'11.3.3', name:'Rating Trend Chart', desc:'Rolling average rating over time, showing the impact of content updates.'},
+                ]
+              },
+              {
+                num:'11.2', name:'Weak Area Detection',
+                summary:'Identifies content that is confusing or underperforming.',
+                subs:[
+                  {num:'11.2.1', name:'High Skip-Rate Lectures', desc:'Lectures where > 40% of students skip forward significantly are flagged for review.'},
+                  {num:'11.2.2', name:'Low-Accuracy Quiz Questions', desc:'Quiz questions with < 50% accuracy rate are listed, suggesting the content needs clarification.'},
+                  {num:'11.2.3', name:'Suggested Improvements', desc:'AI-generated suggestions (e.g., "Consider adding an example to Lecture 4") based on analytics signals.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🖥️', name:'Creator Dashboard',
+            desc:'Central hub for the creator to monitor all their content.',
+            ai:false,
+            features:[
+              {
+                num:'18.2', name:'Creator Dashboard',
+                summary:'Overview of all courses, performance metrics, and quick actions.',
+                subs:[
+                  {num:'18.2.1', name:'Course Cards with KPIs', desc:'Each published course shown as a card with enrollment count, completion rate, and average rating.'},
+                  {num:'18.2.2', name:'Total Students Reached', desc:'Aggregate count of students enrolled across all creator\'s courses.'},
+                  {num:'18.2.3', name:'Recent Activity Feed', desc:'List of recent events such as new enrollments, new reviews, and assignment submissions.'},
+                  {num:'18.2.4', name:'Quick Actions', desc:'"Add Lecture", "View Analytics", and "Manage Course" shortcuts on each course card.'},
+                ]
+              },
+              {
+                num:'15.3', name:'Content Management Dashboard',
+                summary:'Dedicated view for managing drafts, published, and pending courses.',
+                subs:[
+                  {num:'15.3.1', name:'Draft Courses List', desc:'All unpublished drafts listed with last-edited timestamp and "Continue Editing" CTA.'},
+                  {num:'15.3.2', name:'Pending Review List', desc:'Courses submitted for approval shown with "Awaiting Review" status badge.'},
+                  {num:'15.3.3', name:'Published Courses List', desc:'All live courses with publish date, enrollment count, and unpublish toggle.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🔔', name:'Creator Notifications',
+            desc:'Alerts that keep creators informed of course and student activity.',
+            ai:false,
+            features:[
+              {
+                num:'17.3', name:'New Course Notifications',
+                summary:'Notifies the creator when a course status changes.',
+                subs:[
+                  {num:'17.3.1', name:'Approval/Rejection Notification', desc:'Creator receives an in-app and email notification when their course is approved or rejected by admin.'},
+                  {num:'17.3.2', name:'First Enrollment Notification', desc:'Special notification when the first student enrolls in a new course.'},
+                ]
+              },
+              {
+                num:'17.2', name:'Deadline Reminders',
+                summary:'Reminds the creator about approaching assignment grading deadlines.',
+                subs:[
+                  {num:'17.2.1', name:'Ungraded Submission Alert', desc:'Daily digest notification listing assignment submissions awaiting grading.'},
+                  {num:'17.2.2', name:'Grading Deadline Warning', desc:'24-hour warning before a student\'s submission reaches its due date without grading.'},
+                ]
+              },
+              {
+                num:'17.5', name:'Recommendation Alerts',
+                summary:'Notifies creators when their course is recommended to students.',
+                subs:[
+                  {num:'17.5.1', name:'Course Featured Alert', desc:'Notification when a course is added to a featured or curated list by the admin.'},
+                  {num:'17.5.2', name:'AI Recommendation Spike', desc:'Alert when the AI recommendation engine drives a significant surge in course views.'},
+                ]
+              },
+            ]
+          },
+        ]
+      }
+    ]
+  },
+
+  // ─── ADMIN ──────────────────────────────────────────────────
+  {
+    key:'admin', icon:'🛠️', name:'Admin', desc:'Platform Administrator',
+    color:'#534AB7', bg:'rgba(83,74,183,.12)',
+    sections:[
+      {
+        label:'👤 User & Access Control — LMS',
+        panels:[
+          {
+            icon:'👤', name:'User Management',
+            desc:'Full control over platform users, roles, and access.',
+            ai:false,
+            features:[
+              {
+                num:'1.1', name:'User Registration',
+                summary:'Controls how new users join the platform.',
+                subs:[
+                  {num:'1.1.1', name:'Self-Registration Form', desc:'Public sign-up form with email, password, and profile fields; CAPTCHA protected.'},
+                  {num:'1.1.2', name:'Email Verification', desc:'Verification link sent on registration; account is inactive until email is confirmed.'},
+                  {num:'1.1.3', name:'Admin-Created Accounts', desc:'Admin can manually create user accounts for bulk institutional onboarding.'},
+                  {num:'1.1.4', name:'Bulk Import via CSV', desc:'Upload a CSV of names and emails to batch-create student accounts with auto-generated passwords.'},
+                ]
+              },
+              {
+                num:'1.2', name:'Login / Authentication',
+                summary:'Methods and security controls for accessing the platform.',
+                subs:[
+                  {num:'1.2.1', name:'Email / Password Login', desc:'Standard credential-based login with password reset via email.'},
+                  {num:'1.2.2', name:'SSO / OAuth Support', desc:'Google, Microsoft, or custom SAML SSO integration configurable per institution.'},
+                  {num:'1.2.3', name:'Two-Factor Authentication (2FA)', desc:'Optional TOTP-based 2FA for enhanced account security.'},
+                  {num:'1.2.4', name:'Session Management', desc:'Admin can view and forcefully terminate active sessions for any user.'},
+                ]
+              },
+              {
+                num:'1.3', name:'Role Management',
+                summary:'Controls what each user can do on the platform.',
+                subs:[
+                  {num:'1.3.1', name:'Assign Student / Creator / Admin Roles', desc:'Role selector on the user profile; changing a role takes effect immediately.'},
+                  {num:'1.3.2', name:'Role Change Audit Log', desc:'All role changes are recorded with the admin who made the change and the timestamp.'},
+                  {num:'1.3.3', name:'Multi-Role Support', desc:'A user can hold more than one role simultaneously (e.g., Student + Creator).'},
+                ]
+              },
+              {
+                num:'1.4', name:'Profile Management',
+                summary:'Admin-level control over user profile data.',
+                subs:[
+                  {num:'1.4.1', name:'Edit User Profile Details', desc:'Admin can update name, email, or profile fields on behalf of any user.'},
+                  {num:'1.4.2', name:'Profile Photo Management', desc:'Admin can remove inappropriate profile photos.'},
+                  {num:'1.4.3', name:'Merge Duplicate Accounts', desc:'Admin can merge two accounts when a student has registered twice, preserving all progress.'},
+                ]
+              },
+              {
+                num:'1.5', name:'Access Control',
+                summary:'Account-level restrictions for individual users.',
+                subs:[
+                  {num:'1.5.1', name:'Enable / Disable User Accounts', desc:'Toggle to deactivate an account, blocking login while preserving all data.'},
+                  {num:'1.5.2', name:'Suspend User with Reason', desc:'Temporary suspension with a reason note visible to the user on their next login attempt.'},
+                  {num:'1.5.3', name:'IP-Based Access Restriction', desc:'Restrict an account to login only from specific IP ranges (for lab/institutional setups).'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'🔐', name:'Access & Batch Control',
+            desc:'Manages how groups of students access courses and roadmaps.',
+            ai:false,
+            features:[
+              {
+                num:'19.1', name:'Group-Based Access (Batch)',
+                summary:'Organises students into batches with shared access rules.',
+                subs:[
+                  {num:'19.1.1', name:'Create Batches / Groups', desc:'Admin creates named batches (e.g., "2025 Cohort A") and sets their access period.'},
+                  {num:'19.1.2', name:'Assign Students to Batch', desc:'Add students to a batch individually or via bulk CSV upload.'},
+                  {num:'19.1.3', name:'Batch-Level Course Access', desc:'Assigning a batch to a course auto-enrolls all batch members in that course.'},
+                ]
+              },
+              {
+                num:'19.2', name:'Private / Public Courses',
+                summary:'Controls course visibility to the general student population.',
+                subs:[
+                  {num:'19.2.1', name:'Set Course Visibility', desc:'Admin or creator can set a course as Public (visible in catalog) or Private (hidden from catalog).'},
+                  {num:'19.2.2', name:'Invite-Only Enrollment', desc:'Private courses can only be joined via an admin-generated invite link or batch assignment.'},
+                ]
+              },
+              {
+                num:'19.3', name:'Restricted Roadmaps',
+                summary:'Limits roadmap access to specific groups.',
+                subs:[
+                  {num:'19.3.1', name:'Roadmap Access by Batch', desc:'Roadmap visibility and enrollment is restricted to specified batches only.'},
+                  {num:'19.3.2', name:'Admin-Only Roadmap Assignment', desc:'Students cannot self-enroll in restricted roadmaps; admin must assign them.'},
+                ]
+              },
+              {
+                num:'19.4', name:'Permission Management',
+                summary:'Fine-grained feature access controls.',
+                subs:[
+                  {num:'19.4.1', name:'Feature-Level Permissions', desc:'Enable or disable specific features (e.g., certificate download, AI tutor) for individual batches.'},
+                  {num:'19.4.2', name:'Creator Permission Scopes', desc:'Control whether a creator can publish independently, manage roadmaps, or access analytics.'},
+                ]
+              },
+            ]
+          },
+        ]
+      },
+
+      {
+        label:'📚 Content & Course Governance — LMS',
+        panels:[
+          {
+            icon:'✅', name:'Course Approval & Moderation',
+            desc:'Manages the quality gate for all content published on the platform.',
+            ai:false,
+            features:[
+              {
+                num:'2.3', name:'Course Publishing / Approval',
+                summary:'Admin review and approval workflow for new and updated courses.',
+                subs:[
+                  {num:'2.3.1', name:'Review Pending Courses Queue', desc:'Dedicated admin page listing all courses awaiting review with submission date and creator details.'},
+                  {num:'2.3.2', name:'Approve / Reject with Feedback', desc:'One-click approve, or reject with a mandatory comment that is sent to the creator.'},
+                  {num:'2.3.3', name:'Admin Publish Override', desc:'Admin can publish a course on behalf of a creator, bypassing the creator\'s publish action.'},
+                ]
+              },
+              {
+                num:'14.4', name:'Review Moderation',
+                summary:'Moderates student-written course reviews for appropriateness.',
+                subs:[
+                  {num:'14.4.1', name:'Student Review Moderation Queue', desc:'All new reviews appear in a moderation queue before going live on the course page.'},
+                  {num:'14.4.2', name:'Flag / Remove Inappropriate Reviews', desc:'Admin can remove reviews that violate community guidelines, notifying the student.'},
+                  {num:'14.4.3', name:'Bulk Moderation Actions', desc:'Select multiple reviews to approve or reject in a single action.'},
+                ]
+              },
+              {
+                num:'2.8', name:'Course Versioning',
+                summary:'Admin-side view and control of course version history.',
+                subs:[
+                  {num:'2.8.1', name:'View Version History', desc:'Full audit trail of all published versions with creator, date, and change description.'},
+                  {num:'2.8.2', name:'Compare Versions', desc:'Side-by-side diff view of curriculum changes between two versions.'},
+                  {num:'2.8.3', name:'Rollback to Approved Version', desc:'Admin can revert a course to any prior approved version if content quality degrades.'},
+                ]
+              },
+            ]
+          },
+        ]
+      },
+
+      {
+        label:'📊 Platform Analytics & Dashboards — LMS',
+        panels:[
+          {
+            icon:'🖥️', name:'Admin Dashboard',
+            desc:'System-wide overview for platform health and performance.',
+            ai:false,
+            features:[
+              {
+                num:'18.3', name:'Admin Dashboard (LMS Overview)',
+                summary:'Centralised view of all LMS activity across the platform.',
+                subs:[
+                  {num:'18.3.1', name:'Total Active Students', desc:'Count of students who have been active in the past 7 days platform-wide.'},
+                  {num:'18.3.2', name:'Platform-Wide Course Completion Rate', desc:'Aggregate completion rate across all courses, with trend vs. prior period.'},
+                  {num:'18.3.3', name:'New Enrollments This Week', desc:'Count of new enrollments in the last 7 days with a day-by-day breakdown chart.'},
+                  {num:'18.3.4', name:'Content Library Stats', desc:'Total number of published courses, total lectures, and total video hours available.'},
+                ]
+              },
+            ]
+          },
+
+          {
+            icon:'📈', name:'Platform-Wide Analytics',
+            desc:'Deep analytical insights for data-driven platform decisions.',
+            ai:false,
+            features:[
+              {
+                num:'11.1', name:'Topic Mastery Analysis',
+                summary:'Measures how well students are mastering content topics across the platform.',
+                subs:[
+                  {num:'11.1.1', name:'Topic-Level Mastery Score', desc:'Platform-wide average accuracy for each topic tag, sourced from quiz attempt data.'},
+                  {num:'11.1.2', name:'Topics Below Threshold Alert', desc:'Topics with platform-wide accuracy below 60% highlighted for admin review and creator action.'},
+                  {num:'11.1.3', name:'Mastery Distribution Chart', desc:'Distribution histogram showing how students are spread across mastery levels for a given topic.'},
+                ]
+              },
+              {
+                num:'11.4', name:'Consistency Tracking',
+                summary:'Measures whether students are learning regularly vs. in sporadic bursts.',
+                subs:[
+                  {num:'11.4.1', name:'Daily Active User Rate', desc:'% of registered students who log at least one learning event per day, tracked over 30 days.'},
+                  {num:'11.4.2', name:'Dropout Rate Analysis', desc:'Percentage of enrolled students who have had zero activity for > 14 days, by course.'},
+                  {num:'11.4.3', name:'Retention Cohort Analysis', desc:'Cohort retention charts showing how many students from a given enrollment month remain active at 30/60/90 days.'},
+                ]
+              },
+            ]
+          },
+        ]
+      }
+    ]
+  }
+];
+
+// ─────────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────────
+let activeRole = 'student';
+let openCards = new Set();
+let openFeats = new Set();
+
+function countStats(role) {
+  let panels = 0, features = 0, subs = 0, aiPanels = 0;
+  role.sections.forEach(s => {
+    s.panels.forEach(p => {
+      panels++;
+      if(p.ai) aiPanels++;
+      p.features.forEach(f => {
+        features++;
+        subs += f.subs.length;
+      });
+    });
+  });
+  return {panels, features, subs, aiPanels};
+}
+
+function render() {
+  const r = data.find(x => x.key === activeRole);
+  const {panels, features, subs, aiPanels} = countStats(r);
+
+  let html = '';
+
+  // Roles
+  html += '<div class="roles-row">';
+  data.forEach(ro => {
+    const active = ro.key === activeRole;
+    html += `<button class="role-btn${active?' active':''}" onclick="switchRole('${ro.key}')"
+      style="${active?`border-color:${ro.color};background:${ro.bg};`:''}">
+      <div class="role-avatar" style="background:${ro.bg}">${ro.icon}</div>
+      <div class="role-info">
+        <div class="role-name" style="${active?`color:${ro.color}`:''}"> ${ro.name}</div>
+        <div class="role-desc">${ro.desc}</div>
+      </div>
+    </button>`;
+  });
+  html += '</div>';
+
+  // Stats
+  html += `<div class="stats-bar">
+    <div class="stat-chip"><div class="stat-v">${r.sections.length}</div><div class="stat-l">Sections</div></div>
+    <div class="stat-chip"><div class="stat-v">${panels}</div><div class="stat-l">Panels</div></div>
+    <div class="stat-chip"><div class="stat-v">${features}</div><div class="stat-l">Features</div></div>
+    <div class="stat-chip"><div class="stat-v">${subs}</div><div class="stat-l">Sub-Points</div></div>
+    <div class="stat-chip"><div class="stat-v">${aiPanels}</div><div class="stat-l">AI Panels</div></div>
+  </div>`;
+
+  // Sections & Panels
+  r.sections.forEach((sec, si) => {
+    html += `<div class="section-title">${sec.label}</div>`;
+    html += '<div class="panels-grid">';
+
+    sec.panels.forEach((panel, pi) => {
+      const cardId = `${activeRole}-${si}-${pi}`;
+      const isOpen = openCards.has(cardId);
+
+      let featHtml = '';
+      panel.features.forEach((f, fi) => {
+        const featId = `${cardId}-f${fi}`;
+        const isFOpen = openFeats.has(featId);
+
+        const subItems = f.subs.map(s => `
+          <div class="sub-item">
+            <span class="sub-num">${s.num}</span>
+            <div class="sub-body">
+              <div class="sub-name">${s.name}</div>
+              <div class="sub-desc">${s.desc}</div>
+            </div>
+          </div>`).join('');
+
+        featHtml += `
+          <div class="feat-row${isFOpen?' fopen':''}" id="feat-${featId}">
+            <div class="feat-header" onclick="toggleFeat('${featId}')">
+              <span class="feat-num">${f.num}</span>
+              <div class="feat-title-wrap">
+                <div class="feat-title">${f.name}</div>
+                <div class="feat-summary">${f.summary}</div>
+              </div>
+              <span class="feat-arrow">▶</span>
+            </div>
+            <div class="sub-list">${subItems}</div>
+          </div>`;
+      });
+
+      html += `
+        <div class="panel-card${isOpen?' open':''}" id="card-${cardId}">
+          <div class="pc-head" onclick="toggleCard('${cardId}')">
+            <div class="pc-icon" style="background:${r.bg}">${panel.icon}</div>
+            <div class="pc-meta">
+              <div class="pc-name">${panel.name}</div>
+              <div class="pc-desc">${panel.desc}</div>
+              <div class="pc-pills">
+                <span class="pill pill-lms">LMS</span>
+                ${panel.ai ? '<span class="pill pill-ai">AI</span>' : ''}
+              </div>
+            </div>
+            <span class="pc-chevron">▼</span>
+          </div>
+          <div class="pc-body">${featHtml}</div>
+        </div>`;
+    });
+
+    html += '</div>';
+  });
+
+  document.getElementById('app').innerHTML = html;
+}
+
+function toggleCard(id) {
+  openCards.has(id) ? openCards.delete(id) : openCards.add(id);
+  render();
+}
+
+function toggleFeat(id) {
+  openFeats.has(id) ? openFeats.delete(id) : openFeats.add(id);
+  render();
+}
+
+function switchRole(key) {
+  activeRole = key;
+  openCards.clear();
+  openFeats.clear();
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

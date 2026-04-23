@@ -1,0 +1,122 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '../../lib/utils';
+import { IconButton } from './IconButton';
+import { Menu, Search, LogOut, Settings, Bell, ChevronDown } from 'lucide-react';
+import { useAuthStore } from '../../store/auth.store';
+import { GlobalNotifications } from './GlobalNotifications';
+import './Navbar.css';
+
+interface NavbarProps {
+  className?: string;
+  onMenuClick?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ className, onMenuClick }) => {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Generate monogram from name (e.g., "Nikhil Vzo" -> "NV")
+  const getMonogram = (name?: string) => {
+    if (!name) return 'U';
+    const parts = name.split(' ').filter(Boolean);
+    return parts.length > 1 
+      ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() 
+      : parts[0].substring(0, 2).toUpperCase();
+  };
+
+  return (
+    <nav className={cn('ug-navbar', className)}>
+      <div className="navbar-left">
+        <IconButton 
+          icon={<Menu size={20} />} 
+          aria-label="Toggle Sidebar" 
+          variant="ghost" 
+          onClick={onMenuClick}
+        />
+        <div className="navbar-brand">
+          <span className="brand-text">UG</span>
+          <span className="brand-text primary">SKILL</span>
+        </div>
+      </div>
+
+      <div className="navbar-center hidden md:flex">
+        <div className="search-well">
+          <Search className="search-icon" size={16} strokeWidth={2.5} />
+          <input 
+            type="text" 
+            placeholder="Search commands, courses, students..." 
+            className="search-input"
+          />
+          <div className="search-shortcut">⌘K</div>
+        </div>
+      </div>
+
+      <div className="navbar-right">
+        {/* Global Notifications replaces standard bell */}
+        <GlobalNotifications />
+        
+        <div className="navbar-sep" />
+
+        <div className="user-avatar-wrapper" ref={dropdownRef}>
+          <button 
+            className="user-avatar-btn"
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            aria-expanded={isProfileOpen}
+          >
+            <div className="user-monogram">
+              {getMonogram(user?.fullName)}
+            </div>
+            <ChevronDown 
+              size={14} 
+              className={cn("user-caret", isProfileOpen && "open")} 
+              strokeWidth={3}
+            />
+          </button>
+
+          {isProfileOpen && (
+            <div className="profile-dropdown">
+              <div className="dropdown-header">
+                <div className="dropdown-user-name">{user?.fullName || 'Authorized User'}</div>
+                <div className="dropdown-user-role">{user?.email || 'user@ugskill.com'}</div>
+                <div className="dropdown-role-badge">
+                  {user?.roles?.[0] || 'Member'}
+                </div>
+              </div>
+              
+              <button className="dropdown-item">
+                <Settings size={16} />
+                <span>Account Settings</span>
+              </button>
+              
+              <div className="dropdown-divider" />
+              
+              <button className="dropdown-item danger" onClick={handleLogout}>
+                <LogOut size={16} />
+                <span>Terminate Session</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+};

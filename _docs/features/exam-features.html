@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UGSkill — Exam Section</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#f0f4f0;color:#111;min-height:100vh;}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#2d5a0e 0%,#3B6D11 60%,#5a9e1a 100%);padding:18px 18px 14px;display:flex;align-items:center;gap:12px;}
+.header-icon{width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+.header-info{flex:1;}
+.header-title{font-size:17px;font-weight:700;color:#fff;font-family:'Space Grotesk',sans-serif;}
+.header-sub{font-size:11px;color:rgba(255,255,255,.72);margin-top:2px;}
+.header-badge{font-size:10px;background:rgba(255,255,255,.18);color:#fff;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap;}
+
+/* ROLE TABS */
+.role-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1.5px solid #d5e8bc;background:#fff;}
+.role-tab{padding:12px 10px;cursor:pointer;display:flex;align-items:center;gap:10px;border:none;background:none;font-family:'DM Sans',sans-serif;transition:background .15s;border-bottom:3px solid transparent;margin-bottom:-1.5px;}
+.role-tab:hover{background:#f5f9f0;}
+.role-tab.active{border-bottom-color:#3B6D11;background:#f0f7e8;}
+.role-tab-icon{width:40px;height:40px;border-radius:50%;background:#e8f0dc;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:background .15s;}
+.role-tab.active .role-tab-icon{background:rgba(59,109,17,.15);}
+.role-tab-meta{text-align:left;}
+.role-tab-name{font-size:13px;font-weight:700;color:#111;font-family:'Space Grotesk',sans-serif;}
+.role-tab.active .role-tab-name{color:#2d5a0e;}
+.role-tab-sub{font-size:10px;color:#888;margin-top:1px;}
+.role-tab:not(:last-child){border-right:1px solid #e8f0dc;}
+
+/* STATS BAR */
+.stats-bar{display:flex;gap:8px;padding:12px 14px 4px;overflow-x:auto;}
+.stat-chip{background:#fff;border:0.5px solid #dde8d0;border-radius:10px;padding:8px 12px;flex:1;text-align:center;min-width:65px;white-space:nowrap;}
+.stat-v{font-size:17px;font-weight:700;color:#3B6D11;font-family:'Space Grotesk',sans-serif;}
+.stat-l{font-size:9px;color:#777;margin-top:1px;}
+
+/* SECTION TITLE */
+.section-title{font-size:10px;font-weight:700;color:#5a8a25;text-transform:uppercase;letter-spacing:.09em;padding:12px 14px 8px;display:flex;align-items:center;gap:6px;}
+.section-title::after{content:'';flex:1;height:1px;background:#d2e8b8;}
+
+/* PANELS GRID */
+.panels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:0 14px 16px;}
+
+.panel-card{background:#fff;border:0.5px solid #d5e8bc;border-radius:12px;overflow:hidden;transition:border-color .15s,box-shadow .15s;}
+.panel-card:hover{border-color:#3B6D11;box-shadow:0 2px 10px rgba(59,109,17,.08);}
+.panel-card.open{border-color:#3B6D11;border-width:1px;}
+
+.pc-head{padding:10px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;user-select:none;}
+.pc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:1px;background:rgba(59,109,17,.1);}
+.pc-meta{flex:1;}
+.pc-name{font-size:12px;font-weight:700;color:#111;line-height:1.3;font-family:'Space Grotesk',sans-serif;}
+.pc-desc{font-size:10px;color:#888;margin-top:3px;line-height:1.4;}
+.pc-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.pill{font-size:10px;padding:1px 7px;border-radius:8px;font-weight:600;}
+.pill-exam{background:rgba(59,109,17,.12);color:#27500A;}
+.pill-ai{background:rgba(186,117,23,.12);color:#854F0B;}
+.pc-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.pc-chevron{font-size:11px;color:#888;transition:transform .22s;}
+.panel-card.open .pc-chevron{transform:rotate(180deg);}
+.pc-feat-count{font-size:9px;color:#aaa;white-space:nowrap;}
+
+.pc-body{display:none;border-top:0.5px solid #e8f0dc;}
+.panel-card.open .pc-body{display:block;}
+
+.feat-row{border-bottom:0.5px solid #eef3e6;}
+.feat-row:last-child{border-bottom:none;}
+.feat-header{display:flex;gap:9px;padding:8px 12px;cursor:pointer;align-items:flex-start;transition:background .1s;user-select:none;}
+.feat-header:hover{background:#f5f9f0;}
+.feat-num{font-size:10px;font-weight:700;color:#5a9e1a;min-width:40px;padding-top:1px;flex-shrink:0;}
+.feat-title-wrap{flex:1;}
+.feat-title{font-size:11px;font-weight:600;color:#1a1a1a;}
+.feat-summary{font-size:10px;color:#888;margin-top:2px;line-height:1.4;}
+.feat-sub-count{font-size:9px;color:#bbb;margin-top:2px;}
+.feat-arrow{font-size:9px;color:#aaa;transition:transform .2s;margin-top:3px;flex-shrink:0;}
+.feat-row.fopen .feat-arrow{transform:rotate(90deg);}
+
+.sub-list{display:none;background:#f7fbf2;border-top:0.5px solid #e5f0d5;}
+.feat-row.fopen .sub-list{display:block;}
+.sub-item{display:flex;gap:9px;padding:5px 12px 5px 61px;border-bottom:0.5px solid #edf5e3;}
+.sub-item:last-child{border-bottom:none;}
+.sub-num{font-size:10px;color:#8ab554;min-width:46px;flex-shrink:0;padding-top:2px;font-weight:600;}
+.sub-body{flex:1;}
+.sub-name{font-size:11px;font-weight:500;color:#333;}
+.sub-desc{font-size:10px;color:#888;margin-top:2px;line-height:1.4;}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:#aaa;}
+.empty-state-icon{font-size:36px;margin-bottom:10px;}
+.empty-state-text{font-size:13px;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:#f0f4f0;}
+::-webkit-scrollbar-thumb{background:#c5dba5;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🎯</div>
+  <div class="header-info">
+    <div class="header-title">UGSkill — Exam Section</div>
+    <div class="header-sub">Complete Test &amp; Assessment System</div>
+  </div>
+  <div class="header-badge">13 Modules</div>
+</div>
+
+<!-- ROLE TABS -->
+<div class="role-tabs">
+  <button class="role-tab active" onclick="switchRole('student')" id="tab-student">
+    <div class="role-tab-icon">🎓</div>
+    <div class="role-tab-meta">
+      <div class="role-tab-name">Student</div>
+      <div class="role-tab-sub">Learner / Candidate</div>
+    </div>
+  </button>
+  <button class="role-tab" onclick="switchRole('creator')" id="tab-creator">
+    <div class="role-tab-icon">🧑‍🏫</div>
+    <div class="role-tab-meta">
+      <div class="role-tab-name">Creator</div>
+      <div class="role-tab-sub">Instructor / Educator</div>
+    </div>
+  </button>
+  <button class="role-tab" onclick="switchRole('admin')" id="tab-admin">
+    <div class="role-tab-icon">🛠️</div>
+    <div class="role-tab-meta">
+      <div class="role-tab-name">Admin</div>
+      <div class="role-tab-sub">Platform Administrator</div>
+    </div>
+  </button>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+<div id="app"></div>
+
+<script>
+// ── ROLE DEFINITIONS ──────────────────────────────────────────────
+// Each panel has a `roles` array: 'student' | 'creator' | 'admin'
+const panels = [
+
+  {
+    roles:['creator','admin'],
+    icon:'📋', name:'Test Management', ai:false,
+    desc:'End-to-end lifecycle management: create, edit, schedule, categorise, configure difficulty, manage sections, templates, cloning, visibility, and archiving.',
+    features:[
+      { num:'1.1', name:'Test Creation', summary:'Build a new exam from scratch — define type, structure, marking scheme, and instructions.',
+        subs:[
+          {num:'1.1.1', name:'Exam Type Selection', desc:'Choose test type: Full-length mock, Sectional, Chapter-wise, PYQ, Live competitive, or Practice quiz.'},
+          {num:'1.1.2', name:'Basic Details Setup', desc:'Enter exam title, subject, description, target audience (batch/group), and thumbnail image for the student-facing card.'},
+          {num:'1.1.3', name:'Marking Scheme Configuration', desc:'Define marks per correct answer, negative marking penalty per wrong answer, and partial-mark rules for multi-correct MCQs.'},
+          {num:'1.1.4', name:'Instructions & Terms Screen', desc:'Add exam-specific instructions, permitted materials list, and a mandatory acknowledgement screen students must accept before the timer starts.'},
+          {num:'1.1.5', name:'Section & Question Count Setup', desc:'Define number of sections and total questions per section; bind each section to a subject pool.'},
+        ]
+      },
+      { num:'1.2', name:'Test Editing', summary:'Modify any part of an existing exam — questions, settings, or marking — even after creation.',
+        subs:[
+          {num:'1.2.1', name:'Question Add / Remove / Reorder', desc:'Add questions from the bank, remove existing ones, or drag-and-drop to reorder within a section at any time before publishing.'},
+          {num:'1.2.2', name:'Marking Scheme Edit', desc:'Update marks, negative marks, or partial-credit rules; changes are isolated to future attempts if the exam has already started.'},
+          {num:'1.2.3', name:'Instructions & Metadata Edit', desc:'Update exam title, description, instructions, or tags without affecting attempts already in progress.'},
+          {num:'1.2.4', name:'Section Configuration Edit', desc:'Add/remove sections, rename, reassign questions across sections, and adjust per-section time limits.'},
+          {num:'1.2.5', name:'Edit Lock on Live Exams', desc:'Warn admins when editing a live exam; critical field edits are locked until the exam window closes.'},
+        ]
+      },
+      { num:'1.3', name:'Scheduling (Live / Scheduled)', summary:'Control exactly when an exam is accessible — immediate, scheduled window, or live competitive.',
+        subs:[
+          {num:'1.3.1', name:'Scheduled Window (Start & End)', desc:'Set exact start and end date-time; exam opens and closes automatically without manual action.'},
+          {num:'1.3.2', name:'Live Exam Mode', desc:'All registered students start simultaneously at the defined moment; server broadcasts start signal via WebSocket.'},
+          {num:'1.3.3', name:'Flexible (Anytime) Mode', desc:'Students start the exam any time within the open window and complete at their own pace.'},
+          {num:'1.3.4', name:'Recurring Schedule', desc:'Configure weekly or monthly recurrence (e.g. every Sunday 10 AM); auto-publishes without admin intervention.'},
+          {num:'1.3.5', name:'Timezone-aware Scheduling', desc:'Admin sets schedule in a reference timezone; students see the window automatically converted to their local timezone.'},
+        ]
+      },
+      { num:'1.4', name:'Categorization', summary:'Organise exams into a structured taxonomy for easy discovery, filtering, and reporting.',
+        subs:[
+          {num:'1.4.1', name:'Subject & Topic Category', desc:'Assign exams to subject categories (e.g. Mathematics) and drill-down topic categories (e.g. Calculus) from the platform taxonomy.'},
+          {num:'1.4.2', name:'Exam Type Tag', desc:'Tag exams as Mock Test, Practice, PYQ, Live Contest, Assessment, or Quiz to enable type-specific filtering on the student dashboard.'},
+          {num:'1.4.3', name:'Target Exam Mapping', desc:'Map the test to a target competitive exam (GATE, JEE, UPSC) so students filtering by their goal see relevant tests.'},
+          {num:'1.4.4', name:'Custom Labels & Collections', desc:'Create custom label groups (e.g. "Speed Tests") and attach tests to these collections for curated browsing.'},
+        ]
+      },
+      { num:'1.5', name:'Difficulty Configuration', summary:'Define and enforce the difficulty distribution of questions across the entire exam.',
+        subs:[
+          {num:'1.5.1', name:'Overall Difficulty Level', desc:'Tag the exam as Easy, Medium, Hard, or Mixed — used as a filter attribute shown to students on the exam card.'},
+          {num:'1.5.2', name:'Difficulty Distribution Config', desc:'For auto-selected tests, define the percentage split of Easy / Medium / Hard questions (e.g. 30% / 50% / 20%).'},
+          {num:'1.5.3', name:'Per-section Difficulty Override', desc:'Assign different difficulty profiles per section (e.g. Section A = Easy, Section B = Hard) within the same exam.'},
+          {num:'1.5.4', name:'AI Difficulty Recommendation', desc:'AI analyses question bank metadata and historical student performance to recommend an optimal difficulty configuration.'},
+        ]
+      },
+      { num:'1.6', name:'Section Management', summary:'Divide an exam into independently configured sections with their own rules and timers.',
+        subs:[
+          {num:'1.6.1', name:'Section Creation & Naming', desc:'Create multiple named sections (e.g. Quantitative Aptitude, Verbal Reasoning) within a single exam.'},
+          {num:'1.6.2', name:'Per-section Time Limit', desc:'Assign a separate countdown timer per section; students are auto-advanced or locked out when the section timer expires.'},
+          {num:'1.6.3', name:'Per-section Marking Scheme', desc:'Set different marks per correct answer and negative marks for each section within the same exam.'},
+          {num:'1.6.4', name:'Section Question Pool Binding', desc:'Bind each section to a specific subject/topic pool so auto-selection draws only section-relevant questions.'},
+          {num:'1.6.5', name:'Section Navigation Rules', desc:'Configure whether students can move freely between sections or are locked to complete one section before accessing the next.'},
+        ]
+      },
+      { num:'1.7', name:'Template System', summary:'Save and reuse exam configurations as templates to accelerate new exam creation.',
+        subs:[
+          {num:'1.7.1', name:'Save Exam as Template', desc:'Convert any existing exam setup (structure, sections, marking scheme, instructions) into a reusable template.'},
+          {num:'1.7.2', name:'Template Library & Search', desc:'Browse, search, and filter the template library by subject, exam type, or difficulty.'},
+          {num:'1.7.3', name:'Apply Template to New Exam', desc:'Select a template when creating a new exam; all configuration fields pre-populate.'},
+          {num:'1.7.4', name:'Template Version History', desc:'Track changes to a template over time; revert to an earlier version if a configuration update causes issues.'},
+        ]
+      },
+      { num:'1.8', name:'Test Cloning', summary:'Duplicate an existing exam to create a parallel version or repurpose for a new batch.',
+        subs:[
+          {num:'1.8.1', name:'Full Exam Clone', desc:'Create an exact copy of an exam including all questions, sections, marking scheme, and settings.'},
+          {num:'1.8.2', name:'Selective Clone (Structure Only)', desc:'Clone just the exam structure (sections, settings, marking) without copying specific questions.'},
+          {num:'1.8.3', name:'Clone to Different Batch', desc:'Clone an exam and immediately reassign it to a different batch without altering the original.'},
+          {num:'1.8.4', name:'Clone & Modify Workflow', desc:'After cloning, admin is taken into an edit flow highlighting which fields are pre-filled and which need customisation.'},
+        ]
+      },
+      { num:'1.9', name:'Test Visibility', summary:'Control who can see and access an exam based on access rules and conditions.',
+        subs:[
+          {num:'1.9.1', name:'Public Visibility', desc:'Exam is visible and accessible to all enrolled students on the platform without any additional gate or restriction.'},
+          {num:'1.9.2', name:'Private / Password-protected', desc:'Exam is hidden from general listing; students access it only via a direct link with an optional entry password.'},
+          {num:'1.9.3', name:'Batch-restricted Visibility', desc:'Exam appears only on the dashboard of students in specific assigned batches; invisible to all others.'},
+          {num:'1.9.4', name:'Eligibility-gated Visibility', desc:'Exam is visible only to students who meet a prerequisite condition.'},
+        ]
+      },
+      { num:'1.10', name:'Lifecycle (Draft → Archive)', summary:'Manage the complete status lifecycle of an exam from creation to retirement.',
+        subs:[
+          {num:'1.10.1', name:'Draft State', desc:'Newly created exam starts in Draft — not visible to students and fully editable.'},
+          {num:'1.10.2', name:'Published / Live State', desc:'Exam becomes visible and accessible to assigned students within the configured schedule window.'},
+          {num:'1.10.3', name:'Closed State', desc:'Exam window has passed; no new attempts allowed. Historical attempts and results remain accessible.'},
+          {num:'1.10.4', name:'Archived State', desc:'Exam soft-deleted from active listings; hidden from students but all data retained for reporting.'},
+          {num:'1.10.5', name:'Status Transition Audit Log', desc:'Every status change (who changed it, when, from which state to which) is logged for compliance.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['creator','admin'],
+    icon:'🗄️', name:'Question Bank', ai:true,
+    desc:'Centralised repository for creating, bulk-uploading, tagging, categorising, versioning, moderating, AI-generating, pooling, and dynamically selecting exam questions.',
+    features:[
+      { num:'2.1', name:'MCQ / Coding / Descriptive Creation', summary:'Create all supported question types with rich media and structured metadata.',
+        subs:[
+          {num:'2.1.1', name:'MCQ — Single & Multiple Correct', desc:'Standard single-answer and multi-correct MCQs with LaTeX math support in stems and options.'},
+          {num:'2.1.2', name:'Coding / Programming Questions', desc:'Problem statement, constraints, sample I/O, hidden test cases, and supported languages for sandboxed code execution.'},
+          {num:'2.1.3', name:'Descriptive / Short Answer', desc:'Free-text questions with configurable word/character limit; flagged for AI semantic evaluation or manual grading.'},
+          {num:'2.1.4', name:'Numerical / Integer Type', desc:'Student types a numeric answer; set exact match or a ±tolerance range for floating-point problems.'},
+          {num:'2.1.5', name:'Fill-in-the-Blank & Matching', desc:'Inline blank fields (exact/regex match) and two-column matching questions.'},
+          {num:'2.1.6', name:'Rich Media Attachment', desc:'Attach images, diagrams, audio clips, or code snippets to any question type.'},
+        ]
+      },
+      { num:'2.2', name:'Bulk Upload', summary:'Import large volumes of questions at once via structured files.',
+        subs:[
+          {num:'2.2.1', name:'Excel / CSV Template Import', desc:'Download the standard template, fill question data row-by-row, and upload in one batch operation.'},
+          {num:'2.2.2', name:'Word / PDF Document Parsing', desc:'Upload a formatted Word or PDF; AI extracts individual questions and maps them to the schema.'},
+          {num:'2.2.3', name:'Import Validation & Error Report', desc:'System validates each row for mandatory fields; an error report lists issues before final import.'},
+          {num:'2.2.4', name:'Batch Import Status Tracking', desc:'Large imports run asynchronously; admins see a real-time progress bar and receive a completion notification.'},
+        ]
+      },
+      { num:'2.3', name:'Question Tagging', summary:'Attach rich metadata to every question for precise filtering, analytics, and AI selection.',
+        subs:[
+          {num:'2.3.1', name:'Subject & Topic Tags', desc:'Assign a hierarchical tag chain: Subject → Chapter → Topic from the platform taxonomy.'},
+          {num:'2.3.2', name:'Difficulty Level Tag', desc:'Tag as Easy, Medium, or Hard; optionally use AI-recommended difficulty.'},
+          {num:'2.3.3', name:"Bloom's Taxonomy Tag", desc:"Classify cognitive level: Remember, Understand, Apply, Analyse, Evaluate, or Create."},
+          {num:'2.3.4', name:'Source & Year Tag (PYQ)', desc:'Mark as original or PYQ; store source exam name and year for traceability.'},
+          {num:'2.3.5', name:'Custom Keyword Tags', desc:'Freeform keyword tags used by the recommendation engine and advanced search.'},
+        ]
+      },
+      { num:'2.4', name:'Categorization', summary:'Organise the question bank into a navigable, searchable taxonomy.',
+        subs:[
+          {num:'2.4.1', name:'Subject-wise Categorization', desc:'Questions stored under a root subject and browsable from the question bank interface.'},
+          {num:'2.4.2', name:'Question Type Categorization', desc:'Filter and browse questions by type (MCQ, Coding, Descriptive, Numerical).'},
+          {num:'2.4.3', name:'Exam Pattern Categorization', desc:'Tag questions to a specific competitive exam pattern (GATE, JEE, NEET, CAT).'},
+          {num:'2.4.4', name:'Custom Folder / Collection', desc:'Admins create named collections and assign questions manually for curated test building.'},
+        ]
+      },
+      { num:'2.5', name:'Versioning', summary:'Track changes to questions over time and maintain correctness across exam variants.',
+        subs:[
+          {num:'2.5.1', name:'Auto-versioning on Edit', desc:'Every edit to a published question automatically creates a new version; the previous version is retained.'},
+          {num:'2.5.2', name:'Version Diff View', desc:'Side-by-side comparison of any two versions showing exactly what changed.'},
+          {num:'2.5.3', name:'Rollback to Previous Version', desc:'Admin can restore any previous version; linked exams updated only after explicit confirmation.'},
+          {num:'2.5.4', name:'Version-linked Exam Mapping', desc:'Each exam attempt records the specific question version used so historical result data is never corrupted.'},
+        ]
+      },
+      { num:'2.6', name:'Approval / Moderation', summary:'Multi-stage review workflow ensuring only high-quality questions reach students.',
+        subs:[
+          {num:'2.6.1', name:'Draft → Review Queue', desc:'Newly created questions start in Draft; submitting for review routes them to the designated reviewer\'s moderation queue.'},
+          {num:'2.6.2', name:'Reviewer Inline Comments', desc:'Reviewers add comments directly on the question — on specific options, the explanation, or tags.'},
+          {num:'2.6.3', name:'Approve / Reject with Reason', desc:'Reviewer approves to the live bank or rejects with a mandatory rejection reason.'},
+          {num:'2.6.4', name:'Multi-level Approval Workflow', desc:'Configure two-step flow: Subject Reviewer approval → Senior Approver final sign-off.'},
+        ]
+      },
+      { num:'2.7', name:'Duplicate Detection', summary:'Prevent redundant questions from entering the bank using AI similarity analysis.',
+        subs:[
+          {num:'2.7.1', name:'Semantic Similarity Check', desc:'When a question is submitted, AI computes its semantic embedding and compares against all existing questions.'},
+          {num:'2.7.2', name:'Similarity Score & Flagging', desc:'Questions above a configurable threshold are flagged with a list of potentially duplicate questions.'},
+          {num:'2.7.3', name:'Merge or Keep Decision', desc:'Admin reviews flagged duplicates side-by-side and decides to merge or mark as distinct.'},
+          {num:'2.7.4', name:'Cross-upload Duplicate Check', desc:'Duplicate detection runs across bulk uploads before import.'},
+        ]
+      },
+      { num:'2.8', name:'AI Question Generation', summary:'Automatically generate exam-ready questions at scale using AI.',
+        subs:[
+          {num:'2.8.1', name:'Topic-based Generation', desc:'Input a topic name and desired count; AI generates contextually accurate questions with stems, options, answers, and explanations.'},
+          {num:'2.8.2', name:'Difficulty-controlled Generation', desc:'Specify target difficulty level; AI calibrates generated question complexity accordingly.'},
+          {num:'2.8.3', name:'Distractor Generation for MCQs', desc:'AI generates plausible but definitively wrong distractors for each MCQ.'},
+          {num:'2.8.4', name:'Question Variation Generator', desc:'Produce multiple semantically similar but contextually different variants of a seed question.'},
+          {num:'2.8.5', name:'AI Explanation Writer', desc:'Auto-generate step-by-step solution explanations for existing questions that lack one.'},
+        ]
+      },
+      { num:'2.9', name:'Pool Management', summary:'Organise questions into pools for structured, rule-based exam generation.',
+        subs:[
+          {num:'2.9.1', name:'Pool Creation & Naming', desc:'Group related questions into named pools that can be referenced by multiple exam configurations.'},
+          {num:'2.9.2', name:'Pool Assignment Rules', desc:'Define rules for a pool: subject, topic, difficulty, question type.'},
+          {num:'2.9.3', name:'Pool Size & Refresh Monitoring', desc:'Dashboard shows current pool size and alerts when pool size drops below the minimum needed.'},
+          {num:'2.9.4', name:'Pool-to-section Mapping', desc:'Bind exam sections to specific pools so automated question selection draws from the correct set.'},
+        ]
+      },
+      { num:'2.10', name:'Dynamic Question Selection', summary:'Automatically pick the right questions for each exam based on configured criteria.',
+        subs:[
+          {num:'2.10.1', name:'Rule-based Auto-selection', desc:'Define criteria (subject, topic, difficulty distribution) and the engine picks a fresh set from the bank automatically.'},
+          {num:'2.10.2', name:'Randomisation Across Attempts', desc:'For multiple attempts, dynamic selection ensures a different question set each time.'},
+          {num:'2.10.3', name:'Exclusion of Seen Questions', desc:'Optionally exclude questions the student has encountered in recent previous attempts.'},
+          {num:'2.10.4', name:'Fairness & Balance Checks', desc:'After auto-selection, the system verifies the chosen set meets required difficulty balance and topic coverage.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['student'],
+    icon:'⚡', name:'Exam Engine (Core)', ai:false,
+    desc:'The real-time runtime delivering exam questions, enforcing rules, managing sessions, randomising content, and handling edge cases reliably.',
+    features:[
+      { num:'3.1', name:'Timer-based Exam', summary:'Server-authoritative countdown timers ensuring a fair, tamper-proof time experience.',
+        subs:[
+          {num:'3.1.1', name:'Global Exam Countdown', desc:'Single overall exam timer displayed prominently; driven by the server clock to prevent client-side manipulation.'},
+          {num:'3.1.2', name:'Per-section Timer', desc:'Independent countdown per section; students are auto-advanced or locked out when the section timer expires.'},
+          {num:'3.1.3', name:'Visual Timer Alerts', desc:'Timer changes colour at configurable warning thresholds (yellow at 10 min, red at 2 min).'},
+          {num:'3.1.4', name:'Per-question Time Tracking', desc:'Optional per-question timer tracks time spent on each question; stored for time-analysis reporting.'},
+        ]
+      },
+      { num:'3.2', name:'Auto-submit on Timeout', summary:'Guarantee fair exam closure when time runs out regardless of network state.',
+        subs:[
+          {num:'3.2.1', name:'Server-side Auto-submit Trigger', desc:'When the exam timer reaches zero, the server automatically locks the attempt and records a submission.'},
+          {num:'3.2.2', name:'Client-side Graceful Submission', desc:'30 seconds before expiry a full-screen warning overlay appears; client submits answers at zero.'},
+          {num:'3.2.3', name:'Offline Auto-submit Handling', desc:'If the student is offline at timeout, the server submits whatever was last synced.'},
+        ]
+      },
+      { num:'3.3', name:'Random Question Sequencing', summary:'Shuffle question and option order per candidate to reduce copying during simultaneous exams.',
+        subs:[
+          {num:'3.3.1', name:'Question Order Randomization', desc:'Each candidate receives questions in a unique order generated by a seeded random algorithm tied to their session ID.'},
+          {num:'3.3.2', name:'Option Order Randomization', desc:'MCQ option positions shuffled independently per candidate.'},
+          {num:'3.3.3', name:'Deterministic Replay on Reload', desc:'The same randomised order is reproduced exactly on page reload using the session seed.'},
+        ]
+      },
+      { num:'3.4', name:'Section-wise Navigation', summary:'Structured, intuitive UI allowing candidates to navigate across sections and questions.',
+        subs:[
+          {num:'3.4.1', name:'Section Tab Navigation', desc:'Top tabs for each section show name, question count, and status badge (attempted/unattempted/flagged).'},
+          {num:'3.4.2', name:'Question Number Grid', desc:'Numbered grid colour-coded by status: grey (not visited), green (answered), red (skipped), purple (marked for review).'},
+          {num:'3.4.3', name:'Previous / Next Navigation', desc:'"Previous" and "Next" buttons for linear navigation; smart wrap-around between sections.'},
+          {num:'3.4.4', name:'Jump-to-question', desc:'Click any question number in the grid to jump directly to that question.'},
+        ]
+      },
+      { num:'3.5', name:'Section Locking', summary:'Enforce one-way section progression to prevent candidates from revisiting completed sections.',
+        subs:[
+          {num:'3.5.1', name:'Sequential Section Enforcement', desc:'Once a student moves past a section, they cannot return; the section tab becomes disabled.'},
+          {num:'3.5.2', name:'Section Submit Confirmation', desc:'Before locking a section, a modal shows the count of unattempted questions.'},
+          {num:'3.5.3', name:'Admin-configurable Lock Mode', desc:'Section locking is configurable per exam; some exams allow free movement.'},
+        ]
+      },
+      { num:'3.6', name:'Negative Marking', summary:'Apply and communicate penalty scoring rules accurately across all question types.',
+        subs:[
+          {num:'3.6.1', name:'Per-exam Negative Marking Config', desc:'Set the deduction per wrong answer at exam level applied uniformly.'},
+          {num:'3.6.2', name:'Per-section Negative Marking Override', desc:'Different sections within the same exam can have different negative marking factors.'},
+          {num:'3.6.3', name:'Student-visible Penalty Indicator', desc:'Each question shows marks awarded for correct and deducted for wrong, enabling informed skip decisions.'},
+          {num:'3.6.4', name:'No Penalty for Skipped', desc:'Skipped/unattempted questions receive zero marks and zero penalty.'},
+        ]
+      },
+      { num:'3.9', name:'Resume Exam', summary:'Allow candidates to safely resume an interrupted exam session from exactly where they left off.',
+        subs:[
+          {num:'3.9.1', name:'Session Persistence on Crash', desc:'All answers continuously saved server-side; on page reload the exam resumes at the exact question and timer state.'},
+          {num:'3.9.2', name:'Network Disconnection Recovery', desc:'Answers cached locally offline and synced to server on reconnection.'},
+          {num:'3.9.3', name:'Resume Confirmation Screen', desc:'On re-entry after interruption, a screen shows elapsed time, answers saved, and prompts the student to confirm before resuming.'},
+        ]
+      },
+      { num:'3.10', name:'Auto-save Answers', summary:'Ensure zero data loss by persisting every student response in real time.',
+        subs:[
+          {num:'3.10.1', name:'Instant Server Sync on Selection', desc:'Each answer selection triggers an immediate API call to persist the response server-side.'},
+          {num:'3.10.2', name:'Local Storage Fallback', desc:'If the API call fails, the response is written to local browser storage and queued for retry.'},
+          {num:'3.10.3', name:'"Saved" Confirmation Indicator', desc:'A subtle "✓ Saved" badge appears briefly after each successful answer persistence.'},
+          {num:'3.10.4', name:'Periodic Full-state Snapshot', desc:'Every 60 seconds a full snapshot of all current responses is pushed to the server as a safety checkpoint.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['admin'],
+    icon:'🎥', name:'AI Proctoring', ai:true,
+    desc:'Multi-layer AI-powered monitoring: face detection, object detection, audio analysis, screen monitoring, behaviour analysis, violation scoring, and live proctoring dashboard.',
+    features:[
+      { num:'4.1', name:'Face-based Detection', summary:'Continuous webcam analysis to verify candidate presence and identity throughout the exam.',
+        subs:[
+          {num:'4.1.1', name:'Face Detection', desc:'AI confirms a face is present in the webcam frame on every analysis cycle.'},
+          {num:'4.1.2', name:'Face Absence Detection', desc:'Sustained absence of a face triggers a violation event and an on-screen warning.'},
+          {num:'4.1.3', name:'Multiple Face Detection', desc:'If more than one human face is detected, a violation alert is immediately raised.'},
+          {num:'4.1.4', name:'Eye Tracking', desc:'Estimates gaze direction; frequent off-screen gaze accumulates a suspicion score.'},
+          {num:'4.1.5', name:'Head Movement Analysis', desc:'Detects abnormal head rotations and flags patterns inconsistent with normal test-taking behaviour.'},
+        ]
+      },
+      { num:'4.2', name:'Object Detection', summary:'AI scans the camera frame for prohibited physical objects near the candidate.',
+        subs:[
+          {num:'4.2.1', name:'Mobile Phone Detection', desc:'Detects presence of a smartphone or tablet in the candidate\'s workspace; immediate high-severity violation logged.'},
+          {num:'4.2.2', name:'Book / Paper Detection', desc:'Identifies open books, printed notes, or loose papers visible in the frame.'},
+          {num:'4.2.3', name:'External Device Detection', desc:'Flags presence of additional screens, earbuds, smartwatches, or other electronics.'},
+        ]
+      },
+      { num:'4.3', name:'Audio Monitoring', summary:'Microphone-based detection of verbal assistance, background voices, or disruptive sounds.',
+        subs:[
+          {num:'4.3.1', name:'Voice Detection', desc:'Continuous audio analysis detects sustained speech from the candidate.'},
+          {num:'4.3.2', name:'Multiple Voice Detection', desc:'Identifies more than one distinct voice in the audio stream.'},
+          {num:'4.3.3', name:'Background Noise Analysis', desc:'Unusual background sounds flagged as indicative of an uncontrolled exam environment.'},
+        ]
+      },
+      { num:'4.4', name:'Screen & Browser Monitoring', summary:'Prevent access to external resources through browser-level lockdown controls.',
+        subs:[
+          {num:'4.4.1', name:'Tab Switch Detection', desc:'Any browser focus loss, tab switch, or new window is instantly detected and logged.'},
+          {num:'4.4.2', name:'Full-screen Enforcement', desc:'Exam runs in mandatory full-screen; exiting triggers a warning overlay and logs the event.'},
+          {num:'4.4.3', name:'Copy-paste Blocking', desc:'Clipboard operations intercepted and disabled within the exam window.'},
+          {num:'4.4.4', name:'Right-click & DevTools Block', desc:'Context menu and browser developer tools disabled to prevent page inspection.'},
+        ]
+      },
+      { num:'4.6', name:'Violation Management & Live Proctoring', summary:'Real-time violation handling, escalation rules, and a live dashboard for human proctors.',
+        subs:[
+          {num:'4.6.1', name:'Real-time Alerts', desc:'Every violation event fires an instant alert to the live proctor dashboard with severity, timestamp, and screenshot evidence.'},
+          {num:'4.6.2', name:'Violation Scoring', desc:'Each event type carries a configurable severity weight; cumulative score determines whether the system warns, flags, or terminates.'},
+          {num:'4.6.3', name:'In-exam Student Warning', desc:'Low/medium violations display an on-screen warning overlay to the student before escalating to termination.'},
+          {num:'4.6.4', name:'Auto Disqualification', desc:'When cumulative violation score crosses a critical threshold, the exam is automatically terminated.'},
+          {num:'4.6.5', name:'Live Proctor Dashboard', desc:'Multi-candidate grid of live webcam feeds; proctors expand any candidate, view their violation timeline, send chat messages, or manually terminate.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['creator','admin'],
+    icon:'✅', name:'Evaluation System', ai:true,
+    desc:'Automated and AI-assisted scoring for MCQ, coding (execution + quality), descriptive answers, plagiarism detection, and advanced scoring models.',
+    features:[
+      { num:'5.1', name:'Objective Question Evaluation', summary:'Instant, rule-based automated scoring for MCQ, output-based, and test-case questions.',
+        subs:[
+          {num:'5.1.1', name:'MCQ Auto Grading', desc:'Selected option(s) compared against the answer key instantly on submission.'},
+          {num:'5.1.2', name:'Coding Execution Evaluation', desc:'Student code compiled and run in an isolated sandbox; results compared against expected output.'},
+          {num:'5.1.3', name:'Output-based Validation', desc:'For output-match questions, character-level comparison used with configurable options.'},
+          {num:'5.1.4', name:'Test Case Validation', desc:'Each coding submission evaluated against public and hidden test cases; marks awarded per test case passed.'},
+        ]
+      },
+      { num:'5.2', name:'Descriptive & Code Quality Evaluation', summary:'AI-assisted and human-supervised scoring for subjective and programming answers.',
+        subs:[
+          {num:'5.2.1', name:'Descriptive Answer Evaluation', desc:'AI reads the student\'s free-text answer, compares semantic meaning against the model answer, and assigns a score with reasoning.'},
+          {num:'5.2.2', name:'Semantic Answer Checking', desc:'NLP-based similarity scoring allows correctly-phrased-differently answers to receive full marks if meaning is preserved.'},
+          {num:'5.2.3', name:'Code Quality Analysis', desc:'Beyond correctness, evaluate code readability, use of appropriate data structures, and coding style adherence.'},
+          {num:'5.2.4', name:'Plagiarism Detection', desc:'AST-based structural comparison of all coding submissions to detect copied code even after variable renaming.'},
+        ]
+      },
+      { num:'5.3', name:'Score Calculation & Advanced Scoring', summary:'Compute fair, comprehensive final scores including partial marks, time bonuses, consistency, and confidence metrics.',
+        subs:[
+          {num:'5.3.1', name:'Score Calculation', desc:'Aggregate all section scores considering correct marks, negative deductions, and partial marks.'},
+          {num:'5.3.2', name:'Partial Marking', desc:'For multi-correct MCQs, award marks proportional to correctly selected options.'},
+          {num:'5.3.3', name:'Time-based Scoring', desc:'Optionally award bonus points for completing questions faster than a benchmark time.'},
+          {num:'5.3.4', name:'Consistency Scoring', desc:'Calculate a consistency score across multiple attempts — rewarding students who maintain stable performance.'},
+          {num:'5.3.5', name:'Confidence Scoring', desc:'Track whether students changed their initially selected answers and correlate with accuracy to derive a confidence score.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['student','creator','admin'],
+    icon:'📊', name:'Analytics & Reporting', ai:false,
+    desc:'Score analysis, accuracy, time analysis, topic performance, weak area detection, performance trends, improvement tracking, ranking, leaderboards, and admin/class reports.',
+    features:[
+      { num:'6.1', name:'Score & Performance Analysis', summary:'Detailed dissection of how a student performed across every dimension of the exam.',
+        subs:[
+          {num:'6.1.1', name:'Score Analysis', desc:'Full scorecard showing total score, section-wise scores, marks earned vs. maximum.'},
+          {num:'6.1.2', name:'Accuracy Tracking', desc:'Percentage of attempted questions answered correctly — tracked overall, per section, per topic, and per question type.'},
+          {num:'6.1.3', name:'Time Analysis', desc:'Time spent on each question and section; identify questions where the student spent excessive time.'},
+          {num:'6.1.4', name:'Topic-wise Performance', desc:'Accuracy and average score broken down by topic and chapter, shown as a heatmap or bar chart.'},
+          {num:'6.1.5', name:'Weak Area Detection', desc:'AI identifies topics where accuracy falls below a threshold across multiple attempts and flags them as priority focus areas.'},
+        ]
+      },
+      { num:'6.2', name:'Performance Trends', summary:'Longitudinal tracking of improvement or regression over multiple exam attempts.',
+        subs:[
+          {num:'6.2.1', name:'Performance Trends Over Time', desc:'Line chart of score and percentile across all attempts; filterable by subject, exam type, or time range.'},
+          {num:'6.2.2', name:'Improvement Tracking', desc:'Quantifies improvement between attempts per topic with visual progress indicators.'},
+        ]
+      },
+      { num:'6.3', name:'Ranking System', summary:'Fair, multi-dimensional ranking to benchmark students against peers and the full platform.',
+        subs:[
+          {num:'6.3.1', name:'Global Ranking', desc:'Rank the student among all platform users who attempted the same exam.'},
+          {num:'6.3.2', name:'Batch Ranking', desc:'Rank within the student\'s assigned batch only — a more relevant local benchmark.'},
+          {num:'6.3.3', name:'Percentile', desc:'Percentile score showing the percentage of candidates who scored at or below this student.'},
+          {num:'6.3.4', name:'Leaderboard', desc:'Real-time and post-exam ranked leaderboard showing top N performers with score, accuracy, time taken, and batch info.'},
+        ]
+      },
+      { num:'6.4', name:'Admin & Class Reports', summary:'Macro-level insights for educators to evaluate exam quality and cohort performance.',
+        subs:[
+          {num:'6.4.1', name:'Class / Batch Performance', desc:'Aggregate dashboard per exam: average score, median, top and bottom performers, completion rate, and score distribution histogram.'},
+          {num:'6.4.2', name:'Question-level Analytics', desc:'For each question: difficulty index (% correct), discrimination index, average time spent, and most-chosen wrong option.'},
+          {num:'6.4.3', name:'Cheating / Violation Reports', desc:'Per-exam summary of proctoring violations: total events, severity breakdown, list of flagged candidates.'},
+          {num:'6.4.4', name:'Test Effectiveness Report', desc:'Measures whether the exam successfully differentiated high and low performers using reliability metrics.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['student'],
+    icon:'🧠', name:'Personalization Engine', ai:true,
+    desc:'AI-powered engine tailoring test recommendations, adaptive difficulty, goal-based planning, weak-topic test generation, and AI-driven scheduling to each student.',
+    features:[
+      { num:'7.1', name:'Personalized Test Recommendations', summary:'Suggest the most relevant next exam based on student history and goals.',
+        subs:[
+          {num:'7.1.1', name:'History-based Test Suggestion', desc:'Analyse recent exam attempts, accuracy patterns, and topics covered to recommend the most useful next test.'},
+          {num:'7.1.2', name:'Goal-aligned Recommendation', desc:'If the student has set a target exam (e.g. GATE), recommendations are filtered and ranked by relevance.'},
+          {num:'7.1.3', name:'Collaborative Filtering', desc:'Recommend tests that peers with similar performance profiles found most useful.'},
+          {num:'7.1.4', name:'Recommendation Explanation', desc:'Each recommendation shows a brief reason so students understand why it was suggested.'},
+        ]
+      },
+      { num:'7.2', name:'Adaptive Difficulty', summary:'Continuously adjust the difficulty of content and tests to match the student\'s current ability level.',
+        subs:[
+          {num:'7.2.1', name:'Real-time In-exam Adaptation', desc:'During adaptive tests, difficulty of the next question adjusts based on whether the current response was correct.'},
+          {num:'7.2.2', name:'Session-to-session Difficulty Ramp', desc:'Across practice sessions, starting difficulty gradually ramps up as the student demonstrates mastery.'},
+          {num:'7.2.3', name:'Ability Estimation Dashboard', desc:'Student sees estimated proficiency level per topic updated after each adaptive session, showing growth over time.'},
+        ]
+      },
+      { num:'7.3', name:'Goal-based Test Planning', summary:'Generate a structured multi-week test plan aligned with the student\'s target exam and timeline.',
+        subs:[
+          {num:'7.3.1', name:'Target Exam & Date Input', desc:'Student inputs their target exam and exam date; AI calculates available preparation days and structures a plan.'},
+          {num:'7.3.2', name:'Syllabus Coverage Plan', desc:'AI maps the target exam syllabus, distributes topics across available weeks, and schedules tests for each topic cluster.'},
+          {num:'7.3.3', name:'Dynamic Plan Adjustment', desc:'If the student falls behind or performance drops, the plan re-prioritises to focus on weakest areas closest to the exam date.'},
+        ]
+      },
+      { num:'7.4', name:'Weak-topic Test Generation', summary:'Automatically create focused practice tests targeting each student\'s identified knowledge gaps.',
+        subs:[
+          {num:'7.4.1', name:'Weak Area Identification', desc:'AI analyses accuracy across all past attempts to identify topics where the student consistently scores below the mastery threshold.'},
+          {num:'7.4.2', name:'Auto-generated Weak-area Test', desc:'A dedicated practice test is auto-assembled heavily weighted towards the top 3 weakest topics.'},
+          {num:'7.4.3', name:'Progress Check After Practice', desc:'After completing the weak-area test, the system compares accuracy to baseline and shows whether the gap is closing.'},
+        ]
+      },
+      { num:'7.5', name:'AI-driven Scheduling', summary:'AI recommends the optimal time to attempt each test based on readiness and study patterns.',
+        subs:[
+          {num:'7.5.1', name:'Readiness-based Scheduling', desc:'AI evaluates current mastery for a test\'s topics and recommends scheduling the test only once a readiness threshold is met.'},
+          {num:'7.5.2', name:'Optimal Time-of-day Suggestion', desc:'Based on the student\'s historical activity patterns, AI suggests the best time slot for the next exam attempt.'},
+          {num:'7.5.3', name:'Spaced Repetition Scheduling', desc:'Re-schedule revision tests for topics at algorithmically calculated intervals to maximise long-term retention.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['student'],
+    icon:'🎯', name:'Skill Profile Integration', ai:false,
+    desc:'Translate exam performance into verifiable, dynamic skill scores, topic-wise tracking, performance aggregation, certifications, and a dynamic student profile.',
+    features:[
+      { num:'8.1', name:'Skill Score Generation', summary:'Compute a quantified skill score per competency area based on exam performance.',
+        subs:[
+          {num:'8.1.1', name:'Topic-level Skill Score', desc:'For each topic covered in an exam, compute a 0–100 skill score derived from accuracy, question difficulty, and consistency across attempts.'},
+          {num:'8.1.2', name:'Subject-level Aggregate Score', desc:'Aggregate topic-level scores into a subject-level score shown on the student\'s public profile.'},
+          {num:'8.1.3', name:'Score Decay Over Inactivity', desc:'Skill scores gradually decay if the student hasn\'t practised a topic recently, encouraging regular revision.'},
+        ]
+      },
+      { num:'8.2', name:'Topic-wise Skill Tracking', summary:'Granular tracking of evolving proficiency across every topic in the syllabus.',
+        subs:[
+          {num:'8.2.1', name:'Skill Level Banding', desc:'Each topic classified into a skill band: Beginner, Developing, Proficient, or Expert.'},
+          {num:'8.2.2', name:'Skill Growth Timeline', desc:'Interactive timeline showing when the student progressed between skill bands for each topic.'},
+          {num:'8.2.3', name:'Skill Radar Chart', desc:'Spider/radar chart with one axis per major topic group; the polygon fills as skill bands improve.'},
+        ]
+      },
+      { num:'8.4', name:'Certification via Tests', summary:'Issue verifiable certificates when students demonstrate mastery through exam performance.',
+        subs:[
+          {num:'8.4.1', name:'Mastery Threshold for Certificate', desc:'Admin defines minimum exam score and minimum attempts required to qualify for a mastery certificate.'},
+          {num:'8.4.2', name:'Auto-generated Certificate', desc:'On qualifying, a PDF certificate is automatically generated with student name, topic, score, date, and a unique verification QR code.'},
+          {num:'8.4.3', name:'Shareable Certificate Link', desc:'Student receives a shareable public URL for their certificate that third parties can visit to verify authenticity.'},
+        ]
+      },
+      { num:'8.5', name:'Dynamic Profile Building', summary:'Continuously evolving student profile that grows with every exam attempt.',
+        subs:[
+          {num:'8.5.1', name:'Auto-updated Skill Badges', desc:'Skill badges on the student profile automatically awarded and upgraded as performance data meets badge criteria.'},
+          {num:'8.5.2', name:'Exam Performance Summary Card', desc:'A shareable card showing target exam readiness, top subject scores, and recent improvement.'},
+          {num:'8.5.3', name:'Profile Visibility Controls', desc:'Students control which sections of their exam-driven skill profile are public vs. private.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['student','creator','admin'],
+    icon:'👥', name:'Live & Group Test', ai:false,
+    desc:'Real-time competitive and collaborative exam experiences with live sessions, real-time participation, group management, collaborative scheduling, leaderboards, and live monitoring.',
+    features:[
+      { num:'9.1', name:'Live Test Sessions', summary:'Run real-time competitive exams where all participants start simultaneously at a defined moment.',
+        subs:[
+          {num:'9.1.1', name:'Countdown to Start', desc:'All registered participants see a live countdown screen; exam interface unlocks simultaneously when the clock hits zero.'},
+          {num:'9.1.2', name:'Synchronized Exam Start', desc:'Server broadcasts the exact start signal to all connected clients simultaneously using WebSockets.'},
+          {num:'9.1.3', name:'Live Participant Counter', desc:'Students can see the number of peers currently attempting the exam in real time.'},
+          {num:'9.1.4', name:'Late-join Policy', desc:'Configurable whether students who join after the start time are admitted (with reduced time) or blocked.'},
+        ]
+      },
+      { num:'9.3', name:'Group Test Creation', summary:'Set up exams specifically for a defined group, batch, or student community.',
+        subs:[
+          {num:'9.3.1', name:'Group-based Exam Assignment', desc:'Create an exam and assign it exclusively to a named group or batch.'},
+          {num:'9.3.2', name:'Custom Group for One-off Tests', desc:'Create a temporary group for a specific exam event without modifying permanent batch configurations.'},
+          {num:'9.3.3', name:'Group Invitation via Link/Code', desc:'Share an invite link or code; clicking or entering it auto-registers students for the group exam.'},
+          {num:'9.3.4', name:'Group Eligibility Rules', desc:'Set prerequisites for group exam access to ensure readiness before the group assessment.'},
+        ]
+      },
+      { num:'9.5', name:'Real-time Leaderboard', summary:'Live competitive rankings updated in real time as students complete the exam.',
+        subs:[
+          {num:'9.5.1', name:'Live Score Leaderboard', desc:'Leaderboard updates in near-real-time as submissions come in, showing rank, score, and accuracy.'},
+          {num:'9.5.2', name:'In-exam Leaderboard Glimpse', desc:'Optionally show participants a brief leaderboard glimpse at configurable intervals for motivation.'},
+          {num:'9.5.3', name:'Post-exam Final Leaderboard', desc:'Once the exam window closes and all results are computed, a final permanent leaderboard is published.'},
+        ]
+      },
+      { num:'9.6', name:'Live Monitoring', summary:'Real-time administrative oversight of an active live exam session.',
+        subs:[
+          {num:'9.6.1', name:'Live Attempt Dashboard', desc:'Admin sees every registered participant\'s current status (not started, in-progress, submitted) in a live grid.'},
+          {num:'9.6.2', name:'Question-level Live Analytics', desc:'See in real time which questions have the highest skip rates or are taking the most time.'},
+          {num:'9.6.3', name:'Emergency Pause / Extend', desc:'Admin can pause the live exam for all participants simultaneously or add extra time to the session.'},
+          {num:'9.6.4', name:'Individual Participant Override', desc:'Admin can manually extend time, invalidate, or force-submit an individual participant\'s session.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['creator','admin'],
+    icon:'🔐', name:'Access & Control', ai:false,
+    desc:'Granular permission and eligibility management controlling who can access, attempt, and administer exams based on role, batch, restrictions, eligibility, and attempt limits.',
+    features:[
+      { num:'10.1', name:'Role-based Access', summary:'Differentiate exam access and management rights by the user\'s role on the platform.',
+        subs:[
+          {num:'10.1.1', name:'Admin Role', desc:'Full access to create, edit, publish, delete, and view all exams, results, and analytics across the entire platform.'},
+          {num:'10.1.2', name:'Instructor / Educator Role', desc:'Access limited to exams they manage; can view results and analytics for own exams.'},
+          {num:'10.1.3', name:'Student Role', desc:'Can only view and attempt enrolled exams; access to their own results, scorecards, and review.'},
+          {num:'10.1.4', name:'Proctor Role', desc:'Read-only access to live proctoring dashboard during exam windows.'},
+        ]
+      },
+      { num:'10.2', name:'Batch-based Access', summary:'Restrict exams to specific student batches or cohorts for targeted delivery.',
+        subs:[
+          {num:'10.2.1', name:'Single Batch Assignment', desc:'Assign an exam to a single batch; only students in that batch can see and attempt it.'},
+          {num:'10.2.2', name:'Multi-batch Assignment', desc:'Assign the same exam to multiple batches simultaneously; each batch\'s performance tracked separately.'},
+          {num:'10.2.3', name:'Batch-level Result Isolation', desc:'Students only see their own results and batch-level comparison.'},
+          {num:'10.2.4', name:'Dynamic Batch Membership', desc:'When a student is added to or removed from a batch, their exam access updates automatically.'},
+        ]
+      },
+      { num:'10.3', name:'Restricted Exams', summary:'Apply additional access gates beyond role and batch for high-security exam delivery.',
+        subs:[
+          {num:'10.3.1', name:'Password Protection', desc:'Students must enter a unique exam password to access the exam.'},
+          {num:'10.3.2', name:'IP Range Restriction', desc:'Restrict exam access to a specified IP range so the exam can only be taken from approved locations.'},
+          {num:'10.3.3', name:'Device Restriction', desc:'Limit attempts to specific approved device types enforced at the browser/device fingerprint level.'},
+          {num:'10.3.4', name:'Time-window Only Access', desc:'Exam is accessible only during the defined time window; outside it shows a "not yet open" or "closed" state.'},
+        ]
+      },
+      { num:'10.5', name:'Attempt Limits', summary:'Control how many times a student can attempt an exam and enforce mandatory gaps.',
+        subs:[
+          {num:'10.5.1', name:'Maximum Attempt Configuration', desc:'Set the maximum number of times a student may attempt a specific exam.'},
+          {num:'10.5.2', name:'Cooldown Period Between Attempts', desc:'Enforce a mandatory waiting period before a student can re-attempt.'},
+          {num:'10.5.3', name:'Attempt Count Display', desc:'Students see how many attempts used and how many remain.'},
+          {num:'10.5.4', name:'Admin Attempt Override', desc:'Admins can manually grant a student an additional attempt beyond the configured limit.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['student','creator','admin'],
+    icon:'🔔', name:'Notification System', ai:false,
+    desc:'Automated multi-channel notification engine for exam reminders, results, performance alerts, retest suggestions, and violation alerts.',
+    features:[
+      { num:'11.1', name:'Exam Reminders', summary:'Proactively inform students of upcoming exams across all available channels.',
+        subs:[
+          {num:'11.1.1', name:'Tiered Pre-exam Push Notifications', desc:'In-app and mobile push notifications sent at 24 hours, 1 hour, and 15 minutes before exam start.'},
+          {num:'11.1.2', name:'Email Reminders', desc:'HTML email with exam name, date-time (student\'s local timezone), slot details, instructions link, and a "Join Exam" CTA button.'},
+          {num:'11.1.3', name:'SMS Alerts', desc:'Concise SMS sent 1 hour before the exam with the exam name, start time, and a short URL.'},
+          {num:'11.1.4', name:'In-app Notification Bell', desc:'Persistent notification centre listing all upcoming exams, result notifications, and feedback messages.'},
+        ]
+      },
+      { num:'11.2', name:'Result Notifications', summary:'Promptly inform students when results are ready and provide direct access.',
+        subs:[
+          {num:'11.2.1', name:'Result Published Alert', desc:'Immediate push and email notification the moment result processing completes, with a deep link to the scorecard.'},
+          {num:'11.2.2', name:'Rank Change Notification', desc:'If the student\'s rank changes after result re-processing, an update notification is sent with the new rank.'},
+          {num:'11.2.3', name:'Certificate Ready Notification', desc:'Push and email alert when the performance or mastery certificate PDF has been generated and is ready for download.'},
+        ]
+      },
+      { num:'11.3', name:'Performance Alerts', summary:'Data-driven notifications that motivate action when performance signals require attention.',
+        subs:[
+          {num:'11.3.1', name:'Low Score Alert to Student', desc:'If the student scores below a configured threshold, an immediate notification is sent with links to recommended practice.'},
+          {num:'11.3.2', name:'Weak Area Digest', desc:'Weekly digest listing the student\'s top 3 weakest topics with accuracy percentages and direct links to focused practice tests.'},
+          {num:'11.3.3', name:'Instructor Alert for At-risk Students', desc:'Instructor/admin receives a notification when a student\'s score drops significantly or exam engagement falls below threshold.'},
+          {num:'11.3.4', name:'Goal Readiness Alert', desc:'When a student\'s readiness score crosses a milestone, a motivational notification is sent.'},
+        ]
+      },
+      { num:'11.4', name:'Retest Suggestions', summary:'Intelligent, data-driven prompts encouraging students to re-attempt exams for improvement.',
+        subs:[
+          {num:'11.4.1', name:'AI-triggered Retest Prompt', desc:'AI monitors score improvement potential; when sufficient preparation signals are detected, it sends a "Ready for a retest?" suggestion.'},
+          {num:'11.4.2', name:'Cooldown Expiry Notification', desc:'Notification sent when the cooldown period between attempts expires, reminding the student they are now eligible to re-attempt.'},
+          {num:'11.4.3', name:'Retest Checklist Nudge', desc:'Before the retest suggestion, AI sends a micro-checklist to help the student prepare before re-attempting.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['admin'],
+    icon:'⚙️', name:'System & Infrastructure', ai:false,
+    desc:'Real-time streaming, scalable test execution, event logging, background evaluation jobs, and high-concurrency architecture for reliable exam delivery.',
+    features:[
+      { num:'12.1', name:'Real-time Streaming', summary:'WebSocket-based infrastructure for live synchronisation across all active exam sessions.',
+        subs:[
+          {num:'12.1.1', name:'WebSocket Answer Sync', desc:'Every answer selection transmitted via a persistent WebSocket connection; HTTP polling fallback activates if WebSocket drops.'},
+          {num:'12.1.2', name:'Server-authoritative Timer Sync', desc:'Server pushes timer state to all connected clients periodically; client corrects display to match server clock.'},
+          {num:'12.1.3', name:'Real-time Proctoring Stream', desc:'Webcam frames and audio chunks streamed from the client to the AI analysis engine and proctor dashboard.'},
+          {num:'12.1.4', name:'Live Dashboard Push Updates', desc:'Admin dashboards receive real-time server-sent events for candidate count, submission status, and violation alerts.'},
+        ]
+      },
+      { num:'12.2', name:'Scalable Test Execution', summary:'Infrastructure engineered to handle thousands of concurrent exam sessions reliably.',
+        subs:[
+          {num:'12.2.1', name:'Horizontal Load Balancing', desc:'Distribute concurrent exam traffic across multiple application server instances.'},
+          {num:'12.2.2', name:'Auto-scaling on Peak Load', desc:'Cloud auto-scaling policies add compute capacity when concurrent sessions exceed threshold.'},
+          {num:'12.2.3', name:'CDN for Asset Delivery', desc:'Question images, audio files, and UI assets served from a CDN edge node geographically closest to each candidate.'},
+          {num:'12.2.4', name:'Read Replica Routing', desc:'During high-traffic exam windows, read operations routed to read replicas to protect the primary database.'},
+        ]
+      },
+      { num:'12.3', name:'Event Logging', summary:'Complete, tamper-evident audit trail of all actions across exam sessions.',
+        subs:[
+          {num:'12.3.1', name:'User Action Audit Log', desc:'Every significant user action logged with timestamp, user ID, IP, and device fingerprint.'},
+          {num:'12.3.2', name:'System Error Log', desc:'All server-side exceptions and errors centrally aggregated with stack traces, severity levels, and automated alerting.'},
+          {num:'12.3.3', name:'Proctoring Event Storage', desc:'All proctoring events stored in object storage with minimum 12-month retention.'},
+          {num:'12.3.4', name:'Tamper-evident Log Chain', desc:'Critical audit logs are hash-chained so any tampering with historical records is detectable.'},
+        ]
+      },
+      { num:'12.5', name:'High Concurrency Support', summary:'Design patterns and infrastructure choices sustaining performance under extreme load.',
+        subs:[
+          {num:'12.5.1', name:'Stateless Application Tier', desc:'Session state stored in distributed cache (Redis) enables any server node to handle any request without session affinity.'},
+          {num:'12.5.2', name:'Connection Pooling', desc:'Database connection pools sized and configured per service to prevent connection exhaustion.'},
+          {num:'12.5.3', name:'Rate Limiting & Throttling', desc:'API rate limiting protects the system from request floods without affecting normal exam-taking behaviour.'},
+          {num:'12.5.4', name:'Stress Test & Capacity Planning', desc:'Regular load tests simulate peak exam events; results drive infrastructure scaling decisions.'},
+        ]
+      },
+    ]
+  },
+
+  {
+    roles:['admin'],
+    icon:'🛡️', name:'Security System', ai:false,
+    desc:'Multi-layer security: secure exam environment, anti-cheating mechanisms, data encryption, audit logs, and automated fraud detection.',
+    features:[
+      { num:'13.1', name:'Secure Exam Environment', summary:'Harden the exam delivery surface against unauthorised access and client-side manipulation.',
+        subs:[
+          {num:'13.1.1', name:'HTTPS / TLS Enforcement', desc:'All exam traffic encrypted in transit using TLS 1.3; HTTP auto-redirected to HTTPS; HSTS headers enforced.'},
+          {num:'13.1.2', name:'Signed Session Token (JWT)', desc:'Each exam attempt issued a short-lived, signed JWT validated on every API request; tampered or expired tokens rejected.'},
+          {num:'13.1.3', name:'IP-based Access Restriction', desc:'Optionally whitelist IP ranges so the exam can only be started from approved physical locations.'},
+          {num:'13.1.4', name:'Device Fingerprinting', desc:'Browser/device fingerprint captured at exam start; mid-session fingerprint change triggers a security alert.'},
+          {num:'13.1.5', name:'Safe Exam Browser (SEB) Integration', desc:'Optionally require the Safe Exam Browser client that locks the student\'s machine to only the exam window.'},
+        ]
+      },
+      { num:'13.2', name:'Anti-cheating Mechanisms', summary:'Structural exam design defences making answer sharing between candidates impractical.',
+        subs:[
+          {num:'13.2.1', name:'Question Paper Randomization', desc:'Each candidate receives a unique ordering of questions from the same pool.'},
+          {num:'13.2.2', name:'Option Shuffling per Candidate', desc:'MCQ option positions randomised per candidate session.'},
+          {num:'13.2.3', name:'Unique Question Sets per Shift', desc:'Multi-shift exams receive statistically equivalent but different question sets per shift.'},
+          {num:'13.2.4', name:'Response Plagiarism Detection', desc:'Post-exam statistical analysis of answer sequences across all candidates to flag suspiciously high similarity.'},
+          {num:'13.2.5', name:'Screen Recording Detection & Block', desc:'Third-party screen recording software is detected and flagged; the exam screen renders blank to screen capture APIs.'},
+        ]
+      },
+      { num:'13.3', name:'Data Encryption', summary:'Protect all sensitive data at rest and ensure privacy compliance.',
+        subs:[
+          {num:'13.3.1', name:'AES-256 Encryption at Rest', desc:'All sensitive data encrypted at rest using AES-256; keys managed via cloud KMS with automatic rotation.'},
+          {num:'13.3.2', name:'Encrypted Exam Paper Storage', desc:'Question papers and answer keys stored encrypted; decryption happens server-side at delivery time.'},
+          {num:'13.3.3', name:'Data Privacy Compliance', desc:'Compliance with GDPR and India DPDP Act: student data deletion on request, export, consent management.'},
+          {num:'13.3.4', name:'Row-level Security for Multi-tenancy', desc:'Database row security ensures institution admins access only their own institution\'s data.'},
+        ]
+      },
+      { num:'13.4', name:'Audit Logs', summary:'Immutable, comprehensive logs of all security-relevant actions for forensics and compliance.',
+        subs:[
+          {num:'13.4.1', name:'Admin Action Audit Trail', desc:'Every admin action logged with admin\'s ID, timestamp, and before/after state.'},
+          {num:'13.4.2', name:'Student Action Log', desc:'All student exam actions logged and retained for the configured audit retention period.'},
+          {num:'13.4.3', name:'Access Attempt Log', desc:'Failed login attempts, unauthorised exam access, and token validation failures logged with IP and device metadata.'},
+          {num:'13.4.4', name:'Compliance-ready Export', desc:'Audit logs exportable in structured JSON/CSV format for regulatory audits or legal discovery requests.'},
+        ]
+      },
+      { num:'13.5', name:'Fraud Detection', summary:'Automated detection and reporting of account-level and submission-level fraudulent patterns.',
+        subs:[
+          {num:'13.5.1', name:'Suspicious Activity Scoring', desc:'Each session accumulates a fraud score from multiple signals; high-score sessions flagged for review.'},
+          {num:'13.5.2', name:'IP Mismatch & VPN Detection', desc:'Flag sessions where the exam IP differs from the login IP or where a VPN/proxy is used.'},
+          {num:'13.5.3', name:'Multiple Login Detection', desc:'If the same credentials are used on two devices simultaneously, the secondary session is terminated.'},
+          {num:'13.5.4', name:'Timing Anomaly Detection', desc:'Statistical analysis of response times — unnaturally uniform or rapid answer patterns flagged automatically.'},
+          {num:'13.5.5', name:'Automated Fraud Report', desc:'Post-exam report ranking all high-risk candidates by fraud score with evidence links.'},
+        ]
+      },
+    ]
+  },
+
+];
+
+// ── STATE ──────────────────────────────────────────────────────────
+let activeRole = 'student';
+let openCards  = new Set();
+let openFeats  = new Set();
+
+// ── ROLE META ─────────────────────────────────────────────────────
+const roleMeta = {
+  student: { label:'Student',  icon:'🎓', sub:'Learning — Exam Section' },
+  creator: { label:'Creator',  icon:'🧑‍🏫', sub:'Authoring — Exam Section' },
+  admin:   { label:'Admin',    icon:'🛠️', sub:'Platform — Exam Section' },
+};
+
+function getPanels(role){ return panels.filter(p => p.roles.includes(role)); }
+
+function computeStats(role) {
+  const rp = getPanels(role);
+  let feats=0, subs=0, ai=0;
+  rp.forEach(p => {
+    if(p.ai) ai++;
+    p.features.forEach(f => { feats++; subs += f.subs.length; });
+  });
+  return { panels: rp.length, feats, subs, ai };
+}
+
+function switchRole(role) {
+  activeRole = role;
+  openCards.clear();
+  openFeats.clear();
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+role).classList.add('active');
+  render();
+}
+
+function render() {
+  const role = activeRole;
+  const rp   = getPanels(role);
+  const s    = computeStats(role);
+  const meta = roleMeta[role];
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-chip"><div class="stat-v">${s.panels}</div><div class="stat-l">Panels</div></div>
+    <div class="stat-chip"><div class="stat-v">${s.feats}</div><div class="stat-l">Features</div></div>
+    <div class="stat-chip"><div class="stat-v">${s.subs}</div><div class="stat-l">Sub-Points</div></div>
+    <div class="stat-chip"><div class="stat-v">${s.ai}</div><div class="stat-l">AI Panels</div></div>
+  `;
+
+  let html = `<div class="section-title">${meta.icon} ${meta.sub} — ${rp.length} Panels</div><div class="panels-grid">`;
+
+  rp.forEach((panel, pi) => {
+    const cardId = `card-${role}-${pi}`;
+    const isOpen = openCards.has(cardId);
+
+    let featHtml = '';
+    panel.features.forEach((f, fi) => {
+      const featId = `feat-${role}-${pi}-${fi}`;
+      const isFOpen = openFeats.has(featId);
+
+      const subItems = f.subs.map(s => `
+        <div class="sub-item">
+          <span class="sub-num">${s.num}</span>
+          <div class="sub-body">
+            <div class="sub-name">${s.name}</div>
+            <div class="sub-desc">${s.desc}</div>
+          </div>
+        </div>`).join('');
+
+      featHtml += `
+        <div class="feat-row${isFOpen?' fopen':''}" id="${featId}">
+          <div class="feat-header" onclick="toggleFeat('${featId}')">
+            <span class="feat-num">${f.num}</span>
+            <div class="feat-title-wrap">
+              <div class="feat-title">${f.name}</div>
+              <div class="feat-summary">${f.summary}</div>
+              <div class="feat-sub-count">${f.subs.length} sub-features</div>
+            </div>
+            <span class="feat-arrow">&#9658;</span>
+          </div>
+          <div class="sub-list">${subItems}</div>
+        </div>`;
+    });
+
+    html += `
+      <div class="panel-card${isOpen?' open':''}" id="${cardId}">
+        <div class="pc-head" onclick="toggleCard('${cardId}')">
+          <div class="pc-icon">${panel.icon}</div>
+          <div class="pc-meta">
+            <div class="pc-name">${panel.name}</div>
+            <div class="pc-desc">${panel.desc}</div>
+            <div class="pc-pills">
+              <span class="pill pill-exam">Exam</span>
+              ${panel.ai?'<span class="pill pill-ai">AI</span>':''}
+            </div>
+          </div>
+          <div class="pc-right">
+            <span class="pc-chevron">&#9660;</span>
+            <span class="pc-feat-count">${panel.features.length} features</span>
+          </div>
+        </div>
+        <div class="pc-body">${featHtml}</div>
+      </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('app').innerHTML = html;
+}
+
+function toggleCard(id) {
+  openCards.has(id) ? openCards.delete(id) : openCards.add(id);
+  render();
+}
+function toggleFeat(id) {
+  openFeats.has(id) ? openFeats.delete(id) : openFeats.add(id);
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+import { z } from 'zod';
+
+export const updateMeSchema = z.object({
+  body: z.object({
+    fullName: z.string().min(2).max(100).optional(),
+    phone: z.string().optional(),
+    avatarUrl: z.string().url().optional(),
+    institution: z.string().optional(),
+    branch: z.string().optional(),
+    graduationYear: z.coerce.number().int().min(2000).max(2040).optional(),
+  }),
+});
+
+export const getUserParamsSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid user ID'),
+  }),
+});
+
+export const listUsersQuerySchema = z.object({
+  query: z.object({
+    page: z.string().optional(),
+    perPage: z.string().optional(),
+    role: z.string().optional(),
+    status: z.string().optional(),
+    search: z.string().optional(),
+  }),
+});
+
+export type UpdateMeInput = z.infer<typeof updateMeSchema>['body'];

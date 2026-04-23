@@ -1,0 +1,71 @@
+.text-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.text-input-label {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+}
+
+.text-input-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.text-input-container:focus-within {
+  border-color: var(--primary);
+  /* The Aura Glow for focuses */
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
+}
+
+.text-input-container.error {
+  border-color: var(--error);
+  box-shadow: 0 0 10px rgba(255, 110, 132, 0.1);
+}
+
+.text-input-element {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--on-surface);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.875rem 1rem;
+  width: 100%;
+  outline: none;
+}
+
+.text-input-element::placeholder {
+  color: var(--outline);
+}
+
+.text-input-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface-variant);
+  padding: 0 0.875rem;
+}
+
+.text-input-icon.left {
+  padding-right: 0;
+}
+
+.text-input-icon.right {
+  padding-left: 0;
+}
+
+.text-input-error-msg {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--error);
+  margin-top: 0.25rem;
+}

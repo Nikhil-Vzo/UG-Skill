@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UGSkill — Placement Panels Expanded</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-sans,'Inter',sans-serif);background:var(--color-background-secondary,#f5f5f5);color:var(--color-text-primary,#111);}
+.wrap{padding:1rem 0 3rem;}
+
+/* ── Header ── */
+.page-header{text-align:center;margin-bottom:1.5rem;}
+.page-title{font-size:15px;font-weight:600;color:#993556;letter-spacing:.01em;}
+.page-sub{font-size:11px;color:var(--color-text-tertiary,#888);margin-top:4px;}
+
+/* ── Stats bar ── */
+.stats-bar{display:flex;gap:8px;margin-bottom:1.5rem;}
+.stat-chip{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,#ddd);border-radius:var(--border-radius-md,8px);padding:8px 14px;flex:1;text-align:center;}
+.stat-v{font-size:18px;font-weight:600;color:#993556;}
+.stat-l{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:1px;}
+
+/* ── Section label ── */
+.section-title{font-size:10px;font-weight:600;color:#993556;text-transform:uppercase;letter-spacing:.09em;margin:1.5rem 0 8px;padding:4px 8px;background:rgba(153,53,86,.08);border-left:2px solid #993556;border-radius:0 4px 4px 0;}
+.section-title:first-of-type{margin-top:0;}
+
+/* ── Role Tabs ── */
+.role-tabs{display:flex;gap:0;margin-bottom:1.25rem;background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,#ddd);border-radius:var(--border-radius-lg,10px);overflow:hidden;}
+.role-tab{flex:1;display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-right:0.5px solid var(--color-border-tertiary,#ddd);transition:background .15s;user-select:none;position:relative;}
+.role-tab:last-child{border-right:none;}
+.role-tab:hover{background:rgba(153,53,86,.04);}
+.role-tab.active{background:rgba(153,53,86,.06);border-bottom:2px solid #993556;}
+.rt-icon{width:38px;height:38px;border-radius:50%;background:rgba(153,53,86,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.role-tab.active .rt-icon{background:rgba(153,53,86,.18);}
+.rt-text{}
+.rt-name{font-size:13px;font-weight:600;color:var(--color-text-primary,#111);}
+.role-tab.active .rt-name{color:#993556;}
+.rt-sub{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:1px;}
+
+/* ── Panel grid ── */
+.panels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:.5rem;}
+
+/* ── Panel card ── */
+.panel-card{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,#ddd);border-radius:var(--border-radius-lg,10px);overflow:hidden;transition:border-color .15s;}
+.panel-card:hover{border-color:rgba(153,53,86,.3);}
+.panel-card.open{border-color:rgba(153,53,86,.4);}
+
+/* card header */
+.pc-head{padding:10px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;user-select:none;}
+.pc-icon{width:34px;height:34px;border-radius:var(--border-radius-md,8px);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:1px;background:rgba(153,53,86,.1);}
+.pc-meta{flex:1;}
+.pc-name{font-size:12px;font-weight:600;color:var(--color-text-primary,#111);line-height:1.3;}
+.pc-desc{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:3px;line-height:1.45;}
+.pc-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.pill{font-size:10px;padding:1px 7px;border-radius:8px;font-weight:500;}
+.pill-place{background:rgba(153,53,86,.1);color:#993556;}
+.pill-ai{background:rgba(186,117,23,.12);color:#854F0B;}
+.pill-role-student{background:rgba(37,99,235,.1);color:#1d4ed8;}
+.pill-role-creator{background:rgba(5,150,105,.1);color:#065f46;}
+.pill-role-admin{background:rgba(109,40,217,.1);color:#5b21b6;}
+.pc-chevron{font-size:10px;color:var(--color-text-tertiary,#888);transition:transform .2s;margin-top:3px;flex-shrink:0;}
+.panel-card.open .pc-chevron{transform:rotate(180deg);}
+
+/* card body */
+.pc-body{display:none;border-top:0.5px solid var(--color-border-tertiary,#ddd);}
+.panel-card.open .pc-body{display:block;}
+
+/* ── Feature row ── */
+.feat-row{border-bottom:0.5px solid var(--color-border-tertiary,#ddd);}
+.feat-row:last-child{border-bottom:none;}
+.feat-header{display:flex;gap:8px;padding:7px 12px;cursor:pointer;align-items:flex-start;transition:background .1s;user-select:none;}
+.feat-header:hover{background:rgba(153,53,86,.04);}
+.feat-num{font-size:10px;font-weight:600;color:#993556;min-width:38px;padding-top:1px;flex-shrink:0;}
+.feat-title-wrap{flex:1;}
+.feat-title{font-size:11px;font-weight:600;color:var(--color-text-primary,#111);}
+.feat-summary{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:2px;line-height:1.4;}
+.feat-arrow{font-size:9px;color:var(--color-text-tertiary,#888);transition:transform .2s;margin-top:2px;flex-shrink:0;}
+.feat-row.fopen .feat-arrow{transform:rotate(90deg);}
+
+/* ── Sub-items ── */
+.sub-list{display:none;background:rgba(153,53,86,.025);border-top:0.5px solid var(--color-border-tertiary,#ddd);}
+.feat-row.fopen .sub-list{display:block;}
+.sub-item{display:flex;gap:8px;padding:5px 12px 5px 58px;border-bottom:0.5px solid var(--color-border-tertiary,#ddd);}
+.sub-item:last-child{border-bottom:none;}
+.sub-num{font-size:10px;color:rgba(153,53,86,.7);min-width:44px;flex-shrink:0;padding-top:1px;font-weight:500;}
+.sub-body{flex:1;}
+.sub-name{font-size:11px;font-weight:500;color:var(--color-text-secondary,#444);}
+.sub-desc{font-size:10px;color:var(--color-text-tertiary,#888);margin-top:2px;line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="page-header">
+    <div class="page-title">🎯 UGSkill — Placement System</div>
+    <div class="page-sub">Interview & Placement System — All 21 Panels Expanded</div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// PLACEMENT DATA — All 21 panels, fully expanded
+// ─────────────────────────────────────────────────────────────
+const sections = [
+  {
+    label: '🏢 Company Setup & Configuration',
+    panels: [
+      {
+        icon:'🏢', name:'Company Management', ai:false,
+        desc:'Central registry for all companies on the platform — creation, profiling, and configuration.',
+        features:[
+          {
+            num:'1.1', name:'Company Creation',
+            summary:'Registers a new company entity on the platform with its core identity.',
+            subs:[
+              {num:'1.1.1', name:'Company Registration Form', desc:'Admin-facing form capturing the company\'s legal name, industry sector, headquarters location, and website URL.'},
+              {num:'1.1.2', name:'Company Logo Upload', desc:'Upload and crop a company logo (PNG/SVG) displayed on all student-facing company cards and interview screens.'},
+              {num:'1.1.3', name:'Unique Company ID Generation', desc:'System auto-generates a unique slug/ID (e.g., COMP-INFOSYS-001) used across all internal references and URLs.'},
+              {num:'1.1.4', name:'Company Type Classification', desc:'Tag the company as Product, Service, Startup, PSU, or MNC to help students filter by company type during prep.'},
+              {num:'1.1.5', name:'Admin Assignment', desc:'Assign one or more platform admins as managers of the company entity, controlling who can edit its profile.'},
+            ]
+          },
+          {
+            num:'1.2', name:'Onboarding',
+            summary:'Guides the company through all required setup steps before going live.',
+            subs:[
+              {num:'1.2.1', name:'Onboarding Checklist Wizard', desc:'Step-by-step wizard (e.g., Profile → Roles → Interview Flow → Question Bank) showing completion status per step.'},
+              {num:'1.2.2', name:'HR / Recruiter Account Linking', desc:'Invite HR personnel via email to claim the company account and manage their own interview panels.'},
+              {num:'1.2.3', name:'Company Terms Acceptance', desc:'HR or admin must accept the platform\'s data usage and interview recording consent terms before activation.'},
+              {num:'1.2.4', name:'Activation Status Toggle', desc:'"Active / Inactive" status; only active companies are visible to students in readiness and prep sections.'},
+            ]
+          },
+          {
+            num:'1.3', name:'Company Profile',
+            summary:'Rich public profile displayed to students for context during prep and readiness assessment.',
+            subs:[
+              {num:'1.3.1', name:'About / Description Section', desc:'Rich-text field for a company overview, culture note, and hiring philosophy shown on the student-facing company page.'},
+              {num:'1.3.2', name:'Open Roles Listing', desc:'List of job roles the company typically hires for (e.g., SDE-1, Data Analyst) with required skill sets per role.'},
+              {num:'1.3.3', name:'Package / CTC Range', desc:'Optional CTC range (e.g., ₹6–12 LPA) displayed on the company profile to help students gauge alignment.'},
+              {num:'1.3.4', name:'Selection Process Overview', desc:'High-level description of the interview rounds (e.g., Aptitude → Technical → HR) visible to students.'},
+              {num:'1.3.5', name:'Past Hiring Statistics', desc:'Historical data on number of students hired, batch year, and branches preferred — if released by admin.'},
+            ]
+          },
+          {
+            num:'1.4', name:'Categorization',
+            summary:'Tags the company for filtering, targeting, and analytics.',
+            subs:[
+              {num:'1.4.1', name:'Industry Category Tag', desc:'Single or multi-select from categories like IT, Finance, Consulting, Core Engineering, FMCG, etc.'},
+              {num:'1.4.2', name:'Tier Classification', desc:'Admin assigns a tier (Tier-1 / Tier-2 / Tier-3) based on package, brand value, and role quality.'},
+              {num:'1.4.3', name:'Target Branch / Eligibility Filter', desc:'Specify which academic branches (CS, EC, Mechanical, etc.) the company targets for hiring.'},
+              {num:'1.4.4', name:'Category-Based Student Filtering', desc:'Students can filter their readiness dashboard and mock interview suggestions by company category.'},
+            ]
+          },
+          {
+            num:'1.5', name:'Difficulty Tagging',
+            summary:'Labels the company\'s overall interview difficulty for student preparation guidance.',
+            subs:[
+              {num:'1.5.1', name:'Difficulty Level Tag', desc:'Admin or HR tags the company as Easy, Medium, Hard, or Very Hard based on its historical interview complexity.'},
+              {num:'1.5.2', name:'Round-wise Difficulty', desc:'Granular difficulty tags per round type (e.g., Aptitude: Medium, Technical: Hard) for targeted preparation.'},
+              {num:'1.5.3', name:'Difficulty Shown on Company Card', desc:'Difficulty badge displayed on the company card in the student\'s browse/readiness page.'},
+              {num:'1.5.4', name:'Difficulty-Based Prep Suggestions', desc:'Platform auto-recommends practice tests and mock interviews calibrated to the company\'s difficulty level.'},
+            ]
+          },
+          {
+            num:'1.6', name:'Interview Patterns',
+            summary:'Documents the recurring structure and question types seen in past interviews.',
+            subs:[
+              {num:'1.6.1', name:'Past Interview Pattern Entry', desc:'Admin or HR enters recurring question themes, round structures, and time limits from past hiring cycles.'},
+              {num:'1.6.2', name:'Pattern Templates Library', desc:'Pre-built pattern templates for common company types (FAANG-style, consulting case, PSU exam) that can be applied.'},
+              {num:'1.6.3', name:'Pattern Visibility to Students', desc:'Pattern summary displayed in the student\'s "Company Prep" section with suggested preparation resources.'},
+              {num:'1.6.4', name:'Pattern Version History', desc:'Each hiring season\'s pattern is versioned and archived, so students can see year-over-year changes.'},
+            ]
+          },
+          {
+            num:'1.7', name:'Skill Mapping',
+            summary:'Links the company to the specific skills it evaluates during hiring.',
+            subs:[
+              {num:'1.7.1', name:'Required Skills List per Role', desc:'HR maps each open role to a set of required skills (e.g., Java, SQL, System Design for SDE-1).'},
+              {num:'1.7.2', name:'Skill Weight Assignment', desc:'Each skill is assigned a weight (primary / secondary / bonus) indicating its importance in evaluation.'},
+              {num:'1.7.3', name:'Skill-to-Question Bank Linking', desc:'Required skills are linked to the question bank, enabling auto-generation of targeted prep tests.'},
+              {num:'1.7.4', name:'Skill Gap Detection for Students', desc:'Student\'s current skill profile is compared against the company\'s required skill map to highlight gaps.'},
+            ]
+          },
+          {
+            num:'1.8', name:'Process Versioning',
+            summary:'Tracks changes to a company\'s interview process across hiring seasons.',
+            subs:[
+              {num:'1.8.1', name:'Version Per Hiring Season', desc:'Each update to the company\'s interview flow or requirements creates a new dated version (e.g., v2025-1).'},
+              {num:'1.8.2', name:'Version Comparison View', desc:'Side-by-side comparison of two versions showing changes in rounds, skills, or difficulty.'},
+              {num:'1.8.3', name:'Version Rollback', desc:'Admin can revert to a prior version if the latest update was made in error.'},
+              {num:'1.8.4', name:'Student-Facing Changelog', desc:'Summary of what changed in the latest version shown on the company\'s profile page (e.g., "Added GD Round in 2025").'},
+            ]
+          },
+        ]
+      },
+      {
+        icon:'🔄', name:'Interview Flow Management', ai:false,
+        desc:'Designs and manages the sequence of interview rounds for each company.',
+        features:[
+          {
+            num:'2.1', name:'Flow Creation',
+            summary:'Scaffolds a new end-to-end interview process for a company.',
+            subs:[
+              {num:'2.1.1', name:'Flow Name & Description', desc:'Name the flow (e.g., "Infosys SDE-1 2025 Flow") and add a brief description of its purpose.'},
+              {num:'2.1.2', name:'Link Flow to Company & Role', desc:'Associate the flow with a specific company and one or more target roles.'},
+              {num:'2.1.3', name:'Draft / Published State', desc:'Flows start in Draft state; published only after all rounds are configured and validated.'},
+              {num:'2.1.4', name:'Clone Existing Flow', desc:'Duplicate an existing flow as a starting point, then modify rounds without starting from scratch.'},
+            ]
+          },
+          {
+            num:'2.2', name:'Round Definition',
+            summary:'Defines each distinct round type within the interview flow.',
+            subs:[
+              {num:'2.2.1', name:'Aptitude Round Config', desc:'Configure quantitative, logical reasoning, and verbal question counts, time limits, and negative marking.'},
+              {num:'2.2.2', name:'Technical MCQ Round Config', desc:'Set topic distribution (DS, Algorithms, DBMS, OS), question count, and time per question.'},
+              {num:'2.2.3', name:'Coding Round Config', desc:'Define number of coding problems, difficulty mix, supported languages, and execution time limits.'},
+              {num:'2.2.4', name:'HR Round Config', desc:'HR round structured as a live or AI mock interview with a predefined question set or dynamic generation.'},
+              {num:'2.2.5', name:'GD Round Config', desc:'Set GD topic pool, group size, duration, and evaluation criteria for the Group Discussion round.'},
+            ]
+          },
+          {
+            num:'2.3', name:'Round Sequencing',
+            summary:'Sets the order in which rounds are conducted.',
+            subs:[
+              {num:'2.3.1', name:'Drag-and-Drop Round Ordering', desc:'Rounds are displayed as draggable cards; reordering is instant and reflected in the flow preview.'},
+              {num:'2.3.2', name:'Round Number Display', desc:'Each round is labeled Round 1, Round 2, etc., shown to both admins and students.'},
+              {num:'2.3.3', name:'Parallel Round Option', desc:'Mark two rounds as parallel (can be taken in any order) rather than strictly sequential.'},
+            ]
+          },
+          {
+            num:'2.4', name:'Round Dependency Logic',
+            summary:'Controls whether a student must pass one round before accessing the next.',
+            subs:[
+              {num:'2.4.1', name:'Pass/Fail Cutoff per Round', desc:'Admin sets a minimum score or pass criterion for each round; failure locks the subsequent round.'},
+              {num:'2.4.2', name:'Auto-Advance on Pass', desc:'Student automatically unlocks the next round upon meeting the cutoff — no manual admin action required.'},
+              {num:'2.4.3', name:'Shortlisting-Based Progression', desc:'For competitive flows, progression to the next round is based on ranking (top N students advance).'},
+              {num:'2.4.4', name:'Bypass Option for Specific Students', desc:'Admin can manually advance a specific student past a round regardless of score (for edge cases).'},
+            ]
+          },
+          {
+            num:'2.5', name:'Round Configuration',
+            summary:'Detailed settings for each round\'s behaviour and rules.',
+            subs:[
+              {num:'2.5.1', name:'Time Limit Setting', desc:'Configurable total duration for each round (in minutes), enforced by the platform timer.'},
+              {num:'2.5.2', name:'Attempt Limit per Round', desc:'How many times a student can attempt a round (e.g., 1 attempt for shortlisting, 3 for practice).'},
+              {num:'2.5.3', name:'Proctoring ON/OFF per Round', desc:'Toggle AI proctoring independently for each round — e.g., on for aptitude, off for HR conversation.'},
+              {num:'2.5.4', name:'Instructions / Rules Display', desc:'Per-round instruction text shown to students on the pre-round briefing screen.'},
+            ]
+          },
+          {
+            num:'2.6', name:'Company-Specific Mapping',
+            summary:'Associates interview flows with specific companies and drives.',
+            subs:[
+              {num:'2.6.1', name:'Assign Flow to Company Drive', desc:'Link a flow to a specific hiring drive (e.g., Campus Drive Oct 2025) for date-scoped access.'},
+              {num:'2.6.2', name:'Multi-Role Flow Assignment', desc:'Same flow can be assigned to multiple roles within the same company drive.'},
+              {num:'2.6.3', name:'Batch-Restricted Access', desc:'Flow is visible and accessible only to students in the admin-assigned batch for that drive.'},
+            ]
+          },
+          {
+            num:'2.7', name:'Custom Flow Creation',
+            summary:'Allows student-initiated or admin-created practice-purpose flows.',
+            subs:[
+              {num:'2.7.1', name:'Student Self-Practice Flow', desc:'Students can create a personal mock flow by selecting rounds and question types for self-directed practice.'},
+              {num:'2.7.2', name:'Admin Custom Flow Builder', desc:'Admin creates bespoke flows not tied to a real company for training programs or internal assessments.'},
+              {num:'2.7.3', name:'Template-Based Custom Flows', desc:'Start from a saved template (e.g., "FAANG 3-Round Template") and customise parameters.'},
+            ]
+          },
+          {
+            num:'2.8', name:'Version Control',
+            summary:'Tracks changes made to a flow over time.',
+            subs:[
+              {num:'2.8.1', name:'Auto-Version on Edit', desc:'Every significant edit to a published flow creates a new version with a changelog entry.'},
+              {num:'2.8.2', name:'Active Version Pinning', desc:'Admin pins the version students are currently assigned to; new versions don\'t affect in-progress attempts.'},
+              {num:'2.8.3', name:'Rollback to Previous Flow Version', desc:'Admin can restore any prior version of the flow configuration.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '⚡ Test & Interview Engines',
+    panels: [
+      {
+        icon:'⚡', name:'Interview Test Engine', ai:true,
+        desc:'Powers all written and coding tests within the placement interview pipeline.',
+        features:[
+          {
+            num:'3.1', name:'Aptitude Test Engine',
+            summary:'Delivers quantitative, logical, and verbal aptitude tests within interview flows.',
+            subs:[
+              {num:'3.1.1', name:'Section-Wise Aptitude Delivery', desc:'Tests organised into Quantitative, Logical Reasoning, and Verbal sections with independent time limits per section.'},
+              {num:'3.1.2', name:'Negative Marking Config', desc:'Configurable negative marking per section (e.g., -0.25 for wrong, 0 for unattempted).'},
+              {num:'3.1.3', name:'Random Question Selection', desc:'Questions pulled randomly from topic-tagged pools so no two students see the exact same test.'},
+              {num:'3.1.4', name:'Auto-Submit on Timeout', desc:'Test auto-submits when the timer expires, capturing all answered questions up to that point.'},
+            ]
+          },
+          {
+            num:'3.2', name:'Coding Test Engine',
+            summary:'Online IDE-backed coding round with multi-language support and real-time execution.',
+            subs:[
+              {num:'3.2.1', name:'In-Browser Code Editor (IDE)', desc:'Monaco-based editor with syntax highlighting, auto-indent, and theme selection (light/dark).'},
+              {num:'3.2.2', name:'Multi-Language Support', desc:'Supports Python, Java, C++, C, JavaScript, Go, and SQL — student selects language before starting.'},
+              {num:'3.2.3', name:'Custom Test Case Input', desc:'Students can enter custom inputs to test their solution before final submission.'},
+              {num:'3.2.4', name:'Execution Against Hidden Test Cases', desc:'Final score based on passing hidden test cases; student sees pass/fail counts but not the cases themselves.'},
+              {num:'3.2.5', name:'Real-Time Code Execution', desc:'Code compiled and executed in a sandboxed Docker container with time and memory limits enforced.'},
+            ]
+          },
+          {
+            num:'3.3', name:'Technical MCQ Engine',
+            summary:'Delivers subject-specific technical knowledge tests (DS, OS, DBMS, Networks, etc.).',
+            subs:[
+              {num:'3.3.1', name:'Topic-Wise Question Distribution', desc:'Admin defines how many questions are drawn from each technical topic (e.g., 5 DS + 5 OS + 5 DBMS).'},
+              {num:'3.3.2', name:'Difficulty Mix Config', desc:'Easy/Medium/Hard ratio defined per topic to control overall test difficulty.'},
+              {num:'3.3.3', name:'Image-Based Questions', desc:'Support for questions with code snippets, diagrams, or output-based MCQs rendered in the test.'},
+              {num:'3.3.4', name:'Mark for Review', desc:'Student can flag a question for review and return to it before final submission.'},
+            ]
+          },
+          {
+            num:'3.4', name:'Case-Based Test Engine',
+            summary:'Presents multi-part scenario or case study questions for analytical evaluation.',
+            subs:[
+              {num:'3.4.1', name:'Case Passage with Multi-Questions', desc:'A scenario paragraph followed by 3–6 linked MCQs or short-answer questions based on it.'},
+              {num:'3.4.2', name:'Case Linking Logic', desc:'Answers to earlier sub-questions can provide context hints for later ones within the same case.'},
+              {num:'3.4.3', name:'Consulting / Finance Case Templates', desc:'Pre-built case templates for case interview rounds (market sizing, profitability analysis, etc.).'},
+            ]
+          },
+          {
+            num:'3.5', name:'AI Dynamic Question Generation',
+            summary:'Generates novel questions on-the-fly using AI for personalised and anti-cheating tests.',
+            subs:[
+              {num:'3.5.1', name:'Prompt-Based Question Gen', desc:'AI generates unique aptitude or technical questions from a topic and difficulty prompt at test-start time.'},
+              {num:'3.5.2', name:'Paraphrase Existing Bank Questions', desc:'AI paraphrases existing bank questions slightly so repeated test-takers face genuinely different wording.'},
+              {num:'3.5.3', name:'Quality Gate Before Delivery', desc:'AI-generated questions pass through a confidence threshold filter; below-threshold questions are replaced.'},
+            ]
+          },
+          {
+            num:'3.6', name:'Personalised Test Generation',
+            summary:'Builds tests tailored to the student\'s weak areas and target company.',
+            subs:[
+              {num:'3.6.1', name:'Weak Area-Weighted Test', desc:'Questions are drawn with higher probability from topics where the student has historically scored poorly.'},
+              {num:'3.6.2', name:'Company-Targeted Test', desc:'Test is assembled using questions tagged to the target company\'s pattern and required skills.'},
+              {num:'3.6.3', name:'Adaptive Difficulty Mid-Test', desc:'If the student answers 5 consecutive questions correctly, the next batch increases in difficulty automatically.'},
+            ]
+          },
+          {
+            num:'3.7', name:'Timed Test Execution',
+            summary:'Manages all time-based constraints during a test session.',
+            subs:[
+              {num:'3.7.1', name:'Global & Section Timers', desc:'Separate countdown timers for the full test and individual sections, visible to the student at all times.'},
+              {num:'3.7.2', name:'Timer Warning Alerts', desc:'Visual and audio alerts at 10 minutes and 2 minutes remaining.'},
+              {num:'3.7.3', name:'Tab Switch / Focus Loss Timer Pause', desc:'Timer continues running if the student loses focus (tab switch), disincentivising cheating.'},
+              {num:'3.7.4', name:'Auto-Submit Logic', desc:'On timer expiry, all current answers are captured and submitted; a confirmation screen is shown.'},
+            ]
+          },
+          {
+            num:'3.8', name:'Auto Evaluation',
+            summary:'Instantly grades objective and coding submissions without human intervention.',
+            subs:[
+              {num:'3.8.1', name:'MCQ Instant Grading', desc:'Score computed immediately on submission with per-question correct/wrong breakdown.'},
+              {num:'3.8.2', name:'Coding Test Case Grading', desc:'Each test case result (pass/fail) contributes to the coding score; partial marks awarded for partially passing solutions.'},
+              {num:'3.8.3', name:'Score Report Generation', desc:'Full score report (total, section-wise, topic-wise) generated and made available to the student and admin.'},
+              {num:'3.8.4', name:'Percentile Calculation', desc:'Student\'s score ranked against all other takers of the same test to compute a percentile.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'🎙️', name:'Mock Interview (AI + Human)', ai:true,
+        desc:'Full-stack mock interview system combining AI-driven and human-moderated sessions.',
+        features:[
+          {
+            num:'4.1', name:'AI Interviewer',
+            summary:'Conversational AI that conducts structured mock interviews autonomously.',
+            subs:[
+              {num:'4.1.1', name:'Role-Based Question Flow', desc:'AI selects questions appropriate for the target role (e.g., SDE-1 vs. Data Analyst) from a curated question set.'},
+              {num:'4.1.2', name:'Natural Language Interview Conversation', desc:'AI conducts the interview in a natural conversational tone, acknowledging student answers before proceeding.'},
+              {num:'4.1.3', name:'Company-Specific Mode', desc:'Student selects a target company; AI adjusts question style, difficulty, and topics to match that company\'s known pattern.'},
+              {num:'4.1.4', name:'Interview Progress Indicator', desc:'Visual progress bar showing the student\'s position within the interview (e.g., Q 3 of 10).'},
+            ]
+          },
+          {
+            num:'4.2', name:'Follow-Up Question Logic',
+            summary:'AI probes deeper based on the student\'s response to the initial question.',
+            subs:[
+              {num:'4.2.1', name:'Dynamic Follow-Up Generation', desc:'AI analyses the student\'s answer and generates a contextual follow-up (e.g., "Can you explain the time complexity of that approach?").'},
+              {num:'4.2.2', name:'Depth Control Config', desc:'Admin or student sets the interview depth level (shallow / standard / deep) controlling how aggressively the AI follows up.'},
+              {num:'4.2.3', name:'Clarification Requests', desc:'AI asks the student to clarify vague or incomplete answers before scoring them.'},
+            ]
+          },
+          {
+            num:'4.3', name:'AI Answer Evaluation',
+            summary:'Scores and provides feedback on student answers using NLP.',
+            subs:[
+              {num:'4.3.1', name:'Semantic Answer Scoring', desc:'AI scores answers based on semantic similarity to ideal responses, not just keyword matching.'},
+              {num:'4.3.2', name:'Criteria-Based Rubric', desc:'Each question has a rubric (accuracy, completeness, clarity, depth) and the AI scores each dimension.'},
+              {num:'4.3.3', name:'Immediate Post-Answer Feedback', desc:'After each answer, AI shows what was good and what was missing before moving to the next question.'},
+              {num:'4.3.4', name:'Overall Session Score', desc:'End-of-session composite score across all questions with a breakdown by category.'},
+            ]
+          },
+          {
+            num:'4.4', name:'Voice-Based Interaction',
+            summary:'Allows the student to answer mock interview questions by speaking aloud.',
+            subs:[
+              {num:'4.4.1', name:'Speech-to-Text Transcription', desc:'Student\'s spoken answer is transcribed in real-time, shown on screen for review before submission.'},
+              {num:'4.4.2', name:'AI Voice (TTS) for Questions', desc:'Interview questions are read aloud by an AI voice, simulating a real interviewer experience.'},
+              {num:'4.4.3', name:'Voice Clarity Feedback', desc:'Post-session feedback on the student\'s speaking pace, filler words, and articulation.'},
+              {num:'4.4.4', name:'Silence Detection', desc:'If no speech is detected for 15 seconds, AI prompts "Take your time or say Pass to skip this question."'},
+            ]
+          },
+          {
+            num:'4.5', name:'Text-Based Interaction',
+            summary:'Student types answers in a chat-style interface for text-mode mock interviews.',
+            subs:[
+              {num:'4.5.1', name:'Chat Interface Layout', desc:'Split-screen with AI question on the left and a text input box on the right for typed responses.'},
+              {num:'4.5.2', name:'Code Block Support in Answers', desc:'Student can paste or type code within a monospace code block, preserving formatting for evaluation.'},
+              {num:'4.5.3', name:'Answer Time Tracking', desc:'Time taken per answer is recorded for post-session analysis of response speed.'},
+            ]
+          },
+          {
+            num:'4.6', name:'Human Interviewer Integration',
+            summary:'Connects a real human interviewer to conduct or co-conduct a mock interview.',
+            subs:[
+              {num:'4.6.1', name:'Human Interviewer Panel Join Link', desc:'Admin or mentor receives a unique panelist link to join a live mock session as the human interviewer.'},
+              {num:'4.6.2', name:'Interviewer Score Input Form', desc:'Side panel for the human interviewer to enter scores and comments per question in real time.'},
+              {num:'4.6.3', name:'AI + Human Hybrid Mode', desc:'AI asks questions while the human scores and adds qualitative feedback simultaneously.'},
+              {num:'4.6.4', name:'Post-Session Interviewer Debrief Note', desc:'Human interviewer can add a summary debrief note for the student visible after the session.'},
+            ]
+          },
+          {
+            num:'4.7', name:'Interview Recording',
+            summary:'Records the full mock interview session for review and analysis.',
+            subs:[
+              {num:'4.7.1', name:'Auto-Record on Session Start', desc:'Recording begins automatically when the student starts the mock interview; no manual action required.'},
+              {num:'4.7.2', name:'Video + Audio + Transcript Capture', desc:'Captures webcam video, microphone audio, and a text transcript of all questions and answers.'},
+              {num:'4.7.3', name:'Consent Prompt Before Recording', desc:'Student sees a clear recording consent notice before the session begins and must accept to proceed.'},
+              {num:'4.7.4', name:'Secure Cloud Storage', desc:'Recordings stored in encrypted cloud storage accessible only to the student, admin, and assigned mentors.'},
+            ]
+          },
+          {
+            num:'4.8', name:'Session Replay',
+            summary:'Allows the student to watch back their mock interview for self-review.',
+            subs:[
+              {num:'4.8.1', name:'Full Session Video Playback', desc:'Student can replay the full recorded session with video, audio, and transcript in a media player.'},
+              {num:'4.8.2', name:'Jump to Specific Questions', desc:'Timestamp markers for each question allow the student to jump directly to any Q&A segment.'},
+              {num:'4.8.3', name:'Side-by-Side AI Feedback During Replay', desc:'While watching the replay, the AI\'s evaluation comments for each answer are shown alongside.'},
+              {num:'4.8.4', name:'Replay Sharing with Mentor', desc:'Student can share a time-limited replay link with a mentor for external feedback.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '📷 Proctoring & Integrity',
+    panels: [
+      {
+        icon:'📷', name:'Interview Proctoring', ai:true,
+        desc:'AI-powered monitoring system ensuring integrity during all placement tests and interviews.',
+        features:[
+          {
+            num:'5.1', name:'Camera Monitoring',
+            summary:'Continuously monitors the student\'s webcam feed throughout the session.',
+            subs:[
+              {num:'5.1.1', name:'Webcam Access Request & Check', desc:'System checks for camera access permission on session start; blocks entry if camera is denied.'},
+              {num:'5.1.2', name:'Live Video Feed Capture', desc:'Webcam feed is streamed and stored at intervals for post-session proctor review.'},
+              {num:'5.1.3', name:'Camera Obstruction Detection', desc:'Flags if the camera appears covered, blocked, or pointing away from the student.'},
+            ]
+          },
+          {
+            num:'5.2', name:'Face Detection',
+            summary:'Verifies the student\'s identity and presence using face recognition.',
+            subs:[
+              {num:'5.2.1', name:'Face Present / Absent Detection', desc:'AI continuously checks whether a face is present in the frame and flags absence > 5 seconds.'},
+              {num:'5.2.2', name:'Identity Verification at Start', desc:'Student\'s face is compared to their registered profile photo at session start for identity check.'},
+              {num:'5.2.3', name:'Face Confidence Score', desc:'Each detection event is accompanied by a confidence score; low-confidence detections are flagged separately.'},
+            ]
+          },
+          {
+            num:'5.3', name:'Multi-Face Detection',
+            summary:'Detects the presence of more than one person in the camera frame.',
+            subs:[
+              {num:'5.3.1', name:'Second Person Alert', desc:'If more than one face is detected in the frame, an immediate warning is triggered and logged.'},
+              {num:'5.3.2', name:'Consecutive Violation Auto-Flag', desc:'Three or more multi-face detection events within a session automatically escalate the violation to the proctor.'},
+              {num:'5.3.3', name:'Proctor Notification on Violation', desc:'Proctor dashboard receives a real-time push alert with a snapshot when multi-face is detected.'},
+            ]
+          },
+          {
+            num:'5.4', name:'Eye Tracking',
+            summary:'Monitors eye movement to detect focus drift or off-screen reference.',
+            subs:[
+              {num:'5.4.1', name:'Gaze Direction Monitoring', desc:'AI estimates gaze direction (on-screen vs. off-screen left/right) and logs away-gaze events.'},
+              {num:'5.4.2', name:'Sustained Off-Gaze Flagging', desc:'If gaze is off-screen for > 8 seconds continuously, a soft warning is shown and the event is logged.'},
+              {num:'5.4.3', name:'Gaze Heatmap in Proctor Report', desc:'Post-session report includes a gaze heatmap showing where the student looked throughout the session.'},
+            ]
+          },
+          {
+            num:'5.5', name:'Gesture / Posture Detection',
+            summary:'Detects suspicious physical movements suggesting external assistance.',
+            subs:[
+              {num:'5.5.1', name:'Earphone Detection', desc:'AI flags if an earphone or earpiece is visible in the student\'s ear during the session.'},
+              {num:'5.5.2', name:'Repeated Look-Away Gestures', desc:'Patterns of repeated head turns (e.g., 10+ in 5 minutes) are flagged as a posture anomaly.'},
+              {num:'5.5.3', name:'Leaning Off-Camera Detection', desc:'Student frequently leaning out of the camera frame is flagged as a suspicious posture event.'},
+            ]
+          },
+          {
+            num:'5.6', name:'Object Detection',
+            summary:'Identifies prohibited physical objects in the student\'s environment.',
+            subs:[
+              {num:'5.6.1', name:'Mobile Phone Detection', desc:'AI detects the presence of a smartphone in the frame and raises an immediate violation alert.'},
+              {num:'5.6.2', name:'Book / Paper Detection', desc:'Identifies books, notebooks, or physical papers visible in the camera feed.'},
+              {num:'5.6.3', name:'External Monitor / Screen Detection', desc:'Flags the presence of a second monitor or external display in the background.'},
+              {num:'5.6.4', name:'Object Confidence Threshold', desc:'Objects below 70% detection confidence are logged as "suspected" not confirmed, to reduce false positives.'},
+            ]
+          },
+          {
+            num:'5.7', name:'Audio Monitoring',
+            summary:'Listens for suspicious audio events during the session.',
+            subs:[
+              {num:'5.7.1', name:'Background Voice Detection', desc:'AI detects a second human voice in the audio stream, indicating possible assistance.'},
+              {num:'5.7.2', name:'Whispering Detection', desc:'Identifies low-volume speech patterns consistent with whispered coaching.'},
+              {num:'5.7.3', name:'Noise Anomaly Logging', desc:'Sudden loud sounds or repeated audio spikes are logged with timestamps for proctor review.'},
+              {num:'5.7.4', name:'Microphone Access Check', desc:'Session blocked if microphone access is denied; student must grant access to proceed.'},
+            ]
+          },
+          {
+            num:'5.8', name:'Tab Switch Detection',
+            summary:'Detects and penalises attempts to leave the exam tab.',
+            subs:[
+              {num:'5.8.1', name:'Window / Tab Blur Event Capture', desc:'Any browser window blur or tab switch is captured and logged as a violation event.'},
+              {num:'5.8.2', name:'Warning Counter Display', desc:'Student sees a live "Violations: 2/5" counter; exceeding the limit triggers disqualification.'},
+              {num:'5.8.3', name:'Full-Screen Re-Entry Enforcement', desc:'If the student exits fullscreen, a modal forces them to re-enter fullscreen before continuing.'},
+            ]
+          },
+          {
+            num:'5.9', name:'Copy-Paste Blocking',
+            summary:'Prevents pasting of external content into answer fields.',
+            subs:[
+              {num:'5.9.1', name:'Paste Event Blocking in Text Fields', desc:'Ctrl+V / Cmd+V paste is disabled in all answer input fields; right-click context menu is also blocked.'},
+              {num:'5.9.2', name:'Copy Event Blocking', desc:'Ctrl+C / Cmd+C is disabled to prevent copying questions and sharing them externally.'},
+              {num:'5.9.3', name:'Developer Tools Access Block', desc:'F12 and right-click inspect are disabled to prevent source code inspection.'},
+            ]
+          },
+          {
+            num:'5.10', name:'Behavior Anomaly Detection',
+            summary:'AI identifies patterns of behaviour that collectively suggest malpractice.',
+            subs:[
+              {num:'5.10.1', name:'Anomaly Scoring Model', desc:'Each individual violation (tab switch, face absent, object detected) contributes to a composite anomaly score.'},
+              {num:'5.10.2', name:'Threshold-Based Escalation', desc:'When anomaly score crosses a configured threshold, the session is automatically flagged for human proctor review.'},
+              {num:'5.10.3', name:'Pattern-Based Detection', desc:'Recurring patterns (e.g., face absent every 2 minutes) are detected and weighted more heavily than isolated events.'},
+            ]
+          },
+          {
+            num:'5.11', name:'Live Proctor Dashboard',
+            summary:'Real-time monitoring interface for proctors overseeing active sessions.',
+            subs:[
+              {num:'5.11.1', name:'Active Session Grid View', desc:'Proctor sees a grid of all ongoing sessions with live webcam thumbnails and current violation counts.'},
+              {num:'5.11.2', name:'Alert Feed with Timestamps', desc:'Chronological feed of all violation alerts across all active sessions, sortable by severity.'},
+              {num:'5.11.3', name:'Session Detail Drill-Down', desc:'Clicking a student\'s tile opens a full-screen view with live video, audio level, and complete violation log.'},
+              {num:'5.11.4', name:'Manual Intervention Controls', desc:'Proctor can send a warning message to the student, pause the session, or terminate it from the dashboard.'},
+            ]
+          },
+          {
+            num:'5.12', name:'Violation Logging',
+            summary:'Produces a comprehensive, audit-ready log of all proctoring events.',
+            subs:[
+              {num:'5.12.1', name:'Per-Event Log Entry', desc:'Each violation logged with: event type, timestamp, confidence score, snapshot, and session ID.'},
+              {num:'5.12.2', name:'Session Violation Summary Report', desc:'End-of-session PDF report listing all violations, severity scores, and proctor actions taken.'},
+              {num:'5.12.3', name:'Admin Audit Access', desc:'Admins can query the violation log by student, company, date range, or violation type.'},
+              {num:'5.12.4', name:'Evidence Snapshot Archival', desc:'Snapshot images captured at each violation event are stored for 90 days for dispute resolution.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '💬 Group Discussion & Live Interviews',
+    panels: [
+      {
+        icon:'💬', name:'Group Discussion (GD)', ai:false,
+        desc:'Structured platform for conducting, evaluating, and recording Group Discussion rounds.',
+        features:[
+          {
+            num:'6.1', name:'GD Session Creation',
+            summary:'Sets up a new Group Discussion session with all its parameters.',
+            subs:[
+              {num:'6.1.1', name:'Session Title & Topic', desc:'Admin or HR creates the GD with a title and assigns a discussion topic from the GD topic bank or custom input.'},
+              {num:'6.1.2', name:'Session Date & Time Scheduling', desc:'Date/time picker for scheduling; students in the assigned group receive automatic calendar invites.'},
+              {num:'6.1.3', name:'Duration Setting', desc:'Configurable GD duration (e.g., 15, 20, or 30 minutes) enforced by the session timer.'},
+              {num:'6.1.4', name:'Link to Interview Flow', desc:'GD session linked to a specific company\'s interview flow so its results feed into the overall candidate score.'},
+            ]
+          },
+          {
+            num:'6.2', name:'Group Formation',
+            summary:'Assembles students into discussion groups from an eligible batch.',
+            subs:[
+              {num:'6.2.1', name:'Auto-Group by Batch', desc:'System auto-divides the assigned batch into GD groups of the configured size (e.g., 6–8 students per group).'},
+              {num:'6.2.2', name:'Manual Group Assignment', desc:'Admin manually assigns specific students to a group for targeted evaluation scenarios.'},
+              {num:'6.2.3', name:'Group Size Config', desc:'Admin sets the minimum and maximum participants per group; system validates headcount before session start.'},
+              {num:'6.2.4', name:'Waitlist Handling', desc:'Students who join after the group is full are placed on a waitlist and offered the next available session slot.'},
+            ]
+          },
+          {
+            num:'6.3', name:'Topic Assignment',
+            summary:'Selects or generates the GD topic presented to participants.',
+            subs:[
+              {num:'6.3.1', name:'Manual Topic Selection', desc:'Admin picks a topic from the GD bank (sorted by category: current affairs, abstract, business case, etc.).'},
+              {num:'6.3.2', name:'Random Topic Assignment', desc:'System randomly picks a topic from the configured pool, preventing prior preparation on the exact topic.'},
+              {num:'6.3.3', name:'Topic Reveal Timer', desc:'Topic is revealed to all participants simultaneously at session start (not before) to ensure fairness.'},
+              {num:'6.3.4', name:'Prep Time Setting', desc:'Optional 2-minute silent prep window after topic reveal before open discussion begins.'},
+            ]
+          },
+          {
+            num:'6.4', name:'Speaking Turn Management',
+            summary:'Manages fair participation and turn-taking during the discussion.',
+            subs:[
+              {num:'6.4.1', name:'Raise Hand to Speak', desc:'Participants raise a digital hand to indicate they wish to speak; moderator or system grants the floor.'},
+              {num:'6.4.2', name:'Speaking Time Tracker per Participant', desc:'Real-time timer showing total speaking seconds per participant, visible to the moderator.'},
+              {num:'6.4.3', name:'Minimum Participation Alert', desc:'Moderator receives an alert if a participant has not spoken for the first 50% of the session duration.'},
+            ]
+          },
+          {
+            num:'6.5', name:'Moderator Controls',
+            summary:'Tools for the session moderator to manage the GD flow.',
+            subs:[
+              {num:'6.5.1', name:'Mute / Unmute Participants', desc:'Moderator can mute any participant who is speaking out of turn or being disruptive.'},
+              {num:'6.5.2', name:'Spotlight Speaker View', desc:'Moderator can pin a specific speaker to be highlighted for all other participants.'},
+              {num:'6.5.3', name:'Session Timer Control', desc:'Moderator can add time (up to +5 minutes) or end the session early if the discussion concludes.'},
+              {num:'6.5.4', name:'Remove / Rejoin Participant', desc:'Moderator can remove a disruptive participant or re-admit a student who was accidentally disconnected.'},
+            ]
+          },
+          {
+            num:'6.6', name:'Live Multi-User Interaction',
+            summary:'Enables real-time video and audio communication between all GD participants.',
+            subs:[
+              {num:'6.6.1', name:'WebRTC Multi-Party Video', desc:'Low-latency WebRTC video session supporting up to 10 simultaneous participants.'},
+              {num:'6.6.2', name:'Chat Sidebar', desc:'Text chat sidebar for participants to share references or links without interrupting the spoken flow.'},
+              {num:'6.6.3', name:'Network Quality Indicator', desc:'Each participant\'s tile shows a connection quality icon (good / fair / poor) updated in real-time.'},
+            ]
+          },
+          {
+            num:'6.7', name:'GD Recording',
+            summary:'Records the full GD session for evaluator review and student replay.',
+            subs:[
+              {num:'6.7.1', name:'Auto-Record Full Session', desc:'Multi-party video and audio recording starts automatically when the session begins.'},
+              {num:'6.7.2', name:'Speaker-Diarised Transcript', desc:'Post-session transcript with each participant\'s speech segments tagged by name and timestamp.'},
+              {num:'6.7.3', name:'Recording Access Control', desc:'Recording accessible only to the student (their own segments), admin, and assigned evaluators.'},
+            ]
+          },
+          {
+            num:'6.8', name:'GD Evaluation',
+            summary:'Structured scoring of each participant\'s contribution to the GD.',
+            subs:[
+              {num:'6.8.1', name:'Evaluator Score Form per Participant', desc:'Evaluator assigns scores on Content Quality, Communication, Leadership, Listening, and Teamwork.'},
+              {num:'6.8.2', name:'AI Contribution Analysis', desc:'AI analyses transcript to compute each participant\'s contribution percentage and speaking quality metrics.'},
+              {num:'6.8.3', name:'Participant GD Report Card', desc:'Each participant receives a personalised GD report card with scores, AI insights, and evaluator comments.'},
+              {num:'6.8.4', name:'GD Leaderboard within Group', desc:'Relative ranking of participants within the GD session based on combined evaluator and AI scores.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'🎥', name:'Live Interview System', ai:false,
+        desc:'Real-time video interview infrastructure for panel-based and one-on-one live interviews.',
+        features:[
+          {
+            num:'7.1', name:'Live Interview Scheduling',
+            summary:'Books and manages live interview time slots for candidates.',
+            subs:[
+              {num:'7.1.1', name:'Calendar-Based Slot Creation', desc:'Admin or HR creates available interview slots using a calendar date/time picker.'},
+              {num:'7.1.2', name:'Student Self-Booking', desc:'Students see available slots for their assigned round and self-book the one that suits them.'},
+              {num:'7.1.3', name:'Slot Conflict Detection', desc:'System prevents double-booking of a panel member or interview room for the same time slot.'},
+              {num:'7.1.4', name:'Confirmation & Calendar Invite', desc:'All participants (student + interviewers) receive a confirmation email with a calendar (.ics) attachment.'},
+            ]
+          },
+          {
+            num:'7.2', name:'Multi-User Sessions',
+            summary:'Supports multiple interviewers joining the same live interview session.',
+            subs:[
+              {num:'7.2.1', name:'Multiple Panel Member Joins', desc:'Up to 5 interviewers can join a single live session simultaneously with full video/audio access.'},
+              {num:'7.2.2', name:'Individual Interviewer Controls', desc:'Each panelist has independent mute, camera, and screen-share controls.'},
+              {num:'7.2.3', name:'Private Panel Chat', desc:'Side chat visible only to panel members (not the candidate) for real-time internal discussion.'},
+            ]
+          },
+          {
+            num:'7.3', name:'Panel-Based Setup',
+            summary:'Configures the structure of a multi-member interview panel.',
+            subs:[
+              {num:'7.3.1', name:'Panel Member Invitation', desc:'Admin invites HR, technical lead, or external evaluator by email to join as a panelist.'},
+              {num:'7.3.2', name:'Panel Role Assignment', desc:'Designate roles per panelist: Lead Interviewer, Observer, or Note-Taker — each with different access levels.'},
+              {num:'7.3.3', name:'Panel Template Saving', desc:'Frequently used panel configurations can be saved as templates for quick reuse in future drives.'},
+            ]
+          },
+          {
+            num:'7.4', name:'Real-Time Video / Audio',
+            summary:'Core WebRTC communication layer for the live session.',
+            subs:[
+              {num:'7.4.1', name:'HD Video Streaming', desc:'720p video streaming with adaptive bitrate fallback to 480p on poor network connections.'},
+              {num:'7.4.2', name:'Noise Suppression', desc:'Background noise cancellation applied to all audio streams using browser-level audio processing.'},
+              {num:'7.4.3', name:'Screen Sharing', desc:'Candidate can share their entire screen or a specific application window for coding or presentation rounds.'},
+              {num:'7.4.4', name:'Collaborative Whiteboard', desc:'Shared digital whiteboard for diagram-based questions, accessible to candidate and all panelists.'},
+            ]
+          },
+          {
+            num:'7.5', name:'Timer Control',
+            summary:'Manages interview duration and provides time visibility to all participants.',
+            subs:[
+              {num:'7.5.1', name:'Session Duration Timer', desc:'Countdown timer showing total interview time remaining, visible to panelists (not the candidate by default).'},
+              {num:'7.5.2', name:'5-Minute Warning Alert', desc:'Visual and audio chime alert to all panelists when 5 minutes remain in the session.'},
+              {num:'7.5.3', name:'Time Extension by Lead', desc:'Lead interviewer can extend the session by 10 or 15 minutes with a single click.'},
+            ]
+          },
+          {
+            num:'7.6', name:'Waiting Room',
+            summary:'Holds the candidate before the panel is ready to begin.',
+            subs:[
+              {num:'7.6.1', name:'Waiting Room Lobby Screen', desc:'Candidate enters a branded waiting room with company name/logo and a "Your interview will begin shortly" message.'},
+              {num:'7.6.2', name:'Wait Time Estimate Display', desc:'Estimated wait time shown to the candidate based on panel readiness status.'},
+              {num:'7.6.3', name:'Admit Button for Lead Interviewer', desc:'Only the lead interviewer can click "Admit Candidate" to bring them into the live session.'},
+            ]
+          },
+          {
+            num:'7.7', name:'Session Recording',
+            summary:'Records the live interview for compliance, review, and training.',
+            subs:[
+              {num:'7.7.1', name:'Auto-Record Full Session', desc:'Session is recorded from admit to end; recording starts without manual action by any participant.'},
+              {num:'7.7.2', name:'Consent Pop-Up for Candidate', desc:'Candidate sees a recording consent notice in the waiting room and must accept to enter.'},
+              {num:'7.7.3', name:'Encrypted Storage & Retention Policy', desc:'Recording stored with AES-256 encryption; auto-deleted after the configured retention period (default 90 days).'},
+            ]
+          },
+          {
+            num:'7.8', name:'Session Monitoring',
+            summary:'Gives admins visibility into all ongoing live sessions.',
+            subs:[
+              {num:'7.8.1', name:'Admin Live Session Grid', desc:'Admin dashboard shows all active live sessions as tiles with participant count and elapsed time.'},
+              {num:'7.8.2', name:'Session Health Indicators', desc:'Each session tile shows network quality and participant connection status.'},
+              {num:'7.8.3', name:'Emergency Terminate Option', desc:'Admin can force-end a session from the monitoring dashboard in case of a technical or conduct emergency.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '📋 Evaluation, Feedback & Readiness',
+    panels: [
+      {
+        icon:'📋', name:'Feedback & Evaluation', ai:true,
+        desc:'Comprehensive scoring and feedback system covering all interview dimensions.',
+        features:[
+          {
+            num:'8.1', name:'Technical Score',
+            summary:'Quantitative assessment of the candidate\'s domain and technical knowledge.',
+            subs:[
+              {num:'8.1.1', name:'Per-Question Technical Score', desc:'Each technical question is scored individually by the AI or human evaluator on a defined scale.'},
+              {num:'8.1.2', name:'Topic-Wise Technical Breakdown', desc:'Score broken down by topic (e.g., DSA: 8/10, DBMS: 6/10) for granular insights.'},
+              {num:'8.1.3', name:'Code Quality Score (for Coding Rounds)', desc:'Coding submissions scored on correctness, time complexity, space complexity, and code readability.'},
+            ]
+          },
+          {
+            num:'8.2', name:'Communication Score',
+            summary:'Evaluates how clearly and effectively the candidate communicates.',
+            subs:[
+              {num:'8.2.1', name:'Clarity & Structure Score', desc:'AI rates answer structure (introduction → explanation → example → conclusion) on a 5-point scale.'},
+              {num:'8.2.2', name:'Vocabulary & Language Score', desc:'Evaluates appropriate use of technical vocabulary and grammatical correctness.'},
+              {num:'8.2.3', name:'Filler Word Frequency', desc:'Count of filler words (um, uh, like) per minute; high frequency reduces communication score.'},
+            ]
+          },
+          {
+            num:'8.3', name:'Confidence Score',
+            summary:'Infers the candidate\'s confidence from voice and response patterns.',
+            subs:[
+              {num:'8.3.1', name:'Voice Tone & Pace Analysis', desc:'AI analyses speech pace, volume consistency, and voice stability as proxies for confidence.'},
+              {num:'8.3.2', name:'Answer Hesitation Scoring', desc:'Long pauses before or during answers are factored into the confidence score.'},
+              {num:'8.3.3', name:'Eye Contact Score (Camera)', desc:'Percentage of time the candidate maintained eye contact with the camera, mapped to confidence.'},
+            ]
+          },
+          {
+            num:'8.4', name:'Problem-Solving Score',
+            summary:'Assesses analytical thinking and approach to complex problems.',
+            subs:[
+              {num:'8.4.1', name:'Approach Before Answer Rating', desc:'Evaluator rates whether the candidate articulated a clear approach before diving into the solution.'},
+              {num:'8.4.2', name:'Edge Case Consideration', desc:'Score for whether the candidate proactively identified and handled edge cases.'},
+              {num:'8.4.3', name:'Alternative Solution Awareness', desc:'Bonus score if the candidate mentioned or compared alternative approaches.'},
+            ]
+          },
+          {
+            num:'8.5', name:'Detailed Feedback Generation',
+            summary:'Produces rich, actionable feedback narratives for the candidate.',
+            subs:[
+              {num:'8.5.1', name:'AI-Generated Feedback Paragraph', desc:'AI synthesises all scores into a 3–5 sentence narrative paragraph personalised to the candidate.'},
+              {num:'8.5.2', name:'Strength Highlights', desc:'Explicitly calls out 2–3 things the candidate did well during the session.'},
+              {num:'8.5.3', name:'Improvement Areas', desc:'Lists 2–3 specific areas to work on with concrete suggestions (e.g., "Practise explaining recursion with examples").'},
+              {num:'8.5.4', name:'Feedback Delivery Timing', desc:'Feedback released to the candidate immediately after session end (or after evaluator approval for human rounds).'},
+            ]
+          },
+          {
+            num:'8.6', name:'Answer Analysis',
+            summary:'Deep-dives into individual answers for granular review.',
+            subs:[
+              {num:'8.6.1', name:'Answer vs. Ideal Response Comparison', desc:'Student\'s answer is shown alongside the ideal reference answer with highlighted gaps.'},
+              {num:'8.6.2', name:'Key Concept Coverage Check', desc:'AI checks whether the answer covered all key concepts expected for the question.'},
+              {num:'8.6.3', name:'Per-Answer Score Breakdown', desc:'Score card per answer showing accuracy, completeness, depth, and clarity sub-scores.'},
+            ]
+          },
+          {
+            num:'8.7', name:'Improvement Suggestions',
+            summary:'Personalised action items to help the candidate improve before the next attempt.',
+            subs:[
+              {num:'8.7.1', name:'Topic-Linked Resources', desc:'Each weak area links to relevant courses, lectures, or practice sets on the platform.'},
+              {num:'8.7.2', name:'Suggested Retake Interval', desc:'AI recommends when the student should re-attempt the mock interview (e.g., "Retry after 3 days of practice").'},
+              {num:'8.7.3', name:'Peer Benchmark Comparison', desc:'Student\'s scores compared to the batch average so they can gauge relative standing.'},
+            ]
+          },
+          {
+            num:'8.8', name:'Evaluator Comments',
+            summary:'Manual annotations added by human evaluators during or after the session.',
+            subs:[
+              {num:'8.8.1', name:'Per-Question Evaluator Note', desc:'Text field for the evaluator to add a qualitative note for each question during the live session.'},
+              {num:'8.8.2', name:'Overall Evaluator Summary', desc:'Free-text summary the evaluator writes post-session, summarising their overall impression.'},
+              {num:'8.8.3', name:'Hire / Not Hire Recommendation', desc:'Evaluator can mark a recommendation (Hire / Hold / Reject) that feeds into the admin dashboard report.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'🎯', name:'Interview Readiness', ai:true,
+        desc:'Calculates and tracks how prepared a student is for specific companies and roles.',
+        features:[
+          {
+            num:'9.1', name:'Readiness Score',
+            summary:'Overall score representing how interview-ready the student is.',
+            subs:[
+              {num:'9.1.1', name:'Score Calculation Formula', desc:'Weighted composite of aptitude test scores, mock interview performance, topic mastery, and practice consistency.'},
+              {num:'9.1.2', name:'Readiness Score Display (0–100)', desc:'Single score shown prominently on the student\'s placement dashboard with a colour-coded gauge.'},
+              {num:'9.1.3', name:'Score Update Frequency', desc:'Score recalculated after every mock interview, test attempt, or significant practice session.'},
+              {num:'9.1.4', name:'Readiness Score History', desc:'Line chart showing how the student\'s overall readiness score has changed over the past 30 days.'},
+            ]
+          },
+          {
+            num:'9.2', name:'Company-Wise Readiness',
+            summary:'Tailored readiness score calculated per company.',
+            subs:[
+              {num:'9.2.1', name:'Per-Company Readiness Percentage', desc:'Separate readiness % for each company (e.g., TCS: 82%, Amazon: 41%) shown on the company card.'},
+              {num:'9.2.2', name:'Company Readiness Breakdown', desc:'Shows which components (aptitude, technical, communication) are pulling the score up or down for each company.'},
+              {num:'9.2.3', name:'Company Readiness Improvement Plan', desc:'Auto-generated to-do list (e.g., "Attempt 2 Amazon-tagged mock interviews") to raise the company readiness score.'},
+            ]
+          },
+          {
+            num:'9.3', name:'Role-Based Readiness',
+            summary:'Readiness score specific to a target job role.',
+            subs:[
+              {num:'9.3.1', name:'Role Profile Definition', desc:'Readiness is measured against the skill map of the selected role (e.g., SDE-1 requires DS + OS + DBMS).'},
+              {num:'9.3.2', name:'Role Readiness vs. Required Skills', desc:'Side-by-side view of required skills and student\'s current mastery level for each skill.'},
+              {num:'9.3.3', name:'Multiple Role Comparison', desc:'Student can compare their readiness across two or more target roles simultaneously.'},
+            ]
+          },
+          {
+            num:'9.4', name:'Skill Gap Detection',
+            summary:'Identifies specific skills the student needs to develop to be ready.',
+            subs:[
+              {num:'9.4.1', name:'Gap Analysis Table', desc:'Table showing each required skill, the student\'s current proficiency level, and the target level.'},
+              {num:'9.4.2', name:'Critical Gap Highlighting', desc:'Skills with a gap of > 30 points are highlighted in red as "Critical Gaps" requiring urgent attention.'},
+              {num:'9.4.3', name:'Gap-Linked Practice Resources', desc:'Each identified gap links to a curated list of courses, quizzes, and mock interviews for that skill.'},
+            ]
+          },
+          {
+            num:'9.5', name:'Readiness Progression',
+            summary:'Tracks how the student\'s readiness evolves over time.',
+            subs:[
+              {num:'9.5.1', name:'Readiness Progress Chart', desc:'Time-series line chart showing readiness score trajectory over the past 30/60/90 days.'},
+              {num:'9.5.2', name:'Milestone Celebrations', desc:'Pop-up congratulation card when the student crosses a readiness milestone (e.g., 50%, 75%, 90%).'},
+              {num:'9.5.3', name:'Pace vs. Target Date', desc:'If the student has a target placement date, the platform shows whether their improvement pace is sufficient.'},
+            ]
+          },
+          {
+            num:'9.6', name:'Eligibility Thresholds',
+            summary:'Checks whether the student meets a company\'s minimum eligibility criteria.',
+            subs:[
+              {num:'9.6.1', name:'Minimum Readiness Score Gate', desc:'Admin configures a minimum readiness score threshold required to appear for a company\'s test/interview.'},
+              {num:'9.6.2', name:'CGPA / Academic Eligibility Check', desc:'Platform cross-checks the student\'s entered CGPA against the company\'s minimum academic criteria.'},
+              {num:'9.6.3', name:'Eligibility Status Badge', desc:'Eligible / Not Eligible badge shown on each company card with the specific reason if not eligible.'},
+              {num:'9.6.4', name:'Eligibility Improvement Path', desc:'If ineligible, platform shows exactly what the student needs to change to become eligible.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '📈 Analytics & Intelligence',
+    panels: [
+      {
+        icon:'📈', name:'Interview Analytics', ai:false,
+        desc:'Data-driven insights on student performance across all placement activities.',
+        features:[
+          {
+            num:'10.1', name:'Performance Trends',
+            summary:'Shows how the student\'s overall performance has changed over time.',
+            subs:[
+              {num:'10.1.1', name:'Overall Score Trend Chart', desc:'Line chart of the student\'s average mock interview score over the past 8 sessions.'},
+              {num:'10.1.2', name:'Rolling Average Score', desc:'7-day rolling average score to smooth out outlier sessions and show the true trend.'},
+              {num:'10.1.3', name:'Best Session vs. Recent Session', desc:'Highlights the student\'s all-time best performance session versus their most recent one.'},
+            ]
+          },
+          {
+            num:'10.2', name:'Round-Wise Performance',
+            summary:'Breaks down performance by interview round type.',
+            subs:[
+              {num:'10.2.1', name:'Score per Round Type', desc:'Bar chart showing average scores across Aptitude, Technical, HR, Coding, and GD rounds separately.'},
+              {num:'10.2.2', name:'Strongest and Weakest Round', desc:'Auto-identified strongest round (highest avg) and weakest round (lowest avg) highlighted at the top.'},
+              {num:'10.2.3', name:'Round Score Trend', desc:'Per-round trend lines showing whether performance in each type is improving or declining.'},
+            ]
+          },
+          {
+            num:'10.3', name:'Time Analysis',
+            summary:'Analyses how the student uses available time during tests and interviews.',
+            subs:[
+              {num:'10.3.1', name:'Average Time per Question', desc:'How long the student spends on each question on average, compared to the recommended time allocation.'},
+              {num:'10.3.2', name:'Over-Time Question Detection', desc:'Flags questions where the student spent more than 2× the average time, suggesting they got stuck.'},
+              {num:'10.3.3', name:'Time Utilisation Rate', desc:'Percentage of allowed test time used, tracking whether the student is rushing or running out of time.'},
+            ]
+          },
+          {
+            num:'10.4', name:'Mistake Pattern Detection',
+            summary:'Identifies systematic errors the student makes repeatedly.',
+            subs:[
+              {num:'10.4.1', name:'Frequently Wrong Topic Tags', desc:'Topics where the student gets the wrong answer in > 50% of attempts, flagged as systematic weak spots.'},
+              {num:'10.4.2', name:'Common Error Type Analysis', desc:'Categorises mistakes by type: conceptual, calculation error, misread question, or time pressure.'},
+              {num:'10.4.3', name:'Pattern Alert Notification', desc:'Student receives a notification like "You\'ve made 5 errors on Linked List reversal — try this exercise."'},
+            ]
+          },
+          {
+            num:'10.5', name:'Consistency Tracking',
+            summary:'Measures whether the student performs reliably across sessions.',
+            subs:[
+              {num:'10.5.1', name:'Score Variance Metric', desc:'Standard deviation of scores across the last 10 sessions — high variance indicates inconsistency.'},
+              {num:'10.5.2', name:'Consistency Score', desc:'Derived score (0–100) representing performance stability; shown on the analytics dashboard.'},
+              {num:'10.5.3', name:'Session Attendance Rate', desc:'Percentage of scheduled mock sessions the student actually completed, tracking commitment.'},
+            ]
+          },
+          {
+            num:'10.6', name:'Peer Comparison',
+            summary:'Benchmarks the student\'s performance against their batch.',
+            subs:[
+              {num:'10.6.1', name:'Percentile Rank in Batch', desc:'Student\'s overall readiness score ranked as a percentile against all batch members.'},
+              {num:'10.6.2', name:'Topic-Level Peer Comparison', desc:'For each topic, shows whether the student is above or below the batch average.'},
+              {num:'10.6.3', name:'Anonymous Peer Benchmark', desc:'Comparison against peer averages is anonymous — names of other students are not revealed.'},
+            ]
+          },
+          {
+            num:'10.7', name:'Improvement Tracking',
+            summary:'Quantifies and celebrates the student\'s progress from their baseline.',
+            subs:[
+              {num:'10.7.1', name:'Baseline Score Recording', desc:'First mock interview score is recorded as the student\'s baseline for all future comparison.'},
+              {num:'10.7.2', name:'Improvement % from Baseline', desc:'Dashboard shows "+18% improvement from your first session" as a motivational metric.'},
+              {num:'10.7.3', name:'Topic-Level Improvement Heatmap', desc:'Heatmap showing which topics have improved the most and which remain stagnant since baseline.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'🧠', name:'Personalization Engine', ai:true,
+        desc:'AI-driven engine that tailors the placement preparation journey to each student.',
+        features:[
+          {
+            num:'12.1', name:'Personalised Interview Flow',
+            summary:'Adapts the mock interview structure to the student\'s history and goals.',
+            subs:[
+              {num:'12.1.1', name:'Goal-Based Flow Selection', desc:'Student sets a target company/role; engine selects the most relevant mock flow automatically.'},
+              {num:'12.1.2', name:'History-Informed Starting Difficulty', desc:'If the student scored 80%+ last time, their next session starts at a harder difficulty level.'},
+              {num:'12.1.3', name:'Personalised Round Mix', desc:'Engine adjusts round composition (e.g., more HR rounds for a student weak in communication) for each session.'},
+            ]
+          },
+          {
+            num:'12.2', name:'Adaptive Question Difficulty',
+            summary:'Adjusts question difficulty in real-time based on performance.',
+            subs:[
+              {num:'12.2.1', name:'Mid-Session Difficulty Escalation', desc:'Correct streak of 3 answers triggers an automatic step-up in question difficulty.'},
+              {num:'12.2.2', name:'Mid-Session Difficulty Reduction', desc:'Wrong streak of 3 answers triggers a step-down to rebuild confidence before escalating again.'},
+              {num:'12.2.3', name:'Difficulty History per Topic', desc:'System tracks difficulty level performance per topic to personalise future sessions.'},
+            ]
+          },
+          {
+            num:'12.3', name:'Weak Area-Based Questions',
+            summary:'Oversamples questions from topics the student consistently struggles with.',
+            subs:[
+              {num:'12.3.1', name:'Weak Topic Question Weighting', desc:'Questions from identified weak topics appear with 2× frequency in personalised sessions.'},
+              {num:'12.3.2', name:'Weakness Graduation Logic', desc:'Once a weak topic reaches 75% accuracy across 3 sessions, it is no longer overweighted.'},
+              {num:'12.3.3', name:'Weak Area Session Report', desc:'Post-session summary showing how the student performed specifically on their flagged weak areas.'},
+            ]
+          },
+          {
+            num:'12.4', name:'Company-Targeted Prep',
+            summary:'Configures the preparation journey specifically towards a target company.',
+            subs:[
+              {num:'12.4.1', name:'Company Pattern-Matched Questions', desc:'AI selects questions matching the target company\'s documented question patterns and topics.'},
+              {num:'12.4.2', name:'Company Mock Interview Series', desc:'Multi-session mock series that simulates all rounds of a specific company\'s hiring process in sequence.'},
+              {num:'12.4.3', name:'Company Readiness Progress Tracker', desc:'Dedicated progress tracker per target company showing improvement across the mock series.'},
+            ]
+          },
+          {
+            num:'12.5', name:'Dynamic Interview Generation',
+            summary:'Generates a unique, never-before-seen interview for each session using AI.',
+            subs:[
+              {num:'12.5.1', name:'AI-Generated Unique Question Sets', desc:'Each session uses a freshly generated question set so the student never sees repeated questions.'},
+              {num:'12.5.2', name:'Topic Randomisation within Constraints', desc:'Questions are random but constrained to the required topic distribution for the target role.'},
+              {num:'12.5.3', name:'Anti-Memorisation Design', desc:'Paraphrased or context-shifted versions of common questions prevent score inflation from memorisation.'},
+            ]
+          },
+          {
+            num:'12.6', name:'Repeat Practice Optimisation',
+            summary:'Intelligently schedules repeat practice to maximise learning retention.',
+            subs:[
+              {num:'12.6.1', name:'Spaced Repetition Scheduling', desc:'Topics are re-tested at intervals (1 day → 3 days → 7 days → 14 days) based on the SM-2 algorithm.'},
+              {num:'12.6.2', name:'Practice Session Calendar', desc:'Auto-generated weekly practice calendar showing recommended topics and session types for each day.'},
+              {num:'12.6.3', name:'Over-Practice Detection', desc:'If the student repeats the same topic too frequently, the engine redirects them to neglected topics.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '🗄️ Question Bank & Community',
+    panels: [
+      {
+        icon:'🗄️', name:'Question Bank (Interview)', ai:false,
+        desc:'Centralized repository of all interview-related questions across types and topics.',
+        features:[
+          {
+            num:'11.1', name:'Aptitude Question Bank',
+            summary:'Repository of quantitative, logical reasoning, and verbal questions.',
+            subs:[
+              {num:'11.1.1', name:'MCQ Format with 4 Options', desc:'Each aptitude question has exactly 4 options, one correct, with a detailed solution explanation.'},
+              {num:'11.1.2', name:'Topic Tagging (QA, LR, VR)', desc:'Each question tagged under Quantitative Aptitude, Logical Reasoning, or Verbal Reasoning sub-category.'},
+              {num:'11.1.3', name:'Solution & Shortcut Tips', desc:'Each question has a full solution and, where applicable, a shortcut method for faster solving.'},
+              {num:'11.1.4', name:'Estimated Solve Time', desc:'Each question carries an estimated solve time (in seconds) used for time allocation in tests.'},
+            ]
+          },
+          {
+            num:'11.2', name:'Coding Problem Bank',
+            summary:'Library of programming challenges across data structures and algorithms.',
+            subs:[
+              {num:'11.2.1', name:'Problem Statement with Examples', desc:'Each problem has a clear description, input/output examples, and constraints specification.'},
+              {num:'11.2.2', name:'Pre-Loaded Test Cases', desc:'Each problem includes 5–20 test cases (mix of basic, edge, and stress cases) for auto evaluation.'},
+              {num:'11.2.3', name:'Difficulty Tag (Easy/Med/Hard)', desc:'Each problem tagged by difficulty; used in round configuration and personalised session assembly.'},
+              {num:'11.2.4', name:'Reference Solution with Complexity', desc:'Reference solution provided with time and space complexity analysis for creator and admin reference.'},
+            ]
+          },
+          {
+            num:'11.3', name:'Technical Question Bank',
+            summary:'Subject-matter MCQs covering CS fundamentals for technical rounds.',
+            subs:[
+              {num:'11.3.1', name:'Subject-Wise Organisation', desc:'Questions organised by subject: DSA, DBMS, OS, CN, OOP, System Design, SQL, etc.'},
+              {num:'11.3.2', name:'Concept Tag per Question', desc:'Each question tagged to a specific concept (e.g., "Binary Search Tree Traversal") for granular tracking.'},
+              {num:'11.3.3', name:'Code Snippet Questions', desc:'Questions involving reading/debugging code snippets rendered with syntax highlighting.'},
+            ]
+          },
+          {
+            num:'11.4', name:'HR Question Bank',
+            summary:'Behavioural and situational questions for HR interview rounds.',
+            subs:[
+              {num:'11.4.1', name:'Behavioural Question Types', desc:'"Tell me about yourself", STAR-format situational questions, strengths/weaknesses, career goals.'},
+              {num:'11.4.2', name:'Ideal Answer Framework', desc:'Each HR question has a suggested answer framework (e.g., STAR: Situation, Task, Action, Result).'},
+              {num:'11.4.3', name:'Company-Specific HR Questions', desc:'HR questions tagged to specific companies based on documented past interview experiences.'},
+            ]
+          },
+          {
+            num:'11.5', name:'GD Topics Bank',
+            summary:'Library of Group Discussion topics across categories.',
+            subs:[
+              {num:'11.5.1', name:'Topic Categories', desc:'Topics organised into: Current Affairs, Abstract, Business/Economics, Technology, Social Issues, and Case Studies.'},
+              {num:'11.5.2', name:'Key Points per Topic', desc:'Each topic has pre-loaded key arguments (for and against) visible only to moderators for post-GD feedback.'},
+              {num:'11.5.3', name:'Topic Difficulty Rating', desc:'Topics rated as Easy (familiar), Medium (nuanced), or Hard (controversial/specialised).'},
+            ]
+          },
+          {
+            num:'11.6', name:'Difficulty Tagging',
+            summary:'Applies and manages difficulty labels across all question types.',
+            subs:[
+              {num:'11.6.1', name:'Manual Difficulty Assignment', desc:'Creator or admin manually assigns Easy / Medium / Hard / Very Hard to each question at upload time.'},
+              {num:'11.6.2', name:'AI-Suggested Difficulty', desc:'AI analyses question complexity and suggests a difficulty label that the creator can accept or override.'},
+              {num:'11.6.3', name:'Difficulty Recalibration from Analytics', desc:'If 80%+ of students answer a "Hard" question correctly, the system suggests reclassifying it as Medium.'},
+            ]
+          },
+          {
+            num:'11.7', name:'Company Tagging',
+            summary:'Associates questions with specific companies they are known to ask.',
+            subs:[
+              {num:'11.7.1', name:'Company Association per Question', desc:'Each question can be tagged to one or more companies (e.g., "Asked at TCS Ninja 2024").'},
+              {num:'11.7.2', name:'Source Attribution', desc:'Questions sourced from documented interviews include the source attribution (e.g., "Reported by Alumni, Dec 2024").'},
+              {num:'11.7.3', name:'Company-Tag Filter in Bank', desc:'Admin or creator can filter the question bank by company tag for targeted round assembly.'},
+            ]
+          },
+          {
+            num:'11.8', name:'Versioning',
+            summary:'Tracks changes to questions over time for integrity and audit.',
+            subs:[
+              {num:'11.8.1', name:'Edit History per Question', desc:'Every edit to a question creates a version entry with the editor\'s name, timestamp, and change description.'},
+              {num:'11.8.2', name:'Rollback to Prior Version', desc:'Admin can restore a question to any prior version if recent edits introduced errors.'},
+              {num:'11.8.3', name:'Version Lock for Active Tests', desc:'A question in an active or scheduled test is locked from editing to prevent inconsistency.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'👥', name:'Group & Community', ai:false,
+        desc:'Peer-based collaborative features for group practice and community-driven learning.',
+        features:[
+          {
+            num:'13.1', name:'Group Creation',
+            summary:'Enables formation of student groups for collaborative placement preparation.',
+            subs:[
+              {num:'13.1.1', name:'Admin-Created Groups', desc:'Admin creates official groups aligned with batches, branches, or target companies for organised prep.'},
+              {num:'13.1.2', name:'Student-Initiated Groups', desc:'Students can create informal study groups and invite peers by email or username.'},
+              {num:'13.1.3', name:'Group Name, Description & Icon', desc:'Groups have a name, optional description, and a selectable icon for visual identification.'},
+              {num:'13.1.4', name:'Group Membership Limit', desc:'Admin sets a maximum group size (default 20); creator can request an increase from admin.'},
+            ]
+          },
+          {
+            num:'13.2', name:'Peer Practice Sessions',
+            summary:'Enables students to conduct mock interviews with each other.',
+            subs:[
+              {num:'13.2.1', name:'Schedule Peer Mock Session', desc:'Student sends a practice session invite to a peer with a proposed time slot and interview type.'},
+              {num:'13.2.2', name:'Role Alternation (Interviewer/Interviewee)', desc:'Peers take turns playing interviewer and interviewee; the platform tracks which role each takes per session.'},
+              {num:'13.2.3', name:'Session Question Set Assignment', desc:'Platform assigns a question set from the bank for the peer "interviewer" to ask from, ensuring structure.'},
+              {num:'13.2.4', name:'Mutual Feedback Exchange', desc:'Both participants rate and comment on each other\'s performance after the session.'},
+            ]
+          },
+          {
+            num:'13.3', name:'Group Test Participation',
+            summary:'Allows a group to collectively take the same test simultaneously.',
+            subs:[
+              {num:'13.3.1', name:'Group Test Launch', desc:'Admin or group leader launches a test for all group members to start at the same time.'},
+              {num:'13.3.2', name:'Simultaneous Start Synchronisation', desc:'Countdown timer ensures all group members begin the test at exactly the same moment.'},
+              {num:'13.3.3', name:'Group Score Summary After Test', desc:'After all members submit, a group performance summary is shared showing everyone\'s scores.'},
+            ]
+          },
+          {
+            num:'13.4', name:'Group GD Sessions',
+            summary:'Facilitates internal GD practice within a student group.',
+            subs:[
+              {num:'13.4.1', name:'Group Member-Initiated GD', desc:'Any group member can schedule a practice GD with fellow group members as participants.'},
+              {num:'13.4.2', name:'Random Moderator Assignment', desc:'The platform randomly assigns one group member as the session moderator for each practice GD.'},
+              {num:'13.4.3', name:'Group GD History Log', desc:'All past GD sessions within a group are archived with topic, date, participants, and recording link.'},
+            ]
+          },
+          {
+            num:'13.5', name:'Group Leaderboard',
+            summary:'Ranks group members by performance metrics for healthy competition.',
+            subs:[
+              {num:'13.5.1', name:'Weekly Leaderboard Reset', desc:'Leaderboard resets every Monday, ranking by total practice points earned in the prior week.'},
+              {num:'13.5.2', name:'Score Components on Leaderboard', desc:'Leaderboard shows points broken down by mock interviews done, tests taken, and GDs participated in.'},
+              {num:'13.5.3', name:'All-Time Top Performers', desc:'Separate "All-Time" tab showing cumulative top performers since the group was formed.'},
+            ]
+          },
+          {
+            num:'13.6', name:'Peer Comparison',
+            summary:'Allows students to benchmark their performance against specific peers.',
+            subs:[
+              {num:'13.6.1', name:'Head-to-Head Comparison View', desc:'Side-by-side score comparison with a selected peer across all performance dimensions.'},
+              {num:'13.6.2', name:'Anonymous Option', desc:'Students can opt to make their scores visible or anonymous to the group.'},
+              {num:'13.6.3', name:'Comparison Notification', desc:'"Your peer X just scored 85% on Amazon mock — you\'re at 72%. Check your weak areas." motivational nudge.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '📅 Scheduling, Recording & Notifications',
+    panels: [
+      {
+        icon:'📅', name:'Scheduling System', ai:false,
+        desc:'End-to-end scheduling infrastructure for interviews, GDs, and practice sessions.',
+        features:[
+          {
+            num:'14.1', name:'Interview Scheduling',
+            summary:'Books and manages student interview appointments.',
+            subs:[
+              {num:'14.1.1', name:'Admin-Set Available Slots', desc:'Admin creates blocks of available interview slots with interviewer assignment for each slot.'},
+              {num:'14.1.2', name:'Student Slot Selection UI', desc:'Student-facing calendar showing available slots; student clicks to book their preferred time.'},
+              {num:'14.1.3', name:'Slot Confirmation & Reminder', desc:'Booking confirmation sent via email and in-app; reminder sent 1 hour before the interview.'},
+              {num:'14.1.4', name:'Reschedule / Cancel Option', desc:'Student can cancel or reschedule up to 12 hours before the interview; admin is notified automatically.'},
+            ]
+          },
+          {
+            num:'14.2', name:'GD Scheduling',
+            summary:'Schedules Group Discussion sessions for batches or groups.',
+            subs:[
+              {num:'14.2.1', name:'GD Session Time Block Creation', desc:'Admin creates a GD time block and assigns an eligible batch or group to it.'},
+              {num:'14.2.2', name:'Auto-Assign to Session Groups', desc:'System auto-divides the batch into parallel GD sessions running simultaneously to minimise scheduling delays.'},
+              {num:'14.2.3', name:'GD Slot Confirmation to Participants', desc:'All assigned participants receive a session confirmation with a join link and moderator name.'},
+            ]
+          },
+          {
+            num:'14.3', name:'Reminder System',
+            summary:'Automated reminder pipeline for all scheduled events.',
+            subs:[
+              {num:'14.3.1', name:'24-Hour Advance Reminder', desc:'Email + in-app reminder sent 24 hours before any scheduled interview, GD, or test.'},
+              {num:'14.3.2', name:'1-Hour Final Reminder', desc:'Push notification and email reminder sent 1 hour before the session start time.'},
+              {num:'14.3.3', name:'10-Minute Join Prompt', desc:'In-app banner appears 10 minutes before the session with a "Join Now" button for instant access.'},
+              {num:'14.3.4', name:'Missed Session Alert', desc:'If a student doesn\'t join within 5 minutes of the start time, admin and student both receive a missed session alert.'},
+            ]
+          },
+          {
+            num:'14.4', name:'Calendar Integration',
+            summary:'Syncs placement events with external calendar applications.',
+            subs:[
+              {num:'14.4.1', name:'Google Calendar Sync', desc:'One-click "Add to Google Calendar" on every confirmation screen creates a calendar event with join link.'},
+              {num:'14.4.2', name:'Outlook / iCal .ics Download', desc:'Download a standard .ics file compatible with Outlook, Apple Calendar, and other calendar apps.'},
+              {num:'14.4.3', name:'Calendar Re-Sync on Reschedule', desc:'If a session is rescheduled, the updated time is pushed to all linked calendars automatically.'},
+            ]
+          },
+          {
+            num:'14.5', name:'Slot Booking',
+            summary:'Student-facing interface for selecting and confirming interview slots.',
+            subs:[
+              {num:'14.5.1', name:'Visual Availability Calendar', desc:'Month/week calendar view showing green (available), yellow (limited), and grey (full) slot indicators.'},
+              {num:'14.5.2', name:'Time Zone Support', desc:'Slots displayed in the student\'s local time zone, auto-detected from browser settings.'},
+              {num:'14.5.3', name:'Double-Booking Prevention', desc:'System prevents a student from booking two slots that overlap in time.'},
+            ]
+          },
+          {
+            num:'14.6', name:'Batch Scheduling',
+            summary:'Admin tool for scheduling events for an entire batch at once.',
+            subs:[
+              {num:'14.6.1', name:'Batch Test Scheduling', desc:'Admin schedules a test for an entire batch; all batch members see it as "Upcoming" on their dashboards.'},
+              {num:'14.6.2', name:'Drive Schedule Timeline', desc:'Admin creates a full placement drive timeline (aptitude → technical → GD → HR) with dates per round.'},
+              {num:'14.6.3', name:'Batch Schedule Announcement', desc:'On publishing a batch schedule, all batch members receive an in-app + email announcement with the full timeline.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'📼', name:'Recording & Playback', ai:false,
+        desc:'Storage and replay infrastructure for all recorded placement sessions.',
+        features:[
+          {
+            num:'15.1', name:'Interview Recording',
+            summary:'Captures complete mock and live interview sessions.',
+            subs:[
+              {num:'15.1.1', name:'Auto-Start on Session Begin', desc:'Recording triggers automatically when the session officially starts; no manual step for student or admin.'},
+              {num:'15.1.2', name:'Video + Audio + Screen Capture', desc:'Combined recording of webcam video, microphone audio, and (if shared) screen content.'},
+              {num:'15.1.3', name:'Storage Metadata Tagging', desc:'Recording tagged with: student ID, company, round type, session date, and duration for searchability.'},
+              {num:'15.1.4', name:'Consent-Gated Start', desc:'Recording only begins after the student accepts the consent notice; session cannot start without acceptance.'},
+            ]
+          },
+          {
+            num:'15.2', name:'GD Recording',
+            summary:'Records full multi-party Group Discussion sessions.',
+            subs:[
+              {num:'15.2.1', name:'Multi-Party Video Recording', desc:'All participant video and audio streams are captured and stitched into a single multi-view recording.'},
+              {num:'15.2.2', name:'Speaker-Labelled Transcript', desc:'Transcript generated post-session with each participant\'s speech segments clearly attributed by name.'},
+              {num:'15.2.3', name:'Individual Segment Export', desc:'Admin can export only a specific participant\'s speaking segments as a standalone clip.'},
+            ]
+          },
+          {
+            num:'15.3', name:'Session Playback',
+            summary:'Interface for reviewing recorded sessions.',
+            subs:[
+              {num:'15.3.1', name:'In-Platform Media Player', desc:'All recordings playable within the platform using a built-in player; no external app required.'},
+              {num:'15.3.2', name:'Playback Speed Control', desc:'Playback speed adjustable from 0.5× to 2× for efficient review.'},
+              {num:'15.3.3', name:'Chapter / Question Jump', desc:'Timeline markers for each question or topic segment enabling instant navigation to any point.'},
+              {num:'15.3.4', name:'Transcript Sync', desc:'Transcript scrolls in sync with playback; clicking any transcript line seeks the video to that moment.'},
+            ]
+          },
+          {
+            num:'15.4', name:'Answer Replay',
+            summary:'Allows replay of individual answer segments for focused review.',
+            subs:[
+              {num:'15.4.1', name:'Per-Answer Clip Extraction', desc:'Each Q&A pair is extractable as a short clip without downloading the full session recording.'},
+              {num:'15.4.2', name:'Answer vs. AI Feedback Side-by-Side', desc:'Answer clip shown alongside the AI\'s evaluation criteria for that answer for self-review.'},
+              {num:'15.4.3', name:'Bookmark Specific Answers', desc:'Student can bookmark individual answer clips they want to review later, creating a personal review library.'},
+            ]
+          },
+          {
+            num:'15.5', name:'Performance Review Mode',
+            summary:'Structured self-review flow guided by performance data.',
+            subs:[
+              {num:'15.5.1', name:'Guided Review Playlist', desc:'Platform auto-generates a "review playlist" of the student\'s 5 weakest answers from recent sessions.'},
+              {num:'15.5.2', name:'Compare with Ideal Answer', desc:'Side-by-side view of the student\'s recorded answer vs. a model answer for the same question.'},
+              {num:'15.5.3', name:'Improvement Action After Review', desc:'At the end of the review, a "Practice This Topic" button links directly to the relevant practice set.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'🔔', name:'Notification System', ai:false,
+        desc:'Multi-channel notification engine for all placement-related alerts.',
+        features:[
+          {
+            num:'17.1', name:'Interview Reminders',
+            summary:'Automated reminders for upcoming interview sessions.',
+            subs:[
+              {num:'17.1.1', name:'24-Hour Reminder Email', desc:'Email reminder sent 24 hours before the interview with session details and join link.'},
+              {num:'17.1.2', name:'1-Hour Push Notification', desc:'Mobile/desktop push notification sent 1 hour before, with a "Join Now" deep link.'},
+              {num:'17.1.3', name:'10-Minute In-App Banner', desc:'Persistent banner inside the platform appearing 10 minutes before with countdown timer.'},
+            ]
+          },
+          {
+            num:'17.2', name:'GD Alerts',
+            summary:'Notifications specific to Group Discussion sessions.',
+            subs:[
+              {num:'17.2.1', name:'New GD Assignment Notification', desc:'Student notified when assigned to a GD session, with session date, time, and group members listed.'},
+              {num:'17.2.2', name:'GD Result Notification', desc:'Student receives a notification when their GD evaluation report and scores are ready.'},
+              {num:'17.2.3', name:'GD Cancellation Alert', desc:'Immediate notification if a GD session is cancelled or rescheduled, with updated details.'},
+            ]
+          },
+          {
+            num:'17.3', name:'Readiness Alerts',
+            summary:'Proactive nudges to maintain and improve interview readiness.',
+            subs:[
+              {num:'17.3.1', name:'Readiness Drop Alert', desc:'"Your readiness score dropped by 5 points this week — here\'s why and what to do" notification.'},
+              {num:'17.3.2', name:'Inactivity Nudge', desc:'If no placement activity for 3+ days, a "Don\'t break your prep momentum" reminder is sent.'},
+              {num:'17.3.3', name:'Readiness Milestone Alert', desc:'Congratulatory notification when the student crosses a readiness milestone (e.g., 75%+ for a company).'},
+            ]
+          },
+          {
+            num:'17.4', name:'Feedback Notifications',
+            summary:'Alerts the student when new evaluation feedback is available.',
+            subs:[
+              {num:'17.4.1', name:'AI Feedback Ready Notification', desc:'"Your Mock Interview feedback is ready — click to view your score and improvement plan."'},
+              {num:'17.4.2', name:'Human Evaluator Feedback Alert', desc:'Notifies the student when a human evaluator has published their debrief notes for a session.'},
+              {num:'17.4.3', name:'Assignment Score Published Alert', desc:'Alert when a manually graded component (e.g., HR round evaluation) has been scored and released.'},
+            ]
+          },
+          {
+            num:'17.5', name:'Improvement Suggestions',
+            summary:'Proactive AI-generated preparation tips pushed to the student.',
+            subs:[
+              {num:'17.5.1', name:'Weekly Prep Digest', desc:'Weekly email/notification summarising the student\'s progress, top 3 weak areas, and a prep plan for the week.'},
+              {num:'17.5.2', name:'Practice Recommendation Push', desc:'"You have a TCS interview in 5 days — take this Aptitude Practice Test now" contextual recommendation.'},
+              {num:'17.5.3', name:'Personalised Tip of the Day', desc:'Daily micro-tip personalised to the student\'s weakest area (e.g., "Today\'s tip: How to answer \'Tell me about yourself\' in 2 minutes").'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '🖥️ Dashboards, Access & Infrastructure',
+    panels: [
+      {
+        icon:'🖥️', name:'Dashboard System', ai:false,
+        desc:'Centralised dashboards giving students, admins, and companies a real-time overview.',
+        features:[
+          {
+            num:'18.1', name:'Student Interview Dashboard',
+            summary:'Main landing page for students within the placement module.',
+            subs:[
+              {num:'18.1.1', name:'Readiness Score Widget', desc:'Large, prominent readiness score gauge at the top of the dashboard with delta vs. last week.'},
+              {num:'18.1.2', name:'Upcoming Sessions Widget', desc:'Chronological list of upcoming interviews, GDs, and tests with join links and countdown timers.'},
+              {num:'18.1.3', name:'Recent Activity Feed', desc:'List of the student\'s last 5 placement activities (mock done, test taken, GD attended) with date and score.'},
+              {num:'18.1.4', name:'Quick Practice CTA', desc:'"Practice Now" button leading to a one-click personalized mock session based on current weak areas.'},
+            ]
+          },
+          {
+            num:'18.2', name:'Performance Overview',
+            summary:'Summary of the student\'s performance across all interview dimensions.',
+            subs:[
+              {num:'18.2.1', name:'Score Summary Cards', desc:'Cards for Technical, Communication, Confidence, and Problem-Solving scores showing current averages.'},
+              {num:'18.2.2', name:'Round-Type Performance Chart', desc:'Radar/spider chart showing performance across Aptitude, Technical, HR, Coding, and GD.'},
+              {num:'18.2.3', name:'Sessions Completed Count', desc:'Total mock sessions, GDs, and tests completed displayed as milestone counters.'},
+            ]
+          },
+          {
+            num:'18.3', name:'Readiness Insights',
+            summary:'AI-generated contextual insights on what the student should focus on.',
+            subs:[
+              {num:'18.3.1', name:'Top 3 Priority Actions', desc:'AI lists the 3 highest-impact actions the student can take right now (e.g., "Take a Coding Mock for Amazon").'},
+              {num:'18.3.2', name:'Company Readiness Snapshot', desc:'Compact table of all target companies with their readiness percentage and a colour-coded status (green/amber/red).'},
+              {num:'18.3.3', name:'Predicted Interview Date Countdown', desc:'If a company drive is scheduled, a countdown shows "TCS Interview in 8 days — your readiness: 71%".'},
+            ]
+          },
+          {
+            num:'18.4', name:'Upcoming Interviews',
+            summary:'Calendar view of all scheduled placement events.',
+            subs:[
+              {num:'18.4.1', name:'Calendar View with Events', desc:'Week/month calendar showing all booked interviews, GDs, and scheduled tests.'},
+              {num:'18.4.2', name:'Event Detail on Click', desc:'Clicking an event shows: company, round type, date/time, interviewer name, and join link.'},
+              {num:'18.4.3', name:'Add to External Calendar', desc:'"Add to Google / Outlook Calendar" link on each event for easy personal calendar sync.'},
+            ]
+          },
+          {
+            num:'18.5', name:'Past Sessions',
+            summary:'Archive of all completed placement sessions with quick access to reports.',
+            subs:[
+              {num:'18.5.1', name:'Session History Table', desc:'Paginated table of all past sessions: type, company, date, score, and feedback availability status.'},
+              {num:'18.5.2', name:'Direct Access to Feedback Report', desc:'"View Report" link on each session row opens the full evaluation report in one click.'},
+              {num:'18.5.3', name:'Filter / Search Past Sessions', desc:'Filter past sessions by company, round type, date range, or score range for quick retrieval.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'🔐', name:'Access & Control', ai:false,
+        desc:'Role-based and eligibility-based access governance for the placement module.',
+        features:[
+          {
+            num:'19.1', name:'Role-Based Access',
+            summary:'Controls platform access based on the user\'s assigned role.',
+            subs:[
+              {num:'19.1.1', name:'Student Role Access Scope', desc:'Students access only their own sessions, readiness data, and assigned company flows — no admin or HR data.'},
+              {num:'19.1.2', name:'Admin Full Access', desc:'Admins have read/write access to all company profiles, flows, batches, sessions, and analytics.'},
+              {num:'19.1.3', name:'HR / Company Role Access', desc:'HR users can access only the sessions and candidate data for their own company; cannot view other companies.'},
+              {num:'19.1.4', name:'Evaluator Read-Only Access', desc:'External evaluators have read-only access to assigned sessions for scoring; cannot modify any other data.'},
+            ]
+          },
+          {
+            num:'19.2', name:'Company-Specific Access',
+            summary:'Restricts placement content and data to company-relevant users.',
+            subs:[
+              {num:'19.2.1', name:'Company Data Isolation', desc:'Each company\'s interview data, flows, and candidate reports are isolated — not visible to other companies.'},
+              {num:'19.2.2', name:'Student Company Visibility Rules', desc:'Students can only see company profiles and apply for companies to which their batch has been assigned.'},
+              {num:'19.2.3', name:'HR Multi-Company Management', desc:'An HR user can be assigned to manage multiple companies; they see aggregated data only for their assigned companies.'},
+            ]
+          },
+          {
+            num:'19.3', name:'Batch-Based Access',
+            summary:'Restricts access to placement events and content based on batch membership.',
+            subs:[
+              {num:'19.3.1', name:'Batch-Gated Company Drives', desc:'A placement drive is visible and accessible only to students in the admin-specified batch.'},
+              {num:'19.3.2', name:'Batch Expiry Control', desc:'A batch\'s access to a drive automatically expires on the configured drive end date.'},
+              {num:'19.3.3', name:'Batch Transfer', desc:'Admin can move a student from one batch to another, updating their access to all batch-gated drives.'},
+            ]
+          },
+          {
+            num:'19.4', name:'Eligibility Control',
+            summary:'Enforces academic and performance prerequisites before test/interview access.',
+            subs:[
+              {num:'19.4.1', name:'CGPA Gate Enforcement', desc:'If a company requires minimum 7.0 CGPA, students below this threshold cannot access that company\'s tests.'},
+              {num:'19.4.2', name:'Readiness Score Minimum Gate', desc:'Admin can block access to a company\'s live interview until the student\'s readiness score exceeds a threshold.'},
+              {num:'19.4.3', name:'Prerequisite Round Completion', desc:'Student cannot access Round 2 of a company flow until Round 1 is completed and passed.'},
+            ]
+          },
+          {
+            num:'19.5', name:'Permission Management',
+            summary:'Granular feature-level permission controls.',
+            subs:[
+              {num:'19.5.1', name:'Feature Toggle per Batch', desc:'Admin enables/disables specific features (e.g., AI Tutor, Peer Practice, GD Recording) per batch.'},
+              {num:'19.5.2', name:'Recording Access Permission', desc:'Admin controls whether students can view their own session recordings or only evaluators can.'},
+              {num:'19.5.3', name:'Export Permission', desc:'Admin controls whether students and HR can download score reports or only view them on-platform.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'⚙️', name:'System Infra', ai:false,
+        desc:'Core technical infrastructure powering real-time communication, scaling, and reliability.',
+        features:[
+          {
+            num:'20.1', name:'Real-Time (WebRTC)',
+            summary:'Low-latency, peer-to-peer communication layer for all live sessions.',
+            subs:[
+              {num:'20.1.1', name:'WebRTC Peer Connection Handling', desc:'Platform manages WebRTC handshaking, ICE candidate exchange, and STUN/TURN server fallback automatically.'},
+              {num:'20.1.2', name:'Adaptive Bitrate Video', desc:'Video stream quality adapts dynamically based on each participant\'s measured bandwidth.'},
+              {num:'20.1.3', name:'TURN Server Failover', desc:'If direct peer connection fails, traffic is routed through a TURN server to ensure session continuity.'},
+              {num:'20.1.4', name:'Connection Quality Monitoring', desc:'Real-time RTT, jitter, and packet loss metrics tracked per session; displayed as a quality indicator in-session.'},
+            ]
+          },
+          {
+            num:'20.2', name:'Session Management',
+            summary:'Handles the full lifecycle of a placement session from creation to archival.',
+            subs:[
+              {num:'20.2.1', name:'Session State Machine', desc:'Sessions move through defined states: Scheduled → Active → Completed → Archived, with timestamps per transition.'},
+              {num:'20.2.2', name:'Session Token & Secure Join Links', desc:'Each session generates a signed, time-limited join token; expired or tampered tokens are rejected.'},
+              {num:'20.2.3', name:'Reconnection Handling', desc:'If a participant drops, they can rejoin within 3 minutes using their original token without losing session state.'},
+            ]
+          },
+          {
+            num:'20.3', name:'Event Logging',
+            summary:'Comprehensive event log for all platform actions.',
+            subs:[
+              {num:'20.3.1', name:'Per-Action Event Emission', desc:'Every significant action (join, submit, score, flag) emits a structured log event to the event store.'},
+              {num:'20.3.2', name:'Structured Log Format', desc:'Logs follow a consistent schema: event_type, actor_id, session_id, timestamp, metadata.'},
+              {num:'20.3.3', name:'Log Retention Policy', desc:'Events retained for 1 year in hot storage; archived to cold storage for 5 years for compliance.'},
+            ]
+          },
+          {
+            num:'20.4', name:'Scalability',
+            summary:'Architecture designed to handle large concurrent placement drives.',
+            subs:[
+              {num:'20.4.1', name:'Horizontal Auto-Scaling', desc:'Service instances auto-scale based on concurrent session count; scales down after demand drops.'},
+              {num:'20.4.2', name:'Load Balancer with Session Affinity', desc:'Load balancer routes reconnecting participants back to the same server instance using session affinity.'},
+              {num:'20.4.3', name:'Peak Load Testing', desc:'Platform is load-tested quarterly to validate performance at 5× normal concurrent session count.'},
+            ]
+          },
+          {
+            num:'20.5', name:'Background Processing',
+            summary:'Asynchronous job processing for non-time-critical tasks.',
+            subs:[
+              {num:'20.5.1', name:'Recording Processing Queue', desc:'Recording stitching, transcription, and storage are handled asynchronously via a job queue after session end.'},
+              {num:'20.5.2', name:'Score Computation Jobs', desc:'Complex score calculations (percentile, readiness score) run as background jobs to avoid blocking the UI.'},
+              {num:'20.5.3', name:'Notification Dispatch Queue', desc:'All email and push notifications are queued and dispatched by a dedicated notification worker with retry logic.'},
+            ]
+          },
+        ]
+      },
+
+      {
+        icon:'🛡️', name:'Security', ai:false,
+        desc:'Comprehensive security controls protecting session integrity, data, and user privacy.',
+        features:[
+          {
+            num:'21.1', name:'Secure Sessions',
+            summary:'Protects live interview and test sessions from unauthorised access.',
+            subs:[
+              {num:'21.1.1', name:'JWT-Based Session Tokens', desc:'All session access controlled via short-lived JWTs; tokens expire after 1 hour and require re-authentication.'},
+              {num:'21.1.2', name:'Signed Join Links', desc:'Session join links are HMAC-signed; unsigned or tampered links are rejected with a 403 error.'},
+              {num:'21.1.3', name:'Single-Device Enforcement', desc:'A session token is bound to the first device that uses it; subsequent logins from a different device are blocked.'},
+            ]
+          },
+          {
+            num:'21.2', name:'Proctoring Security',
+            summary:'Security measures specific to the proctoring layer.',
+            subs:[
+              {num:'21.2.1', name:'Encrypted Video / Audio Streams', desc:'All webcam and microphone streams transmitted over DTLS-SRTP encryption.'},
+              {num:'21.2.2', name:'Proctoring Data Access Control', desc:'Violation snapshots and session recordings accessible only to authorised proctors and admins.'},
+              {num:'21.2.3', name:'Proctoring Data Retention Policy', desc:'Proctoring evidence data retained for 90 days post-session, then auto-deleted unless flagged for dispute.'},
+            ]
+          },
+          {
+            num:'21.3', name:'Data Encryption',
+            summary:'Encrypts all sensitive data at rest and in transit.',
+            subs:[
+              {num:'21.3.1', name:'TLS 1.3 for All API Traffic', desc:'All client-server communication enforced over TLS 1.3; HTTP requests are redirected to HTTPS.'},
+              {num:'21.3.2', name:'AES-256 for Data at Rest', desc:'Recordings, evaluation reports, and student PII stored with AES-256 encryption on the storage layer.'},
+              {num:'21.3.3', name:'Database Field-Level Encryption', desc:'Sensitive fields (CGPA, contact info, scores) encrypted at the database field level.'},
+            ]
+          },
+          {
+            num:'21.4', name:'Audit Logs',
+            summary:'Immutable logs of all security-relevant actions for compliance.',
+            subs:[
+              {num:'21.4.1', name:'Admin Action Audit Trail', desc:'All admin actions (role change, score override, session terminate) logged with actor ID and timestamp.'},
+              {num:'21.4.2', name:'Immutable Log Storage', desc:'Audit logs written to an append-only store; no admin or system process can modify or delete them.'},
+              {num:'21.4.3', name:'Audit Log Export for Compliance', desc:'Admin can export audit logs filtered by date range, actor, or event type for regulatory review.'},
+            ]
+          },
+          {
+            num:'21.5', name:'Fraud Detection',
+            summary:'Identifies and flags suspicious platform-level behaviour.',
+            subs:[
+              {num:'21.5.1', name:'Account Sharing Detection', desc:'Flags when the same account logs in from two geographically distinct IPs within a short time window.'},
+              {num:'21.5.2', name:'Score Anomaly Detection', desc:'AI flags sudden large score jumps (e.g., 40% to 95% in one session) for proctor review as possible impersonation.'},
+              {num:'21.5.3', name:'Blacklist Management', desc:'Admin can blacklist specific IPs or devices from accessing placement sessions after confirmed fraud.'},
+              {num:'21.5.4', name:'Velocity Limit on Test Attempts', desc:'Rate limiting on test attempt submissions to prevent scripted/automated answer submission exploits.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+
+  {
+    label: '🤖 AI Interview Intelligence',
+    panels: [
+      {
+        icon:'🤖', name:'AI Interview Intelligence', ai:true,
+        desc:'Cross-cutting AI capabilities powering all intelligent features in the placement module.',
+        features:[
+          {
+            num:'16.1', name:'AI Question Generation',
+            summary:'Generates fresh, contextually relevant interview questions using AI.',
+            subs:[
+              {num:'16.1.1', name:'Role & Topic-Constrained Generation', desc:'AI generates questions constrained to the required role, topic, and difficulty parameters.'},
+              {num:'16.1.2', name:'Question Uniqueness Check', desc:'Generated questions are checked against the existing bank for similarity; duplicates are rejected and regenerated.'},
+              {num:'16.1.3', name:'Multi-Format Generation', desc:'AI can generate MCQ, open-ended, coding problem statement, or scenario-based question formats on demand.'},
+              {num:'16.1.4', name:'Human Review Queue', desc:'AI-generated questions enter a human review queue before being added to the production bank.'},
+            ]
+          },
+          {
+            num:'16.2', name:'Follow-Up Reasoning',
+            summary:'AI generates contextual follow-up questions based on the candidate\'s answer.',
+            subs:[
+              {num:'16.2.1', name:'Answer Parsing for Follow-Up Trigger', desc:'AI parses the candidate\'s answer for incomplete concepts or gaps that warrant a follow-up probe.'},
+              {num:'16.2.2', name:'Contextual Follow-Up Phrasing', desc:'Follow-up is phrased to naturally reference the candidate\'s previous answer (e.g., "You mentioned caching — can you explain…").'},
+              {num:'16.2.3', name:'Depth Control Parameter', desc:'Follow-up depth is configurable: 0 (no follow-ups), 1 (one level deep), or 2 (two levels of probing).'},
+            ]
+          },
+          {
+            num:'16.3', name:'NLP Answer Evaluation',
+            summary:'Natural Language Processing-based scoring of free-form text and voice answers.',
+            subs:[
+              {num:'16.3.1', name:'Semantic Similarity Scoring', desc:'Answer scored against ideal response using sentence embedding similarity; accounts for paraphrasing.'},
+              {num:'16.3.2', name:'Keyword & Concept Coverage', desc:'AI checks presence of key concepts expected in the answer, with partial credit for partial coverage.'},
+              {num:'16.3.3', name:'Coherence & Structure Analysis', desc:'AI evaluates logical flow and structural coherence of the answer beyond just content coverage.'},
+              {num:'16.3.4', name:'Multi-Criteria Scoring Matrix', desc:'Final score is a weighted combination of accuracy, completeness, clarity, depth, and structure sub-scores.'},
+            ]
+          },
+          {
+            num:'16.4', name:'Speech Analysis',
+            summary:'Analyses verbal communication quality from voice recordings.',
+            subs:[
+              {num:'16.4.1', name:'Words Per Minute (WPM) Measurement', desc:'Speech pace measured and compared to the ideal interview speaking rate of 120–150 WPM.'},
+              {num:'16.4.2', name:'Filler Word Detection', desc:'AI detects and counts filler words (um, uh, like, you know) and computes a filler rate per minute.'},
+              {num:'16.4.3', name:'Pronunciation Clarity Score', desc:'AI rates the overall clarity and intelligibility of the student\'s speech on a 1–5 scale.'},
+              {num:'16.4.4', name:'Voice Energy & Modulation', desc:'Measures monotone vs. dynamic speaking; low modulation scores indicate flat, disengaging delivery.'},
+            ]
+          },
+          {
+            num:'16.5', name:'Sentiment Analysis',
+            summary:'Detects emotional tone in student responses to gauge attitude and positivity.',
+            subs:[
+              {num:'16.5.1', name:'Positive / Neutral / Negative Sentiment Classification', desc:'AI classifies each answer as positive, neutral, or negative in overall emotional tone.'},
+              {num:'16.5.2', name:'Negative Language Flag', desc:'Answers with excessive negative language (complaints, self-doubt) are flagged in the feedback report.'},
+              {num:'16.5.3', name:'Sentiment Trend Across Session', desc:'Chart showing how the student\'s sentiment evolved from the start to the end of the session.'},
+            ]
+          },
+          {
+            num:'16.6', name:'Confidence Detection',
+            summary:'Estimates the candidate\'s confidence level from multimodal signals.',
+            subs:[
+              {num:'16.6.1', name:'Voice Stability Score', desc:'Measures tremor, volume drops, and pitch instability as proxies for nervousness.'},
+              {num:'16.6.2', name:'Response Latency Analysis', desc:'Long initial pause before answering (> 5 seconds) reduces the confidence score.'},
+              {num:'16.6.3', name:'Confidence Score per Answer', desc:'Each answer gets an individual confidence score; low-confidence answers are highlighted in the feedback.'},
+              {num:'16.6.4', name:'Confidence Progression Chart', desc:'Line chart showing how confidence scores changed across the session (e.g., "You became more confident by Q5").'},
+            ]
+          },
+          {
+            num:'16.7', name:'Communication Analysis',
+            summary:'Holistic assessment of the candidate\'s overall communication quality.',
+            subs:[
+              {num:'16.7.1', name:'Communication Score Composite', desc:'Final communication score combining vocabulary richness, grammar, clarity, pace, and structure dimensions.'},
+              {num:'16.7.2', name:'Grammar & Fluency Check', desc:'AI flags grammatical errors and disfluencies in transcribed answers with specific examples.'},
+              {num:'16.7.3', name:'Communication Improvement Tips', desc:'Personalised tips generated based on the student\'s specific weaknesses (e.g., "Reduce filler words by 50% — try pausing instead").'},
+              {num:'16.7.4', name:'Communication Benchmark vs. Batch', desc:'Student\'s communication score benchmarked against the batch average for that company/role.'},
+            ]
+          },
+        ]
+      },
+    ]
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// ROLE ASSIGNMENTS
+// Map each panel (by name) to which roles can see it
+// ─────────────────────────────────────────────────────────────
+const roleMap = {
+  'Company Management':            ['admin'],
+  'Interview Flow Management':     ['admin','creator'],
+  'Interview Test Engine':         ['creator','admin'],
+  'Mock Interview (AI + Human)':   ['student'],
+  'Interview Proctoring':          ['student','admin'],
+  'Group Discussion (GD)':         ['student','creator'],
+  'Live Interview System':         ['creator','admin'],
+  'Feedback & Evaluation':         ['student','creator'],
+  'Interview Readiness':           ['student'],
+  'Interview Analytics':           ['admin','creator'],
+  'Personalization Engine':        ['student'],
+  'Question Bank (Interview)':     ['creator','admin'],
+  'Group & Community':             ['student','creator'],
+  'Scheduling System':             ['creator','admin'],
+  'Recording & Playback':          ['student','creator','admin'],
+  'Notification System':           ['student','admin'],
+  'Dashboard System':              ['admin','student','creator'],
+  'Access & Control':              ['admin'],
+  'System Infra':                  ['admin'],
+  'Security':                      ['admin'],
+  'AI Interview Intelligence':     ['student','creator'],
+};
+
+const ROLES = [
+  { id:'student', label:'Student',  sub:'Learner / Candidate',       icon:'🎓' },
+  { id:'creator', label:'Creator',  sub:'HR / Recruiter',             icon:'🧑‍💼' },
+  { id:'admin',   label:'Admin',    sub:'Platform Administrator',     icon:'🔧' },
+];
+
+// ─────────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────────
+let openCards = new Set();
+let openFeats = new Set();
+let activeRole = 'student';
+
+function visibleSections() {
+  return sections.map(sec => ({
+    ...sec,
+    panels: sec.panels.filter(p => {
+      const roles = roleMap[p.name] || ['student','creator','admin'];
+      return roles.includes(activeRole);
+    })
+  })).filter(sec => sec.panels.length > 0);
+}
+
+function countFiltered(visSecs) {
+  let panels=0,features=0,subs=0,aiP=0,secCount=0;
+  visSecs.forEach(s => {
+    if(s.panels.length) secCount++;
+    s.panels.forEach(p => {
+      panels++; if(p.ai) aiP++;
+      p.features.forEach(f => { features++; subs += f.subs.length; });
+    });
+  });
+  return {secCount,panels,features,subs,aiP};
+}
+
+function render() {
+  const visSecs = visibleSections();
+  const {secCount,panels,features,subs,aiP} = countFiltered(visSecs);
+  const app = document.getElementById('app');
+
+  // Role tabs
+  const tabsHtml = ROLES.map(r => `
+    <div class="role-tab${activeRole===r.id?' active':''}" onclick="setRole('${r.id}')">
+      <div class="rt-icon">${r.icon}</div>
+      <div class="rt-text">
+        <div class="rt-name">${r.label}</div>
+        <div class="rt-sub">${r.sub}</div>
+      </div>
+    </div>`).join('');
+
+  let html = `
+    <div class="page-header">
+      <div class="page-title">🎯 UGSkill — Placement System</div>
+      <div class="page-sub">Interview &amp; Placement System — All 21 Panels Expanded with Sub-Points</div>
+    </div>
+    <div class="role-tabs">${tabsHtml}</div>
+    <div class="stats-bar">
+      <div class="stat-chip"><div class="stat-v">${secCount}</div><div class="stat-l">Sections</div></div>
+      <div class="stat-chip"><div class="stat-v">${panels}</div><div class="stat-l">Panels</div></div>
+      <div class="stat-chip"><div class="stat-v">${features}</div><div class="stat-l">Features</div></div>
+      <div class="stat-chip"><div class="stat-v">${subs}</div><div class="stat-l">Sub-Points</div></div>
+      <div class="stat-chip"><div class="stat-v">${aiP}</div><div class="stat-l">AI Panels</div></div>
+    </div>`;
+
+  visSecs.forEach((sec, si) => {
+    html += `<div class="section-title">${sec.label}</div>`;
+    html += `<div class="panels-grid">`;
+
+    sec.panels.forEach((panel, pi) => {
+      const cardId = `s${si}-p${pi}`;
+      const isOpen = openCards.has(cardId);
+
+      let featHtml = '';
+      panel.features.forEach((f, fi) => {
+        const featId = `${cardId}-f${fi}`;
+        const isFOpen = openFeats.has(featId);
+
+        const subItems = f.subs.map(s => `
+          <div class="sub-item">
+            <span class="sub-num">${s.num}</span>
+            <div class="sub-body">
+              <div class="sub-name">${s.name}</div>
+              <div class="sub-desc">${s.desc}</div>
+            </div>
+          </div>`).join('');
+
+        featHtml += `
+          <div class="feat-row${isFOpen?' fopen':''}" id="feat-${featId}">
+            <div class="feat-header" onclick="toggleFeat('${featId}')">
+              <span class="feat-num">${f.num}</span>
+              <div class="feat-title-wrap">
+                <div class="feat-title">${f.name}</div>
+                <div class="feat-summary">${f.summary}</div>
+              </div>
+              <span class="feat-arrow">▶</span>
+            </div>
+            <div class="sub-list">${subItems}</div>
+          </div>`;
+      });
+
+      // Role pills
+      const panelRoles = roleMap[panel.name] || ['student','creator','admin'];
+      const rolePills = panelRoles.map(r => {
+        const ri = ROLES.find(x=>x.id===r);
+        return `<span class="pill pill-role-${r}">${ri.icon} ${ri.label}</span>`;
+      }).join('');
+
+      html += `
+        <div class="panel-card${isOpen?' open':''}" id="card-${cardId}">
+          <div class="pc-head" onclick="toggleCard('${cardId}')">
+            <div class="pc-icon">${panel.icon}</div>
+            <div class="pc-meta">
+              <div class="pc-name">${panel.name}</div>
+              <div class="pc-desc">${panel.desc}</div>
+              <div class="pc-pills">
+                <span class="pill pill-place">Placements</span>
+                ${panel.ai ? '<span class="pill pill-ai">AI</span>' : ''}
+                ${rolePills}
+              </div>
+            </div>
+            <span class="pc-chevron">▼</span>
+          </div>
+          <div class="pc-body">${featHtml}</div>
+        </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  app.innerHTML = html;
+}
+
+function setRole(role) {
+  activeRole = role;
+  openCards = new Set();
+  openFeats = new Set();
+  render();
+}
+
+function toggleCard(id) {
+  openCards.has(id) ? openCards.delete(id) : openCards.add(id);
+  render();
+}
+
+function toggleFeat(id) {
+  openFeats.has(id) ? openFeats.delete(id) : openFeats.add(id);
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

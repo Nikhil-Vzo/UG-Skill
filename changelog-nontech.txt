@@ -1,0 +1,225 @@
+# UGSkill Platform — Non-Technical Release Changelog
+
+A high-level overview of milestone completions and feature deliveries, recorded for stakeholders and project tracking.
+
+================================================================================
+
+## [April 21, 2026] — Pre-Real-Time Polish & Socket.io Scaffold 🛠️
+*Impact: Polished community features, integrated local media streams for live GDs, and laid the foundation for real-time Socket.io communication across the platform.*
+
+### 💬 Community & Discussion
+- Added a seamless slide-over drawer for Community posts. Clicking on reply counts now fetches and displays real replies dynamically via `GET /community/posts/:id/replies`, enhancing peer interaction UI.
+
+### 🎥 Live Group Discussions
+- Replaced static avatar placeholders in the Live GD tracking room with real local camera/microphone streams via `navigator.mediaDevices.getUserMedia()`.
+
+### 🔌 Socket.io Infrastructure (Chunk I8)
+- Scaffolding complete: installed `socket.io-client` and created `lib/socket.ts`.
+- Configured connection management for all required namespaces (`/exam`, `/proctoring`, `/interview`, `/gd`, `/leaderboard`).
+
+================================================================================
+
+## [April 20, 2026] — Phase 8 Chunk I4: Video Player & Placements Hub Now Live 🎬💼
+*Impact: Students can now follow a proper learning path through real lecture content, and placement seekers see live company drive listings instead of demo data.*
+
+### 🎬 Video Player (Full Integration)
+- Lecture titles, video URLs, and descriptions are all loaded from the backend based on the course and lecture ID in the URL.
+- The curriculum sidebar now shows the real sections and lectures from the database — students can jump between lectures, see which are complete, and navigate with Prev/Next buttons.
+- A "Mark Complete" button now saves progress to the server. On video end, completion is triggered automatically.
+- Q&A thread is loaded from the community API per lecture; students can post questions live.
+- Personal notes auto-save to the server 1.5 seconds after the student stops typing, with a visible "Saved ✓" indicator.
+
+### 💼 Placement Hub (Full Integration)
+- Company drives are loaded from the live placements API. The stats panel (Active Drives, Applied, Shortlisted, Rejected) updates from real data.
+- Students can apply to open drives directly from the grid card; button disables while the request is in flight.
+- Both Grid and Kanban views switch seamlessly from the same live dataset.
+- Search is debounced; filter chips filter the in-memory data for instant response.
+
+================================================================================
+
+## [April 20, 2026] — Phase 8 Chunk I3: All Student Pages Now Live-Connected ✅
+*Impact: Every screen a student interacts with now pulls real data from the backend. No more hardcoded courses, exams, or assignments.*
+
+### 📚 Discover Page
+- Course catalog now loads from the live database. Category filters and search bar hit the real API.
+- Enrolling in a course now writes to the database instantly.
+
+### 🎓 Course Landing Page
+- Course titles, curriculum, instructor info, and enrollment status all sourced from the API.
+- Students who are already enrolled see "Continue Learning" instead of "Enroll".
+
+### 📝 Exams & Exam Interface
+- Exam list is live — shows real schedules, statuses, and scores from the backend.
+- Entering an exam now starts a real tracked attempt. Answers are auto-saved to the server as students work. Submission is permanent and recorded.
+- Exam duration and questions come from the server, not hardcoded values.
+
+### 📎 Assignment Submission
+- Assignment details (title, due date, instructions) are now loaded from the database.
+- File upload submits to the real API endpoint with proper multipart encoding.
+- A real submission ID is returned and displayed to the student on success.
+
+### 🧭 Course Navigation Fixed
+- "Resume Course" and "Continue" buttons now correctly navigate to the video player for the right course.
+
+================================================================================
+
+## [April 20, 2026] — Phase 8 Kicked Off: Authentication Hardened & Security Dev Bypass Removed ✅
+*Impact: The platform is no longer operating with a "demo" fake login. All authentication flows are now wired to the real backend API with production-grade security.*
+
+### 🔐 Authentication (Phase 8 — Chunk I1) — Fully Delivered
+
+**DEV BYPASS Eliminated**
+- The one-click "DEV BYPASS — Skip Auth (Admin Mock)" button has been permanently removed from the login screen. The platform now requires real credentials from the live database to authenticate.
+
+**JWT Token Architecture Upgraded (In-Memory Security)**
+- Access tokens are now stored exclusively in JavaScript memory — never in `localStorage` or cookies. This prevents XSS attacks from stealing session credentials. A page refresh requires re-authentication (correct behavior for this security model).
+
+**Automatic Token Refresh**
+- When an access token expires, the system now silently calls the backend refresh endpoint and retries the original request — completely transparent to the user. If the refresh token is also expired, the user is automatically redirected to login with their session safely cleared.
+
+**Backend API Shape Verified & Corrected**
+- All auth-related frontend calls now send and receive exactly the right data fields (`fullName` instead of `name`, `roles` array instead of `role` string) to match the actual backend schema.
+
+**Single Source of Truth for User Data**
+- The dashboard store no longer maintains a duplicate user profile. All pages now read the logged-in user's data from the central auth store — no more stale or hardcoded "Alex Student" placeholder in the dashboard header.
+
+**Build Verification**
+- Production build passes: ✅ zero TypeScript errors, 2,450 modules.
+
+================================================================================
+
+## [April 18, 2026] — Frontend Complete: Admin Portal, Platform Features & Clean Build ✅
+*Impact: The entire UGSkill frontend is now shippable. Every screen — from student learning to admin command centers — is built, integrated, and the production bundle compiles with zero errors.*
+
+### 🛠 Admin & Creator Portals (F6–F8) — Fully Delivered
+
+**Admin KPI Dashboard**
+- A live command-center overview page for admins with four stat widgets (Active Users, Total Revenue, Enrollments, Active Exams) and a recharts-powered radar chart showing platform health across six dimensions.
+
+**User Directory**
+- A sortable, filterable data table listing all registered students, creators, and admins with real-time search, role badges, status indicators, and per-row action menus (edit, suspend). Bulk-action controls allow multi-select operations across the entire user base.
+
+**Batch Management**
+- Admins can create cohort batches, assign students to them, and grant or revoke batch-level course access windows — all from a single management interface with a split-panel layout.
+
+**Course Builder (Creator)**
+- A multi-step course creation flow: course metadata (title, category, level, description) → curriculum builder with section and lecture nesting → media upload step showing S3 pre-signed upload progress. The builder supports reordering, free/locked lecture toggling, and draft saving.
+
+**Quiz Builder (Creator)**
+- A full question-authoring interface. Creators add MCQ questions, mark the correct answer, write per-option explanations, score each question, and preview the full quiz live before publishing.
+
+**Placements Configuration (Admin)**
+- A drive configurator for setting up recruitment drives — company selection, CGPA slider, branch eligibility dropdowns, seat count, timeline, package, and interview-round sequencing. Built around a two-panel layout: form on the left, live preview card on the right.
+
+**Exam Operations & Live Proctoring (Admin)**
+- A real-time command center for ongoing exams: view all active exams at a glance, see per-student submission status in a grid, and manage incoming proctoring violation alerts (tab-switch, right-click, focus loss) via a live incident log with severity badges and dismiss controls.
+
+---
+
+### 🌐 Platform-Wide Features (F9) — Fully Delivered
+
+**AI Chatbot**
+- A floating "AI" button fixed to the bottom-right of every authenticated page opens a full slide-in chat sidebar. Students can ask questions and get AI responses. The interface is integrated at the global layout level so it persists across all routes.
+
+**Global Notifications**
+- The header notification bell is now a fully functional dropdown listing system alerts, assignment reminders, and exam announcements — with unread count badge, individual dismiss actions, and a "mark all read" control.
+
+**Live Group Discussion (GD) Interface**
+- A video-call–style layout for real-time group discussions: participant video tiles (with speaking highlight ring), AI Facilitator notes sidebar, and media controls (mute/unmute, camera, raise hand, chat toggle).
+
+**Leaderboards**
+- A rankings page showing top performers by exam score and overall platform readiness. Includes podium cards for top 3, a full ranked table with score bars, and a "My Rank" card that contextualizes the student's position.
+
+---
+
+### 🔧 Build Stability — Zero Errors ✅
+- Resolved 20+ TypeScript strict-mode `TS6133` warnings (unused imports and variables) across 12 files.
+- Production bundle now compiles cleanly: zero errors, 2,451 modules processed, shipped in under 2 seconds.
+
+---
+
+## [April 18, 2026] — Frontend Chunks F3–F5: Full Student Portal Shipped
+*Impact: Students can now navigate a complete, production-quality learning and placement management experience entirely within the browser — no backend connection required during development thanks to a dev-bypass auth layer.*
+
+### 🎓 LMS Experience (F3) — Fully Delivered
+- **Course Landing Pages**: Every course now has a full-detail page — hero banner, instructor section, an expandable chapter-by-chapter curriculum, and a sticky enroll/continue card.
+- **Video Learning Player**: A dedicated fullscreen player with a 70/30 split — video controls on the left, a collapsible curriculum sidebar on the right. Students can take personal notes, read the overview, and post Q&A questions without leaving the player. Interactive knowledge-check questions (MCQs) appear directly below the video at key timestamps.
+- **Assignment Upload Interface**: A drag-and-drop file upload zone that shows a simulated upload progress bar and confirms successful submission. Students can see the status of each file in their submission queue.
+
+### 💼 Placements & Community (F4) — Fully Delivered
+- **Placements Hub**: A central dashboard showing all live, applied, shortlisted, and rejected placement drives — switchable between a card grid and a Kanban-style board. Stat widgets at the top show a live count across all application statuses.
+- **Company Detail Pages**: Each placement drive has a dedicated detail page — company branding, role details, package, seat count, an expandable step-by-step selection process (OA → Technical → HR), requirements checklist, and a benefits sidebar. Students apply directly from this page.
+- **Community Board**: A peer-to-peer discussion forum where students share interview experiences, placement tips, and announcements. Anyone can write a post, tag it by topic (e.g., "Google", "Resume", "DSA"), like and reply to posts, and sort the feed by trending or most recent.
+
+### 📝 Live Exam Engine (F5) — Fully Delivered
+- **Exam Discovery Page**: A filterable list of all scheduled, live, completed, and missed exams — with stat widgets showing counts at a glance and Score display for completed tests.
+- **Full Proctored Exam Interface**: Fullscreen dedicated exam environment with countdown timer, question palette sidebar, flag-for-review, anti-cheat detection (tab-switch banner + right-click block), submit confirmation modal, and a results score card.
+
+### 🔐 Dev Bypass Auth
+- Added a one-click **"DEV BYPASS"** button to the login page that injects a mock Admin session directly — allowing full navigation of all pages without requiring the backend API to be running. Designed to be removed before production.
+
+---
+
+## [April 18, 2026] - Phase 7: Frontend SPA Framework & Design System Initialized
+*Impact: The visual foundation for the platform is set. We have established a high-performance React application governed by a strict, enterprise-grade design system.*
+
+- **React 19 + Vite Framework**: Successfully initialized the core frontend infrastructure (`ugskill-web`) using the latest TypeScript-ready standards for maximum speed and type safety.
+- **Strict Design System**: Defined an exhaustive suite of visual tokens in `src/index.css`. Custom "Midnight Navy & Vibrant Indigo" palette designed for deep focus and executive-level clarity.
+- **Bespoke UI Primitives**: Button, TextInput, Select, Checkbox, Card, Modal, Tabs, Badge, DataTable, SkeletonLoader — all built with the custom token system.
+
+---
+
+## [April 17, 2026] - Chunk 8: Enterprise Security, Scaling & WebSockets (Final Backend Milestone)
+*Impact: The platform is now highly interactive, live-connected, and hardened to support thousands of concurrent exams.*
+
+- **Live Exam Telemetry**: Students taking exams are now bound by precise, server-enforced countdown timers. The system tracks navigation and automatically halts/submits tests the instant time expires.
+- **Proctoring Command Center**: Live web-socket streams pass tab-switching alerts, window minimization strikes, and suspicious flags directly to the database in real-time.
+- **Interview & GD Orchestration**: Speaking duration in GDs or an interviewer's real-time note-taking are now securely broadcasted precisely to the participants involved.
+- **Enterprise Defenses**: Aggressive traffic limits, Swagger documentation, Sentry error tracking, and Docker deployments.
+
+---
+
+###  MILESTONE: Chunk 7 - Cross-Cutting Shared Services
+*Impact: The entire platform is now scalable, asynchronous, and capable of deep integrations.*
+
+- **Asynchronous Task Processing (BullMQ & Redis)**: Heavy operations are pushed to background workers silently.
+- **External AI Integration Strategy**: Authenticated API gateways for AI model integration.
+- **AWS S3 File Strategy**: Pre-signed URLs — users stream files directly to AWS, saving bandwidth on our server.
+- **CDC Pipelines**: Activity → Progress materialization, User → Snapshot sync, Scoring → Readiness aggregation.
+
+---
+
+###  MILESTONE: Chunk 6 - The Examination Suite
+*Impact: Institutions can now securely design, distribute, and grade large-scale exams.*
+
+- Configurable Exam Engine, Adaptive Question Bank, Fault-Tolerant Save Mechanics, Real-Time Proctoring Handlers.
+
+---
+
+###  MILESTONE: Chunk 5 - Enterprise Placements
+*Impact: Our recruitment wing can host structured corporate placement drives.*
+
+- Custom Interview Playbooks, Mock Interviews & Group Discussions, "Job Ready" Scoring Algorithm.
+
+================================================================================
+
+## RELEASE DATE: April 16, 2026
+
+###  MILESTONE: Chunk 4b - Student Learning Experience
+*Impact: The core student consumption journey is fully operational.*
+
+- Streaks & Retention Tracking, Course Interactions (assignments, grading, reviews).
+
+---
+
+###  MILESTONE: Chunk 3 - Authentication & Identity
+*Impact: Secured the platform from unauthorized actor access.*
+
+- JWT Session Core, Role-based Defenses, Audit Logging.
+
+---
+
+### 🏗MILESTONE: Chunk 1 & 2 - Architecture Setup
+*Impact: The bare metal of our dual-database setup safely initialized.*
+
+- Plumbed structured data into PostgreSQL, flexible data into MongoDB, initialized error loggers and health pings.

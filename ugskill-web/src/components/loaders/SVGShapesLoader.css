@@ -1,0 +1,59 @@
+.shapes-loader-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.loader-sm .shapes-svg { width: 32px; height: 32px; }
+.loader-md .shapes-svg { width: 48px; height: 48px; }
+.loader-lg .shapes-svg { width: 64px; height: 64px; }
+.loader-xl .shapes-svg { width: 96px; height: 96px; }
+
+.shapes-svg {
+  overflow: visible;
+}
+
+.shape {
+  fill: var(--primary);
+  transform-origin: 50px 50px;
+}
+
+.circle-1 {
+  animation: orbit 2s ease-in-out infinite;
+  fill: var(--primary);
+}
+
+.circle-2 {
+  animation: orbit 2s ease-in-out infinite -0.66s;
+  fill: var(--primary-dim);
+}
+
+.circle-3 {
+  animation: orbit 2s ease-in-out infinite -1.33s;
+  fill: var(--on-surface);
+}
+
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateX(15px) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: rotate(180deg) translateX(-15px) scale(0.5);
+    opacity: 0.4;
+  }
+  100% {
+    transform: rotate(360deg) translateX(15px) scale(1);
+    opacity: 0.8;
+  }
+}
+
+.loader-text {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.02em;
+  animation: pulse-glow 2s infinite;
+}

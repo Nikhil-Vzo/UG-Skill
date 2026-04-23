@@ -1,0 +1,33 @@
+.layout-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-body {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+.layout-main {
+  flex: 1;
+  /* Allow space for the sidebar on desktop sizes */
+  margin-left: 260px;
+  padding: 2rem;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure the main content doesn't get squished unnecessarily */
+.layout-main > * {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 768px) {
+  .layout-main {
+    margin-left: 0;
+    padding: 1.5rem 1rem;
+  }
+}

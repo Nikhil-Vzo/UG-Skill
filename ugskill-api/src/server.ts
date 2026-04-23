@@ -1,0 +1,68 @@
+import http from 'http';
+import app from './app';
+import { env } from './config/env';
+import { connectMongo } from './config/mongodb';
+import { logger } from './lib/logger';
+import { createSocketServer } from './sockets/socket.server';
+import { registerExamNamespace } from './sockets/exam.namespace';
+import { registerChatNamespace } from './sockets/chat.namespace';
+import { registerTrackingNamespace } from './sockets/tracking.namespace';
+import { registerInterviewNamespace } from './sockets/interview.namespace';
+import { registerGdNamespace } from './sockets/gd.namespace';
+import { registerLeaderboardNamespace } from './sockets/leaderboard.namespace';
+
+const startServer = async () => {
+  try {
+    // 1. Connect dependencies
+    await connectMongo();
+
+    // 2. Wrap Express in a raw HTTP server so Socket.io can share the port
+    const httpServer = http.createServer(app);
+
+    // 3. Boot Socket.io (JWT auth applied globally)
+    const io = createSocketServer(httpServer);
+
+    // 4. Register namespaces
+    registerExamNamespace(io);       // /exam        — timer ticks, auto-submit
+    registerChatNamespace(io);       // /chat        — room messaging + Mongo persistence
+    registerTrackingNamespace(io);   // /tracking    — proctoring flags
+    registerInterviewNamespace(io);  // /interview   — 1:1 live interview sessions
+    registerGdNamespace(io);         // /gd          — group discussion sessions
+    registerLeaderboardNamespace(io); // /leaderboard — live score push to viewers
+
+    // 5. Start listening
+    httpServer.listen(env.PORT, () => {
+      logger.info(`🚀 Server running on http://localhost:${env.PORT} in ${env.NODE_ENV} mode`);
+      logger.info('⚡ Socket.io ready on /exam, /chat, /tracking, /interview, /gd, /leaderboard');
+    });
+
+    // 6. Graceful Shutdown
+    const shutdown = async (signal: string) => {
+      logger.info(`Received ${signal}. Shutting down gracefully...`);
+
+      io.close(() => {
+        logger.info('Socket.io server closed.');
+      });
+
+      httpServer.close(() => {
+        logger.info('HTTP server closed.');
+        process.exit(0);
+      });
+
+      // Force exit if it takes too long
+      setTimeout(() => {
+        logger.error('Could not close connections in time, forcefully shutting down');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
