@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ShieldCheck, AlertCircle, LogIn, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import './portals.css';
@@ -42,6 +40,10 @@ export const AdminLogin: React.FC = () => {
 
   return (
     <div className="admin-portal-page">
+      <Link to="/" className="portal-back-home">
+        <ArrowLeft size={16} />
+        <span>Back to Home</span>
+      </Link>
       {/* Left — Branding */}
       <div className="admin-portal-left">
         <div className="admin-portal-bg-grid" />
@@ -60,7 +62,7 @@ export const AdminLogin: React.FC = () => {
           </h1>
 
           <p className="admin-portal-desc">
-            Manage students, courses, exams, placement drives and analytics from one secure platform. 
+            Manage students, courses, exams, placement drives and analytics from one secure platform.
             Access is strictly provisioned.
           </p>
 
@@ -83,10 +85,6 @@ export const AdminLogin: React.FC = () => {
 
       {/* Right — Form */}
       <div className="admin-portal-right">
-        <Link to="/" className="back-to-landing">
-          <ArrowLeft size={18} />
-          Back to Home
-        </Link>
         <div className="admin-portal-card">
           {/* Logo */}
           <div className="admin-portal-logo">
