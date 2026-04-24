@@ -2,24 +2,27 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Briefcase, MapPin, Clock,
-  CheckCircle, XCircle, AlertCircle, Search, Loader2
+  Briefcase, MapPin, Clock, Video, Calendar,
+  CheckCircle, XCircle, AlertCircle, Search, Loader2, MessageSquare, ExternalLink
 } from 'lucide-react';
+import { useAuthStore } from '../store/auth.store';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/loaders/Skeleton';
 import { useDebounce } from '../hooks/useDebounce';
 import api from '../lib/api';
 
 /* ─────────── Types ─────────── */
-type DriveStatus = 'open' | 'applied' | 'shortlisted' | 'rejected' | 'closed';
+type DriveStatus = 'open' | 'active' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'closed' | 'selected';
 
 interface Drive {
-  _id: string;
-  company: string | { name: string; logoInitial?: string };
-  role: string;
-  location: string;
+  id: string;
+  companyName: string;
+  companyLogo?: string;
+  name: string;
+  targetRoles: string[];
+  location?: string;
   package?: string;
-  deadline?: string;
+  registrationDeadline?: string;
   status: DriveStatus;
   cgpaCutoff?: number;
   branches?: string[];
@@ -28,10 +31,13 @@ interface Drive {
 /* ─────────── Config ─────────── */
 const STATUS_CONFIG: Record<DriveStatus, { label: string; variant: any; icon: React.ReactNode }> = {
   open: { label: 'Open', variant: 'success', icon: <Clock size={12} /> },
+  active: { label: 'Open', variant: 'success', icon: <Clock size={12} /> },
   applied: { label: 'Applied', variant: 'primary', icon: <AlertCircle size={12} /> },
   shortlisted: { label: 'Shortlisted', variant: 'warning', icon: <CheckCircle size={12} /> },
+  interview: { label: 'Interviewing', variant: 'warning', icon: <MessageSquare size={12} /> },
   rejected: { label: 'Rejected', variant: 'danger', icon: <XCircle size={12} /> },
   closed: { label: 'Closed', variant: 'default', icon: <XCircle size={12} /> },
+  selected: { label: 'Selected', variant: 'success', icon: <CheckCircle size={12} /> },
 };
 
 const LOGO_PALETTE = ['#4285F4', '#00A4EF', '#F7CB45', '#FF9900', '#2D9CDB', '#76B900', '#E91E63', '#9C27B0'];
@@ -41,10 +47,9 @@ function logoColor(name: string): string {
   return LOGO_PALETTE[Math.abs(hash) % LOGO_PALETTE.length];
 }
 
-function resolveCompany(c: Drive['company']): { name: string; initial: string } {
-  if (!c) return { name: 'Unknown', initial: 'U' };
-  if (typeof c === 'string') return { name: c, initial: c[0]?.toUpperCase() ?? 'U' };
-  return { name: c.name, initial: c.logoInitial ?? c.name[0]?.toUpperCase() ?? 'U' };
+function resolveCompany(drive: Drive): { name: string; initial: string } {
+  const name = drive.companyName || drive.name || 'Unknown';
+  return { name, initial: name[0]?.toUpperCase() ?? 'U' };
 }
 
 function formatDeadline(d?: string): string {
@@ -55,7 +60,7 @@ function formatDeadline(d?: string): string {
 /* ─────────── Drive Card ─────────── */
 const DriveCard: React.FC<{ drive: Drive; onApply: () => void; onClick: () => void; isApplying: boolean }> = ({ drive, onClick, onApply, isApplying }) => {
   const cfg = STATUS_CONFIG[drive.status] ?? STATUS_CONFIG.open;
-  const { name: companyName, initial } = resolveCompany(drive.company);
+  const { name: companyName, initial } = resolveCompany(drive);
   const color = logoColor(companyName);
   return (
     <div
@@ -72,7 +77,8 @@ const DriveCard: React.FC<{ drive: Drive; onApply: () => void; onClick: () => vo
           </div>
           <div>
             <div style={{ color: 'var(--text-high)', fontWeight: 700, fontSize: '0.9375rem' }}>{companyName}</div>
-            <div style={{ color: 'var(--text-low)', fontSize: '0.8125rem' }}>{drive.role}</div>
+            <div style={{ color: 'var(--text-low)', fontSize: '0.8125rem' }}>{drive.name}</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{drive.targetRoles?.join(', ')}</div>
           </div>
         </div>
         <Badge variant={cfg.variant} size="sm">{cfg.icon} {cfg.label}</Badge>
@@ -81,7 +87,7 @@ const DriveCard: React.FC<{ drive: Drive; onApply: () => void; onClick: () => vo
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.8125rem', color: 'var(--text-low)' }}>
         {drive.location && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><MapPin size={13} />{drive.location}</div>}
         {drive.package && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Briefcase size={13} />{drive.package}</div>}
-        {drive.deadline && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Clock size={13} />Due: {formatDeadline(drive.deadline)}</div>}
+        {drive.registrationDeadline && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Clock size={13} />Due: {formatDeadline(drive.registrationDeadline)}</div>}
       </div>
 
       {(drive.cgpaCutoff ?? 0) > 0 && (
@@ -93,7 +99,7 @@ const DriveCard: React.FC<{ drive: Drive; onApply: () => void; onClick: () => vo
         </div>
       )}
 
-      {drive.status === 'open' && (
+      {drive.status === 'active' && (
         <button
           onClick={e => { e.stopPropagation(); onApply(); }}
           disabled={isApplying}
@@ -141,6 +147,16 @@ export const PlacementsHub: React.FC = () => {
   const queryClient = useQueryClient();
   const debouncedSearch = useDebounce(search, 400);
   const [applyingId, setApplyingId] = useState<string | null>(null);
+  const { user } = useAuthStore();
+
+  const { data: mySessions = [], isLoading: loadingSessions } = useQuery({
+    queryKey: ['my-interview-sessions', user?.userId],
+    queryFn: async () => {
+      const res = await api.get(`/placements/sessions?studentId=${user?.userId}`);
+      return res.data.data || res.data || [];
+    },
+    enabled: !!user?.userId,
+  });
 
   const { data: drives = [], isLoading, isError } = useQuery<Drive[]>({
     queryKey: ['placement-drives'],
@@ -152,7 +168,7 @@ export const PlacementsHub: React.FC = () => {
   });
 
   const applyMut = useMutation({
-    mutationFn: (driveId: string) => api.post(`/placements/drives/${driveId}/apply`),
+    mutationFn: (driveId: string) => api.post('/placements/registrations', { driveId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['placement-drives'] });
       setApplyingId(null);
@@ -161,9 +177,9 @@ export const PlacementsHub: React.FC = () => {
   });
 
   const filtered = drives.filter(d => {
-    const { name: companyName } = resolveCompany(d.company);
+    const { name: companyName } = resolveCompany(d);
     const q = debouncedSearch.toLowerCase();
-    const matchesSearch = companyName.toLowerCase().includes(q) || d.role.toLowerCase().includes(q);
+    const matchesSearch = companyName.toLowerCase().includes(q) || d.name.toLowerCase().includes(q);
     const matchesFilter = filter === 'all' || d.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -171,7 +187,7 @@ export const PlacementsHub: React.FC = () => {
   const myApps = drives.filter(d => ['applied', 'shortlisted', 'rejected'].includes(d.status));
 
   const statsConfig = [
-    { label: 'Active Drives', val: drives.filter(d => d.status === 'open').length, color: 'var(--success)' },
+    { label: 'Active Drives', val: drives.filter(d => d.status === 'active').length, color: 'var(--success)' },
     { label: 'Applied', val: myApps.filter(d => d.status === 'applied').length, color: 'var(--primary-glow)' },
     { label: 'Shortlisted', val: myApps.filter(d => d.status === 'shortlisted').length, color: 'var(--warning)' },
     { label: 'Rejected', val: myApps.filter(d => d.status === 'rejected').length, color: 'var(--error)' },
@@ -219,6 +235,41 @@ export const PlacementsHub: React.FC = () => {
         )}
       </div>
 
+      {/* ── My Interviews Section ── */}
+      {mySessions.length > 0 && (
+        <div style={{ background: 'var(--surface-well)', border: '1px solid var(--primary-glow)', borderRadius: 16, padding: '1.5rem', marginTop: '1rem', boxShadow: '0 8px 32px rgba(20,184,166,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--primary)' }}>
+            <Video size={20} />
+            <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>My Interviews</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+            {mySessions.map((session: any) => (
+              <div key={session.id} style={{ background: 'var(--surface-highest)', border: '1px solid var(--surface-highest)', borderRadius: 12, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-high)' }}>Round {session.roundNumber || 1} Interview</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-low)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                      <Calendar size={12} /> {session.createdAt ? new Date(session.createdAt).toLocaleDateString() : 'Today'}
+                    </div>
+                  </div>
+                  <Badge variant={session.status === 'scheduled' ? 'warning' : session.status === 'in_progress' ? 'success' : 'default'}>
+                    {session.status?.replace('_', ' ')}
+                  </Badge>
+                </div>
+                {(session.status === 'scheduled' || session.status === 'in_progress') && (
+                  <button
+                    onClick={() => navigate(`/app/placements/interview/${session.id}`)}
+                    style={{ background: 'linear-gradient(135deg,var(--primary),var(--primary-hover))', color: '#fff', border: 'none', padding: '0.625rem', borderRadius: 8, fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}
+                  >
+                    <ExternalLink size={16} /> Join Interview
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Search + Filter */}
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         <div className="search-well" style={{ flex: 1, minWidth: 240 }}>
@@ -253,11 +304,11 @@ export const PlacementsHub: React.FC = () => {
           ) : (
             filtered.map(d => (
               <DriveCard
-                key={d._id}
+                key={d.id}
                 drive={d}
-                onClick={() => navigate(`/placements/${d._id}`)}
-                onApply={() => handleApply(d._id)}
-                isApplying={applyingId === d._id}
+                onClick={() => navigate(`/app/placements/${d.id}`)}
+                onApply={() => handleApply(d.id)}
+                isApplying={applyingId === d.id}
               />
             ))
           )}

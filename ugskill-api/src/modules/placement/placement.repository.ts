@@ -9,6 +9,7 @@ import {
 } from '../../db/pg/schema/placement';
 import { CompanyProfileModel, InterviewFlowModel, QuestionBankModel, MockInterviewAttemptModel, GDRecordingModel } from '../../db/mongo/models/placement';
 import { ProctoringEventModel } from '../../db/mongo/models/core';
+import { users } from '../../db/pg/schema/core';
 import { 
   CreateCompanyInput, UpdateCompanyInput, CompanyQuery, 
   CreateDriveInput, UpdateDriveInput, DriveQuery,
@@ -155,21 +156,47 @@ export const listProctoringEventsMongo = async (query: ProctoringEventQuery) => 
 };
 
 export const insertDriveFlowMongo = async (
-  driveId: string,
+  companyId: string,
+  name: string,
+  creatorId: string,
   flowSpec: CreateDriveInput['flowSpec']
 ) => {
   const flow = new InterviewFlowModel({
-    driveId, // Need to make sure we sync this ID if Mongo schema expects it, though typically we store Mongo ID in PG. Let's use PG id for reference.
-    stages: flowSpec
+    pg_company_id: companyId,
+    name,
+    pg_created_by: creatorId,
+    rounds: flowSpec
   });
   await flow.save();
   return flow;
 };
 
-export const getDriveById = async (id: string) => {
+export const getDriveById = async (id: string, userId?: string) => {
   const [drive] = await db
-    .select()
+    .select({
+      id: companyDrives.id,
+      name: companyDrives.name,
+      companyId: companyDrives.companyId,
+      companyName: companies.name,
+      companyLogo: companies.logoUrl,
+      companyDescription: companies.description,
+      targetRoles: companyDrives.targetRoles,
+      status: companyDrives.status,
+      scheduledAt: companyDrives.scheduledAt,
+      registrationDeadline: companyDrives.registrationDeadline,
+      eligibility: companyDrives.eligibility,
+      mongoFlowId: companyDrives.mongoFlowId,
+      createdAt: companyDrives.createdAt,
+      myStatus: userId ? driveRegistrations.status : sql<string | null>`NULL`,
+    })
     .from(companyDrives)
+    .leftJoin(companies, eq(companyDrives.companyId, companies.id))
+    .leftJoin(
+      driveRegistrations,
+      userId 
+        ? and(eq(driveRegistrations.driveId, companyDrives.id), eq(driveRegistrations.studentId, userId))
+        : sql`FALSE`
+    )
     .where(eq(companyDrives.id, id))
     .limit(1);
 
@@ -177,15 +204,14 @@ export const getDriveById = async (id: string) => {
 
   let interviewFlow = null;
   if (drive.mongoFlowId) {
-    // Assuming InterviewFlow model exists in placement.ts models
-    interviewFlow = await InterviewFlowModel.findById(drive.mongoFlowId);
+    interviewFlow = await InterviewFlowModel.findById(drive.mongoFlowId).lean();
   }
 
   return { ...drive, flow: interviewFlow };
 };
 
 export const listDrivesPg = async (query: DriveQuery) => {
-  const { page = 1, limit = 10, companyId, status } = query;
+  const { page = 1, limit = 10, companyId, status, userId } = query;
   const offset = (page - 1) * limit;
 
   let conditions = [];
@@ -195,8 +221,27 @@ export const listDrivesPg = async (query: DriveQuery) => {
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   const data = await db
-    .select()
+    .select({
+      id: companyDrives.id,
+      name: companyDrives.name,
+      companyId: companyDrives.companyId,
+      companyName: companies.name,
+      companyLogo: companies.logoUrl,
+      targetRoles: companyDrives.targetRoles,
+      status: companyDrives.status,
+      scheduledAt: companyDrives.scheduledAt,
+      registrationDeadline: companyDrives.registrationDeadline,
+      createdAt: companyDrives.createdAt,
+      myStatus: userId ? driveRegistrations.status : sql<string | null>`NULL`,
+    })
     .from(companyDrives)
+    .leftJoin(companies, eq(companyDrives.companyId, companies.id))
+    .leftJoin(
+      driveRegistrations,
+      userId 
+        ? and(eq(driveRegistrations.driveId, companyDrives.id), eq(driveRegistrations.studentId, userId))
+        : sql`FALSE`
+    )
     .where(whereClause)
     .orderBy(desc(companyDrives.createdAt))
     .limit(limit)
@@ -231,12 +276,17 @@ export const updateRegistrationPg = async (
   id: string,
   data: Partial<typeof driveRegistrations.$inferInsert>
 ): Promise<typeof driveRegistrations.$inferSelect | null> => {
-  const [registration] = await db
-    .update(driveRegistrations)
-    .set({ ...data }) // driveRegistrations doesn't have updatedAt
-    .where(eq(driveRegistrations.id, id))
-    .returning();
-  return registration || null;
+  try {
+    const [registration] = await db
+      .update(driveRegistrations)
+      .set(data)
+      .where(eq(driveRegistrations.id, id))
+      .returning();
+    return registration || null;
+  } catch (error) {
+    console.error('Database error in updateRegistrationPg:', error);
+    throw error;
+  }
 };
 
 export const getRegistrationById = async (id: string) => {
@@ -269,8 +319,24 @@ export const listRegistrationsPg = async (query: RegistrationQuery) => {
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   const data = await db
-    .select()
+    .select({
+      id: driveRegistrations.id,
+      studentId: driveRegistrations.studentId,
+      driveId: driveRegistrations.driveId,
+      status: driveRegistrations.status,
+      registeredAt: driveRegistrations.registeredAt,
+      student: {
+        fullName: users.fullName,
+        email: users.email,
+      },
+      drive: {
+        name: companyDrives.name,
+        companyId: companyDrives.companyId,
+      }
+    })
     .from(driveRegistrations)
+    .innerJoin(users, eq(driveRegistrations.studentId, users.id))
+    .innerJoin(companyDrives, eq(driveRegistrations.driveId, companyDrives.id))
     .where(whereClause)
     .orderBy(desc(driveRegistrations.registeredAt))
     .limit(limit)
@@ -290,6 +356,52 @@ export const listRegistrationsPg = async (query: RegistrationQuery) => {
       totalPages: Math.ceil(countResult.count / limit)
     }
   };
+};
+
+// --- PLACEMENT SESSIONS REPOSITORY ---
+
+export const insertPlacementSessionPg = async (
+  data: Partial<typeof placementSessions.$inferInsert>
+): Promise<typeof placementSessions.$inferSelect> => {
+  const [session] = await db.insert(placementSessions).values(data as any).returning();
+  return session;
+};
+
+export const getPlacementSessionPg = async (id: string) => {
+  const [session] = await db
+    .select()
+    .from(placementSessions)
+    .where(eq(placementSessions.id, id))
+    .limit(1);
+  return session || null;
+};
+
+export const updatePlacementSessionPg = async (
+  id: string,
+  data: Partial<typeof placementSessions.$inferInsert>
+) => {
+  const [session] = await db
+    .update(placementSessions)
+    .set(data)
+    .where(eq(placementSessions.id, id))
+    .returning();
+  return session || null;
+};
+
+export const listPlacementSessionsPg = async (query: any) => {
+  const { studentId, driveId, status } = query || {};
+  let conditions: any[] = [];
+  if (studentId) conditions.push(eq(placementSessions.studentId, studentId));
+  if (driveId) conditions.push(eq(placementSessions.driveId, driveId));
+  if (status) conditions.push(eq(placementSessions.status, status));
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  return await db
+    .select()
+    .from(placementSessions)
+    .where(whereClause)
+    .orderBy(desc(placementSessions.createdAt));
 };
 
 // --- QUESTION BANK REPOSITORY ---
@@ -397,80 +509,6 @@ export const getInterviewFlowsMongo = async (queryParams: InterviewFlowQuery) =>
 
 export const deleteInterviewFlowMongo = async (id: string) => {
   return await InterviewFlowModel.findByIdAndDelete(id);
-};
-
-// --- PLACEMENT SESSIONS REPOSITORY ---
-export const insertPlacementSessionPg = async (
-  data: Partial<typeof placementSessions.$inferInsert>
-): Promise<typeof placementSessions.$inferSelect> => {
-  const [result] = await db
-    .insert(placementSessions)
-    .values(data as any)
-    .returning();
-  return result;
-};
-
-export const getPlacementSessionPg = async (
-  id: string
-): Promise<typeof placementSessions.$inferSelect | undefined> => {
-  const [result] = await db
-    .select()
-    .from(placementSessions)
-    .where(eq(placementSessions.id, id));
-  return result;
-};
-
-export const updatePlacementSessionPg = async (
-  id: string,
-  data: Partial<typeof placementSessions.$inferInsert>
-): Promise<typeof placementSessions.$inferSelect | undefined> => {
-  const [result] = await db
-    .update(placementSessions)
-    .set({ ...data, updatedAt: new Date() })
-    .where(eq(placementSessions.id, id))
-    .returning();
-  return result;
-};
-
-export const getPlacementSessionsPg = async (
-  queryParams: PlacementSessionQuery
-) => {
-  const { page = 1, limit = 10, studentId, driveId, companyId, status } = queryParams;
-  const offset = (page - 1) * limit;
-
-  const conditions = [];
-  if (studentId) conditions.push(eq(placementSessions.studentId, studentId));
-  if (driveId) conditions.push(eq(placementSessions.driveId, driveId));
-  if (companyId) conditions.push(eq(placementSessions.companyId, companyId));
-  if (status) conditions.push(eq(placementSessions.status, status));
-
-  const contentQuery = db
-    .select()
-    .from(placementSessions)
-    .where(and(...conditions))
-    .limit(limit)
-    .offset(offset)
-    .orderBy(desc(placementSessions.createdAt));
-
-  const countQuery = db
-    .select({ value: count() })
-    .from(placementSessions)
-    .where(and(...conditions));
-
-  const [data, [{ value: total }]] = await Promise.all([
-    contentQuery,
-    countQuery
-  ]);
-
-  return {
-    data,
-    meta: {
-      total: Number(total),
-      page,
-      limit,
-      totalPages: Math.ceil(Number(total) / limit)
-    }
-  };
 };
 
 // --- MOCK INTERVIEW ATTEMPTS REPOSITORY (5.7) ---

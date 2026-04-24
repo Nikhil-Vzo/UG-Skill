@@ -1,6 +1,6 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Briefcase, Users, CalendarCheck, LogOut, TrendingUp, Clock, CheckCircle, XCircle, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Briefcase, Users, CalendarCheck, LogOut, TrendingUp, Clock, CheckCircle, XCircle, ChevronRight, FileText, Plus, Video, Copy, Link, ExternalLink, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import api from '../../lib/api';
@@ -10,21 +10,63 @@ const statusColor: Record<string, string> = {
   rejected:    '#ef4444',
   pending:     '#f59e0b',
   interview:   '#818cf8',
+  selected:    '#10b981',
 };
 
 export const HRDashboard: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [selectedApplicant, setSelectedApplicant] = useState<any | null>(null);
+  const [createdSession, setCreatedSession] = useState<any | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string, status: string }) => 
+      api.patch(`/placements/registrations/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hr-applicants'] });
+      setSelectedApplicant(null);
+    }
+  });
 
   const { data: drives = [] } = useQuery({
     queryKey: ['hr-drives'],
-    queryFn: () => api.get('/placements/drives/my').then(r => r.data.data || []),
+    queryFn: () => api.get('/placements/drives').then(r => r.data.data || []),
   });
 
   const { data: applicants = [] } = useQuery({
     queryKey: ['hr-applicants'],
-    queryFn: () => api.get('/placements/applications/my').then(r => r.data.data || []),
+    queryFn: () => api.get('/placements/registrations').then(r => r.data.data || []),
   });
+
+  const startInterviewMutation = useMutation({
+    mutationFn: async (applicant: any) => {
+      const res = await api.post('/placements/sessions', {
+        studentId: applicant.studentId,
+        sessionType: 'live',
+        driveId: applicant.driveId,
+        companyId: applicant.drive?.companyId || undefined,
+        roundNumber: 1
+      });
+      return res.data.data || res.data;
+    },
+    onSuccess: (session) => {
+      setCreatedSession(session);
+      queryClient.invalidateQueries({ queryKey: ['hr-applicants'] });
+    },
+    onError: (err: any) => {
+      alert('Failed to create session: ' + (err?.response?.data?.error?.message || err.message));
+    }
+  });
+
+  const copyLink = (sessionId: string) => {
+    const link = `${window.location.origin}/app/placements/interview/${sessionId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
+  };
 
   const handleLogout = () => {
     logout('');
@@ -53,6 +95,26 @@ export const HRDashboard: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <button
+            onClick={() => navigate('/app/admin/placements')}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              padding: '0.625rem 1.25rem', 
+              background: 'linear-gradient(135deg, #14b8a6, #0d9488)', 
+              border: 'none', 
+              borderRadius: 8, 
+              color: '#fff', 
+              fontSize: '0.875rem', 
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(20, 184, 166, 0.2)'
+            }}
+          >
+            <Plus size={16} /> Create New Drive
+          </button>
+          
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.fullName}</div>
             <div style={{ fontSize: '0.75rem', color: '#475569' }}>{user?.email}</div>
@@ -107,13 +169,13 @@ export const HRDashboard: React.FC = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {applicants.slice(0, 8).map((a: any) => (
-                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: 8, cursor: 'pointer' }}>
+                  <div key={a.id} onClick={() => setSelectedApplicant(a)} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: 8, cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}>
                     <div style={{ width: 36, height: 36, background: 'rgba(20,184,166,0.12)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.875rem', color: '#2dd4bf', flexShrink: 0 }}>
                       {a.student?.fullName?.[0] || '?'}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.student?.fullName}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#475569' }}>{a.drive?.title}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#475569' }}>{a.drive?.name}</div>
                     </div>
                     <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.625rem', borderRadius: 100, background: `${statusColor[a.status] || '#818cf8'}18`, color: statusColor[a.status] || '#818cf8', fontWeight: 600, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
                       {a.status}
@@ -141,10 +203,10 @@ export const HRDashboard: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                 {drives.map((d: any) => (
                   <div key={d.id} style={{ padding: '1rem', background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.12)', borderRadius: 10 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.375rem' }}>{d.title}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.375rem' }}>{d.name}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: '#475569' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Users size={12} /> {d.applicationCount || 0} applicants</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> Closes {d.deadline ? new Date(d.deadline).toLocaleDateString() : 'TBD'}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> Closes {d.registrationDeadline ? new Date(d.registrationDeadline).toLocaleDateString() : 'TBD'}</span>
                     </div>
                   </div>
                 ))}
@@ -153,6 +215,137 @@ export const HRDashboard: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Applicant Side-Panel */}
+      {selectedApplicant && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', justifyContent: 'flex-end', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedApplicant(null)}>
+          <div style={{ width: 400, background: '#0f172a', borderLeft: '1px solid rgba(255,255,255,0.1)', padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '-10px 0 30px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem' }}>{selectedApplicant.student?.fullName}</h2>
+                <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Applied for: <span style={{ color: '#f8fafc', fontWeight: 500 }}>{selectedApplicant.drive?.name}</span></div>
+              </div>
+              <button onClick={() => setSelectedApplicant(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.25rem' }}><XCircle size={24} /></button>
+            </div>
+            
+            {/* Status Badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <span style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem', borderRadius: 100, background: `${statusColor[selectedApplicant.status] || '#818cf8'}25`, color: statusColor[selectedApplicant.status] || '#818cf8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Current Status: {selectedApplicant.status}
+              </span>
+            </div>
+
+            {/* Resume Action */}
+            {selectedApplicant.resumeUrl ? (
+              <button onClick={() => window.open(selectedApplicant.resumeUrl, '_blank')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#f8fafc', fontWeight: 500, cursor: 'pointer' }}>
+                <FileText size={18} /> View Resume
+              </button>
+            ) : (
+              <div style={{ padding: '1rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: 8, color: '#64748b', fontSize: '0.875rem' }}>No resume attached to this application</div>
+            )}
+
+            {/* Pipeline Actions */}
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Update Pipeline Status</h3>
+              <button 
+                onClick={() => updateStatusMutation.mutate({ id: selectedApplicant.id, status: 'shortlisted' })}
+                disabled={updateStatusMutation.isPending || selectedApplicant.status === 'shortlisted'}
+                style={{ padding: '1rem', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 8, color: '#4ade80', fontWeight: 600, cursor: 'pointer', opacity: selectedApplicant.status === 'shortlisted' ? 0.5 : 1 }}
+              >
+                {updateStatusMutation.isPending && selectedApplicant.status !== 'shortlisted' ? 'Updating...' : 'Shortlist Candidate'}
+              </button>
+              <button 
+                onClick={() => updateStatusMutation.mutate({ id: selectedApplicant.id, status: 'interview' })}
+                disabled={updateStatusMutation.isPending || selectedApplicant.status === 'interview'}
+                style={{ padding: '1rem', background: 'rgba(129,140,248,0.1)', border: '1px solid rgba(129,140,248,0.3)', borderRadius: 8, color: '#818cf8', fontWeight: 600, cursor: 'pointer', opacity: selectedApplicant.status === 'interview' ? 0.5 : 1 }}
+              >
+                Move to Interview Stage
+              </button>
+              <button 
+                onClick={() => updateStatusMutation.mutate({ id: selectedApplicant.id, status: 'rejected' })}
+                disabled={updateStatusMutation.isPending || selectedApplicant.status === 'rejected'}
+                style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontWeight: 600, cursor: 'pointer', opacity: selectedApplicant.status === 'rejected' ? 0.5 : 1 }}
+              >
+                Reject Candidate
+              </button>
+
+              {selectedApplicant.status === 'interview' && (
+                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <button 
+                    onClick={() => startInterviewMutation.mutate(selectedApplicant)}
+                    disabled={startInterviewMutation.isPending}
+                    style={{ 
+                      width: '100%', 
+                      padding: '1rem', 
+                      background: 'linear-gradient(135deg, #eab308, #ca8a04)', 
+                      border: 'none', 
+                      borderRadius: 8, 
+                      color: '#000', 
+                      fontWeight: 700, 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      boxShadow: '0 4px 12px rgba(234, 179, 8, 0.3)'
+                    }}
+                  >
+                    <Video size={18} />
+                    {startInterviewMutation.isPending ? 'Generating Room...' : 'Start Video Interview Now'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Session Created Invite Modal ── */}
+      {createdSession && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 16, padding: '2.5rem', maxWidth: 480, width: '90%', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.375rem' }}>
+                  <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg,#14b8a6,#0d9488)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Video size={16} color="#fff" />
+                  </div>
+                  <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#f0f9ff' }}>Interview Session Created</h2>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b' }}>Share the link below with the student to join</p>
+              </div>
+              <button onClick={() => setCreatedSession(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.25rem' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '1rem', marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student Join Link</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: '#2dd4bf', wordBreak: 'break-all' }}>
+                {`${window.location.origin}/app/placements/interview/${createdSession.id}`}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => copyLink(createdSession.id)}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: copiedLink ? 'rgba(34,197,94,0.15)' : 'rgba(20,184,166,0.12)', border: `1px solid ${copiedLink ? 'rgba(34,197,94,0.4)' : 'rgba(20,184,166,0.3)'}`, borderRadius: 8, color: copiedLink ? '#4ade80' : '#2dd4bf', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+              >
+                <Copy size={15} /> {copiedLink ? 'Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={() => window.open(`/app/placements/interview/${createdSession.id}`, '_blank')}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: 'linear-gradient(135deg,#14b8a6,#0d9488)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+              >
+                <ExternalLink size={15} /> Open Room
+              </button>
+            </div>
+            <p style={{ margin: '1rem 0 0', fontSize: '0.75rem', color: '#475569', textAlign: 'center' }}>
+              The student will see a "Join Interview" button in their Placements Hub.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

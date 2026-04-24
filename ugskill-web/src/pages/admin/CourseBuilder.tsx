@@ -5,6 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Plus, GripVertical, FileVideo, FileText, Settings, Save, AlertCircle, Loader } from 'lucide-react';
 import api from '../../lib/api';
+import { FileUpload } from '../../components/ui/FileUpload';
 
 /* ---------- types ---------- */
 interface Lecture {
@@ -66,6 +67,8 @@ export const CourseBuilder: React.FC = () => {
   const [localSections, setLocalSections] = useState<Section[]>([]);
   const sections = course?.sections ?? localSections;
 
+  const [editingLectureId, setEditingLectureId] = useState<string | null>(null);
+
   const saveMutation = useMutation({
     mutationFn: () => saveCurriculum({ courseId: courseId!, sections }),
     onSuccess: () => alert('Curriculum saved!'),
@@ -89,6 +92,23 @@ export const CourseBuilder: React.FC = () => {
         s.id === sectionId ? { ...s, lectures: [...s.lectures, newLec] } : s
       );
     });
+  };
+
+  const handleVideoUploaded = (sectionId: string, lectureId: string, path: string) => {
+    setLocalSections((prev) => {
+      const base = course?.sections ?? prev;
+      return base.map((s) =>
+        s.id === sectionId
+          ? {
+              ...s,
+              lectures: s.lectures.map((l) =>
+                l.id === lectureId ? { ...l, videoUrl: path } : l
+              ),
+            }
+          : s
+      );
+    });
+    setEditingLectureId(null);
   };
 
   /* Loading */
@@ -174,16 +194,33 @@ export const CourseBuilder: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '2rem' }}>
               {mod.lectures.map((item) => (
-                <div
-                  key={item.id}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <GripVertical size={16} color="var(--text-muted)" style={{ cursor: 'grab' }} />
-                    <LectureIcon type={item.type} />
-                    <span style={{ color: 'var(--text-primary)' }}>{item.title}</span>
+                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)', cursor: 'pointer' }}
+                    onClick={() => setEditingLectureId(editingLectureId === item.id ? null : item.id)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <GripVertical size={16} color="var(--text-muted)" style={{ cursor: 'grab' }} />
+                      <LectureIcon type={item.type} />
+                      <span style={{ color: 'var(--text-primary)' }}>{item.title}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      {item.videoUrl && <span style={{ color: 'var(--success)', fontSize: '0.75rem', background: 'rgba(34, 197, 94, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>Video attached</span>}
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{item.duration ?? '—'}</span>
+                    </div>
                   </div>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{item.duration ?? '—'}</span>
+
+                  {editingLectureId === item.id && (
+                    <div style={{ padding: '1.5rem', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '0.5rem', border: '1px dashed var(--border)', marginLeft: '2rem' }}>
+                      <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)' }}>Upload Video for: {item.title}</h4>
+                      <FileUpload 
+                        category="course_content"
+                        acceptedTypes="video/mp4,video/webm"
+                        maxSizeMB={2000}
+                        onUploadComplete={(path) => handleVideoUploaded(mod.id, item.id, path)}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
 

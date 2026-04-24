@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import { NavLink, useLocation } from 'react-router-dom';
 import { MAIN_NAV_ITEMS, ADMIN_NAV_ITEMS, FOOTER_NAV_ITEMS } from '../../config/navigation';
 import { useAuthStore } from '../../store/auth.store';
+import { LayoutGrid, Telescope, Building2 } from 'lucide-react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -14,8 +15,15 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) => {
   const { user } = useAuthStore();
   const location = useLocation();
-  const isAdminOrCreator = user?.roles?.includes('admin') || user?.roles?.includes('creator');
-  const isAdminPortal = location.pathname.startsWith('/admin');
+  const isManager = user?.roles?.some(r => ['admin', 'creator', 'hr', 'super_admin'].includes(r));
+  const isHR = user?.roles?.includes('hr');
+  const isAdminPortal = location.pathname.startsWith('/app/admin');
+
+  // Filter admin items based on role
+  const visibleAdminItems = ADMIN_NAV_ITEMS.filter(item => {
+    if (isHR) return item.to === '/app/admin/placements'; 
+    return true; 
+  });
 
   return (
     <>
@@ -34,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
                   <li key={item.to}>
                     <NavLink
                       to={item.to}
+                      end
                       className={({ isActive }) => cn('nav-link', isActive && 'active')}
                       onClick={() => {
                         if (window.innerWidth < 768) onClose?.();
@@ -47,31 +56,48 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
               </ul>
             </div>
           ) : (
-            isAdminOrCreator && (
-              <div className="nav-section">
-                <h3 className="nav-heading">Administration</h3>
-                <ul className="nav-list">
-                  {ADMIN_NAV_ITEMS.map((item) => (
-                    <li key={item.to}>
-                      <NavLink
-                        to={item.to}
-                        className={({ isActive }) => cn('nav-link', isActive && 'active')}
-                        onClick={() => {
-                          if (window.innerWidth < 768) onClose?.();
-                        }}
-                      >
-                        <span className="nav-icon">{item.icon}</span>
-                        <span className="nav-label">{item.label}</span>
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
+            <div className="nav-section">
+              <h3 className="nav-heading">{isHR ? 'Recruiter Console' : 'Administration'}</h3>
+              <ul className="nav-list">
+                {isHR && (
+                   <li>
+                     <NavLink to="/hr/dashboard" end className={({ isActive }) => cn('nav-link', isActive && 'active')}>
+                       <span className="nav-icon"><LayoutGrid size={18} /></span>
+                       <span className="nav-label">HR Dashboard</span>
+                     </NavLink>
+                   </li>
+                )}
+                {!isHR && (
+                  <li>
+                    <NavLink to="/app/admin/analytics" end className={({ isActive }) => cn('nav-link', isActive && 'active')}>
+                      <span className="nav-icon"><LayoutGrid size={18} /></span>
+                      <span className="nav-label">Analytics Overview</span>
+                    </NavLink>
+                  </li>
+                )}
+                {visibleAdminItems.map((item) => (
+                  <li key={item.to}>
+                    <NavLink
+                      to={item.to}
+                      end
+                      className={({ isActive }) => cn('nav-link', isActive && 'active')}
+                      onClick={() => {
+                        if (window.innerWidth < 768) onClose?.();
+                      }}
+                    >
+                      <span className="nav-icon">{item.icon}</span>
+                      <span className="nav-label">{item.label}</span>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </nav>
 
         <div className="sidebar-footer">
+          <div className="dropdown-divider" style={{ margin: '0.5rem 0' }} />
+
           {FOOTER_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}

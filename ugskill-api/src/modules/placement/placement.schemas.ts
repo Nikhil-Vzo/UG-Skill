@@ -73,7 +73,8 @@ export const driveQuerySchema = z.object({
     page: z.string().regex(/^\d+$/).transform(Number).optional(),
     limit: z.string().regex(/^\d+$/).transform(Number).optional(),
     companyId: z.string().uuid().optional(),
-    status: z.enum(['upcoming', 'active', 'completed', 'cancelled']).optional()
+    status: z.enum(['upcoming', 'active', 'completed', 'cancelled']).optional(),
+    userId: z.string().uuid().optional()
   })
 });
 
@@ -94,7 +95,7 @@ export const registerForDriveSchema = z.object({
 
 export const updateRegistrationSchema = z.object({
   body: z.object({
-    status: z.enum(['registered', 'shortlisted', 'rejected', 'selected']).optional(),
+    status: z.enum(['registered', 'shortlisted', 'interview', 'rejected', 'selected']).optional(),
     eligibilityOk: z.boolean().optional()
   })
 });

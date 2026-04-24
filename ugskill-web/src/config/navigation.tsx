@@ -35,16 +35,12 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
 ];
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { icon: <Database size={18} strokeWidth={2.5} />, label: 'Content Manager', to: '/admin/content' },
-  { icon: <PenTool size={18} strokeWidth={2.5} />, label: 'Course Builder', to: '/admin/courses/builder' },
-  { icon: <ClipboardList size={18} strokeWidth={2.5} />, label: 'Assessment Engine', to: '/admin/assessments' },
-  { icon: <Target size={18} strokeWidth={2.5} />, label: 'Quiz Builder', to: '/admin/quizzes/builder' },
-  { icon: <CalendarDays size={18} strokeWidth={2.5} />, label: 'Exam Operations', to: '/admin/exams' },
-  { icon: <Building2 size={18} strokeWidth={2.5} />, label: 'Placements Manager', to: '/admin/placements' },
-  { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'Batch Management', to: '/admin/batches' },
-  { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'User Directory', to: '/admin/users' },
-  { icon: <BarChart3 size={18} strokeWidth={2.5} />, label: 'Analytics Grid', to: '/admin/analytics' },
-  { icon: <Monitor size={18} strokeWidth={2.5} />, label: 'Design System', to: '/showcase' },
+  { icon: <PenTool size={18} strokeWidth={2.5} />, label: 'Course Builder', to: '/app/admin/courses/builder' },
+  { icon: <Target size={18} strokeWidth={2.5} />, label: 'Quiz Builder', to: '/app/admin/quizzes/builder' },
+  { icon: <CalendarDays size={18} strokeWidth={2.5} />, label: 'Exam Operations', to: '/app/admin/exams' },
+  { icon: <Building2 size={18} strokeWidth={2.5} />, label: 'Placements Manager', to: '/app/admin/placements' },
+  { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'Batch Management', to: '/app/admin/batches' },
+  { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'User Directory', to: '/app/admin/users' },
 ];
 
 export const FOOTER_NAV_ITEMS: NavItem[] = [

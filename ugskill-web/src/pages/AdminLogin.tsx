@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ShieldCheck, AlertCircle, LogIn, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import './portals.css';
@@ -15,7 +17,7 @@ export const AdminLogin: React.FC = () => {
     if (isAuthenticated && user) {
       const isAdmin = user.roles?.includes('admin') || user.roles?.includes('creator');
       if (isAdmin) {
-        navigate('/admin/analytics', { replace: true });
+        navigate('/app/admin/analytics', { replace: true });
       } else {
         // Logged in but not admin — show a portal-specific error
         setPortalError('This portal is for administrators only. Please use the Student Portal.');

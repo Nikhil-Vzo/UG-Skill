@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, LogIn, GraduationCap, ArrowLeft, Trophy, Users, Rocket } from 'lucide-react';
+import { Mail, Lock, LogIn, ChevronRight, GraduationCap, ShieldCheck, Zap, Globe } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { TextInput } from '../components/ui/TextInput';
-import { useAuthStore } from '../store/auth.store';
 import { Logo } from '../components/ui/Logo';
+import { useAuthStore } from '../store/auth.store';
 import './Login.css';
 
 export const Login: React.FC = () => {
@@ -13,6 +13,7 @@ export const Login: React.FC = () => {
   const { login, isLoading, error, isAuthenticated, user, clearError } = useAuthStore();
   const navigate = useNavigate();
 
+  // Role-based redirect after login
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.roles?.includes('admin') || user.roles?.includes('creator')) {
@@ -25,8 +26,10 @@ export const Login: React.FC = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
+  // Clear errors when user starts typing
   useEffect(() => {
     if (error) clearError();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, password]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -36,78 +39,88 @@ export const Login: React.FC = () => {
 
   return (
     <div className="login-page-container">
-      {/* Sidebar Content */}
+      {/* ── Left Sidebar: Brand & Value Prop ── */}
       <aside className="auth-sidebar">
         <div className="sidebar-glow"></div>
+        
         <div className="sidebar-content">
           <div className="sidebar-logo">
-            <Logo />
+            <Logo size="md" />
           </div>
 
-          <h1 className="sidebar-headline">
-            Welcome back to the <br />
-            <span>Future of Learning.</span>
-          </h1>
+          <div className="sidebar-main-content">
+            <h1 className="sidebar-headline">
+              Master the Skills <br />
+              <span className="text-gradient">that Matter.</span>
+            </h1>
+            
+            <div className="sidebar-features">
+              <div className="sidebar-feature">
+                <div className="sidebar-feature-icon">
+                  <ShieldCheck size={24} />
+                </div>
+                <div className="sidebar-feature-text">
+                  <h4>Industry Recognized</h4>
+                  <p>Our certifications are trusted by top-tier global companies.</p>
+                </div>
+              </div>
 
-          <div className="sidebar-features">
-            <div className="sidebar-feature">
-              <div className="sidebar-feature-icon"><Rocket size={24} /></div>
-              <div className="sidebar-feature-text">
-                <h4>Career Velocity</h4>
-                <p>Land your dream job faster with our enterprise network.</p>
+              <div className="sidebar-feature">
+                <div className="sidebar-feature-icon">
+                  <Zap size={24} />
+                </div>
+                <div className="sidebar-feature-text">
+                  <h4>AI-Powered Learning</h4>
+                  <p>Adaptive curriculum that evolves with your progress.</p>
+                </div>
               </div>
-            </div>
-            <div className="sidebar-feature">
-              <div className="sidebar-feature-icon"><Trophy size={24} /></div>
-              <div className="sidebar-feature-text">
-                <h4>AI Leaderboards</h4>
-                <p>Compete and showcase your skills on a national level.</p>
-              </div>
-            </div>
-            <div className="sidebar-feature">
-              <div className="sidebar-feature-icon"><Users size={24} /></div>
-              <div className="sidebar-feature-text">
-                <h4>Elite Network</h4>
-                <p>Connect with industry experts and high-achievers.</p>
+
+              <div className="sidebar-feature">
+                <div className="sidebar-feature-icon">
+                  <Globe size={24} />
+                </div>
+                <div className="sidebar-feature-text">
+                  <h4>Global Community</h4>
+                  <p>Connect with peers and mentors from around the world.</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div className="sidebar-footer">
-          &copy; 2026 UGSkill. Pioneering Cognitive Ecosystems.
+          <p>© 2024 UGSkill Cognitive Ecosystem. All rights reserved.</p>
         </div>
       </aside>
 
-      {/* Form Content */}
-      <main className="auth-form-column">
-        <Link to="/" className="back-to-landing">
-          <ArrowLeft size={18} />
-          Back to Home
-        </Link>
-
+      {/* ── Right Section: Login Form ── */}
+      <section className="auth-form-column">
         <div className="login-ambient-1"></div>
         <div className="login-ambient-2"></div>
 
+        <Link to="/" className="back-to-landing">
+          Back to website <ChevronRight size={14} />
+        </Link>
+
         <div className="login-glass-card">
           <header className="login-header">
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
-              <Logo size="lg" showText={false} />
+            <div className="mobile-only-logo">
+              <Logo size="sm" />
             </div>
-            <h1 className="login-title">Welcome back</h1>
+            <h2 className="login-title">Welcome back</h2>
             <p className="login-subtitle">
-              Sign in to access your courses, exams and placement dashboard.
+              Sign in to your student account to continue your journey.
             </p>
           </header>
 
           <form onSubmit={handleLogin} className="login-form">
             <TextInput
-              label="Institutional Email"
+              label="Email Address"
               type="email"
-              placeholder="student@ugskill.edu"
+              placeholder="name@university.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              leftIcon={<Mail size={18} />}
+              leftIcon={<Mail size={20} />}
               required
             />
 
@@ -117,13 +130,19 @@ export const Login: React.FC = () => {
               placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              leftIcon={<Lock size={18} />}
+              leftIcon={<Lock size={20} />}
               required
             />
 
-            <Link to="/forgot-password" className="login-forgot-link">Forgot your password?</Link>
+            <div className="login-options">
+              <label className="remember-me">
+                <input type="checkbox" />
+                <span>Remember me</span>
+              </label>
+              <Link to="/forgot-password" title="Forgot Password?" className="login-forgot-link">Forgot password?</Link>
+            </div>
 
-            {error && <div style={{ color: '#ef4444', fontSize: '0.8125rem' }}>{error}</div>}
+            {error && <div className="auth-error-message">{error}</div>}
 
             <Button
               type="submit"
@@ -131,27 +150,28 @@ export const Login: React.FC = () => {
               className="login-submit-btn"
               fullWidth
               isLoading={isLoading}
-              leftIcon={<LogIn size={18} />}
+              leftIcon={<LogIn size={20} />}
             >
-              Log In
+              Sign In
             </Button>
           </form>
 
           <div className="login-footer">
-            New student?{' '}
-            <Link to="/signup" className="login-footer-link">Create an account</Link>
+            Don't have an account?{' '}
+            <Link to="/signup" className="login-footer-link">Join the ecosystem</Link>
           </div>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1.5rem' }}>
-            <Link to="/admin" style={{ fontSize: '0.75rem', color: '#64748b', textDecoration: 'none', transition: 'color 0.2s' }}>
-              Admin Portal
-            </Link>
-            <Link to="/hr" style={{ fontSize: '0.75rem', color: '#64748b', textDecoration: 'none', transition: 'color 0.2s' }}>
-              HR Portal
-            </Link>
+          <div className="portal-switcher">
+            <div className="switcher-label">Need a different portal?</div>
+            <div className="switcher-links">
+              <Link to="/admin">Admin</Link>
+              <span className="dot">•</span>
+              <Link to="/hr">Recruiters</Link>
+            </div>
           </div>
         </div>
-      </main>
+      </section>
     </div>
   );
 };
+

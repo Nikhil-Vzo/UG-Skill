@@ -102,12 +102,12 @@ export const createDrive = async (data: CreateDriveInput, creatorId: string) => 
   const { flowSpec, eligibility, scheduledAt, registrationDeadline, ...pgData } = data;
 
   // 2. Create Interview Flow in Mongo
-  const flow = await placementRepo.insertDriveFlowMongo(data.companyId, flowSpec);
+  const flow = await placementRepo.insertDriveFlowMongo(data.companyId, data.name, creatorId, flowSpec);
 
   // 3. Create Drive in PG
   const newDrive = await placementRepo.insertDrivePg({
     ...pgData,
-    eligibility: eligibility ? JSON.stringify(eligibility) : null,
+    eligibility: eligibility || null,
     mongoFlowId: flow.id,
     scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
     registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
@@ -117,8 +117,8 @@ export const createDrive = async (data: CreateDriveInput, creatorId: string) => 
   return { ...newDrive, flow };
 };
 
-export const getDrive = async (id: string) => {
-  const drive = await placementRepo.getDriveById(id);
+export const getDrive = async (id: string, userId?: string) => {
+  const drive = await placementRepo.getDriveById(id, userId);
   if (!drive) {
     throw new NotFoundError('Drive not found');
   }
@@ -150,13 +150,18 @@ export const registerForDrive = async (studentId: string, data: RegisterForDrive
 };
 
 export const updateRegistrationStatus = async (id: string, data: UpdateRegistrationInput) => {
-  const existing = await placementRepo.getRegistrationById(id);
-  if (!existing) {
-    throw new NotFoundError('Registration not found');
-  }
+  try {
+    const existing = await placementRepo.getRegistrationById(id);
+    if (!existing) {
+      throw new NotFoundError('Registration not found');
+    }
 
-  const updated = await placementRepo.updateRegistrationPg(id, data);
-  return updated;
+    const updated = await placementRepo.updateRegistrationPg(id, data);
+    return updated;
+  } catch (error) {
+    console.error('Error updating registration status:', error);
+    throw error;
+  }
 };
 
 export const getRegistration = async (id: string) => {
@@ -309,7 +314,7 @@ export const updatePlacementSessionStatus = async (id: string, data: UpdatePlace
 };
 
 export const listPlacementSessions = async (query: PlacementSessionQuery) => {
-  return await placementRepo.getPlacementSessionsPg(query);
+  return await placementRepo.listPlacementSessionsPg(query);
 };
 
 // --- MOCK INTERVIEW ATTEMPTS (5.7) ---

@@ -82,7 +82,7 @@ router.patch(
 router.post(
   '/drives',
   requireAuth,
-  requireRole(['admin', 'creator']),
+  requireRole(['admin', 'creator', 'hr']),
   validate(createDriveSchema),
   placementController.createDrive
 );
@@ -101,6 +101,12 @@ router.get(
 );
 
 // --- DRIVE REGISTRATIONS ---
+router.post(
+  '/drives/:id/apply',
+  requireAuth,
+  requireRole(['student']),
+  placementController.registerForDrive
+);
 
 router.post(
   '/registrations',
@@ -113,7 +119,7 @@ router.post(
 router.get(
   '/registrations',
   requireAuth,
-  requireRole(['admin', 'creator', 'student']),
+  requireRole(['admin', 'creator', 'hr', 'student']),
   validate(registrationQuerySchema),
   placementController.listRegistrations
 );
@@ -128,7 +134,7 @@ router.get(
 router.patch(
   '/registrations/:id',
   requireAuth,
-  requireRole(['admin', 'creator']),
+  requireRole(['admin', 'creator', 'hr']),
   validate(updateRegistrationSchema),
   placementController.updateRegistrationStatus
 );
@@ -216,7 +222,7 @@ router.delete(
 router.post(
   '/sessions',
   requireAuth,
-  requireRole(['admin', 'placement_coordinator']),
+  requireRole(['admin', 'placement_coordinator', 'hr']),
   validate(createPlacementSessionSchema),
   placementController.createPlacementSession
 );
@@ -237,7 +243,7 @@ router.get(
 router.patch(
   '/sessions/:id/status',
   requireAuth,
-  requireRole(['admin', 'placement_coordinator']),
+  requireRole(['admin', 'placement_coordinator', 'hr', 'student']),
   validate(updatePlacementSessionStatusSchema),
   placementController.updatePlacementSessionStatus
 );

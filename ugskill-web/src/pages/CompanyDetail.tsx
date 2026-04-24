@@ -34,7 +34,7 @@ export const CompanyDetail: React.FC = () => {
   });
 
   const applyMutation = useMutation({
-    mutationFn: () => api.post(`/placements/drives/${driveId}/apply`),
+    mutationFn: () => api.post('/placements/registrations', { driveId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drive', driveId] });
     },
@@ -65,7 +65,7 @@ export const CompanyDetail: React.FC = () => {
   if (error || !company) {
     return (
       <div style={{ padding: '2rem', maxWidth: 960, margin: '0 auto' }}>
-        <button onClick={() => navigate('/placements')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '0.875rem', marginBottom: '2rem' }}>
+        <button onClick={() => navigate('/app/placements')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '0.875rem', marginBottom: '2rem' }}>
           <ArrowLeft size={16} /> Back to Drives
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--error)', background: 'var(--error-container)', padding: '1rem', borderLeft: '4px solid var(--error)' }}>
@@ -79,7 +79,7 @@ export const CompanyDetail: React.FC = () => {
   return (
     <div style={{ padding: '2rem', maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       {/* Back */}
-      <button onClick={() => navigate('/placements')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '0.875rem', width: 'fit-content' }}>
+      <button onClick={() => navigate('/app/placements')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '0.875rem', width: 'fit-content' }}>
         <ArrowLeft size={16} /> Back to Drives
       </button>
 
@@ -87,21 +87,21 @@ export const CompanyDetail: React.FC = () => {
       <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ width: 72, height: 72, background: '#4285F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 900, color: 'white', flexShrink: 0 }}>
-            {(company.company || company.name || '?').charAt(0)}
+            {(company.companyName || company.name || '?').charAt(0)}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.375rem' }}>
-              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--text-high)', margin: 0 }}>{company.company || company.name}</h1>
-              <Badge variant={company.status === 'open' ? 'success' : 'warning'} size="sm">
-                {company.status === 'open' ? 'Hiring Open' : company.status}
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--text-high)', margin: 0 }}>{company.companyName || company.name}</h1>
+              <Badge variant={company.status === 'active' ? 'success' : 'warning'} size="sm">
+                {company.status === 'active' ? 'Hiring Open' : company.status}
               </Badge>
             </div>
-            <p style={{ color: 'var(--text-low)', fontSize: '1rem', margin: '0 0 0.75rem' }}>{company.role}</p>
+            <p style={{ color: 'var(--text-low)', fontSize: '1rem', margin: '0 0 0.75rem' }}>{company.name}</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', fontSize: '0.875rem', color: 'var(--text-low)' }}>
               {company.location && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><MapPin size={14} />{company.location}</span>}
               {company.package && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Briefcase size={14} />{company.package}</span>}
-              {company.seats && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Users size={14} />{company.seats} seats</span>}
-              {company.deadline && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Clock size={14} />Deadline: {new Date(company.deadline).toLocaleDateString()}</span>}
+              {company.targetRoles && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Users size={14} />{company.targetRoles.join(', ')}</span>}
+              {company.registrationDeadline && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Clock size={14} />Deadline: {new Date(company.registrationDeadline).toLocaleDateString()}</span>}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', alignItems: 'flex-end' }}>
@@ -134,19 +134,19 @@ export const CompanyDetail: React.FC = () => {
         {/* Left */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Description */}
-          {company.description && (
+          {(company.companyDescription || company.description) && (
             <div className="surface-card" style={{ padding: '1.5rem' }}>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--text-high)', marginBottom: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>About the Role</h2>
-              <p style={{ color: 'var(--text-low)', fontSize: '0.9375rem', lineHeight: 1.7 }}>{company.description}</p>
+              <p style={{ color: 'var(--text-low)', fontSize: '0.9375rem', lineHeight: 1.7 }}>{company.companyDescription || company.description}</p>
             </div>
           )}
 
           {/* Selection Rounds */}
-          {company.rounds?.length > 0 && (
+          {(company.flow?.rounds || company.flow?.stages || []).length > 0 && (
             <div className="surface-card" style={{ padding: '1.5rem' }}>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--text-high)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Selection Process</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {company.rounds.map((r: any, i: number) => (
+                {(company.flow?.rounds || company.flow?.stages || []).map((r: any, i: number) => (
                   <div key={r.id ?? i}>
                     <button
                       onClick={() => setExpanded(expanded === (r.id ?? i) ? null : (r.id ?? i))}
@@ -154,10 +154,10 @@ export const CompanyDetail: React.FC = () => {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <div style={{ width: 28, height: 28, background: 'var(--primary-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 0, color: 'var(--primary-glow)', flexShrink: 0 }}>
-                          {ROUND_ICONS[r.type] ?? <MessageSquare size={16} />}
+                          {ROUND_ICONS[r.roundType] ?? <MessageSquare size={16} />}
                         </div>
                         <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Round {i + 1}: {r.label}</div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Round {i + 1}: {r.roundType?.replace('_', ' ')}</div>
                           {r.duration && <div style={{ fontSize: '0.75rem', color: 'var(--text-low)' }}><Clock size={11} style={{ display: 'inline', marginRight: 3 }} />{r.duration}</div>}
                         </div>
                       </div>
@@ -165,7 +165,7 @@ export const CompanyDetail: React.FC = () => {
                     </button>
                     {expanded === (r.id ?? i) && (
                       <div style={{ padding: '0.875rem 1rem', background: 'var(--surface-well)', border: '1px solid var(--surface-highest)', borderTop: 'none', fontSize: '0.875rem', color: 'var(--text-low)', lineHeight: 1.6 }}>
-                        {r.desc ?? r.description ?? 'No description available.'}
+                        {r.description || 'No description available.'}
                       </div>
                     )}
                   </div>

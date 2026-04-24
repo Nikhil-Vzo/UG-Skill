@@ -20,11 +20,11 @@ const ADMIN_PASSWORD = 'Admin@123';
 const ADMIN_NAME = 'Super Admin';
 const BCRYPT_ROUNDS = 12;
 
-async function seedAdmin() {
+export async function seedAdmin() {
   const pgUrl = process.env.PG_DATABASE_URL;
   if (!pgUrl) {
     console.error('❌ PG_DATABASE_URL is not set in .env');
-    process.exit(1);
+    throw new Error('PG_DATABASE_URL is not set in .env');
   }
 
   // Use explicit options to avoid postgres.js misparse of dot-notation username
@@ -84,11 +84,15 @@ async function seedAdmin() {
   } catch (error) {
     console.error('❌ Seed failed:', error);
     await client.end();
-    process.exit(1);
+    throw error;
   }
 
   await client.end();
-  process.exit(0);
 }
 
-seedAdmin();
+// Support running directly via `npm run seed:admin`
+if (process.argv[1] && process.argv[1].includes('seed-admin')) {
+  seedAdmin()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}

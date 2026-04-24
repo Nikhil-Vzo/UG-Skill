@@ -43,14 +43,16 @@ export const createDrive = async (req: Request, res: Response, next: NextFunctio
   try {
     const result = await placementService.createDrive(req.body, req.user!.userId);
     res.status(201).json(successResponse(result));
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Create Drive Error:', error);
     next(error);
   }
 };
 
 export const getDrive = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await placementService.getDrive(req.params.id as string);
+    const userId = req.user?.roles.includes('student') ? req.user.userId : undefined;
+    const result = await placementService.getDrive(req.params.id as string, userId);
     res.status(200).json(successResponse(result));
   } catch (error) {
     next(error);
@@ -59,7 +61,10 @@ export const getDrive = async (req: Request, res: Response, next: NextFunction) 
 
 export const listDrives = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await placementService.listDrives(req.query as any);
+    const query = { ...req.query };
+    if (req.user?.roles.includes('student')) query.userId = req.user.userId;
+    const result = await placementService.listDrives(query as any);
+    console.log('List drives result:', result.data.length, 'drives found');
     res.status(200).json(successResponse(result.data, result.meta));
   } catch (error) {
     next(error);
@@ -68,7 +73,10 @@ export const listDrives = async (req: Request, res: Response, next: NextFunction
 
 export const registerForDrive = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await placementService.registerForDrive(req.user!.userId, req.body);
+    console.log('Registering for drive:', { params: req.params, body: req.body, user: req.user?.userId });
+    const payload = { ...req.body };
+    if (req.params.id) payload.driveId = req.params.id;
+    const result = await placementService.registerForDrive(req.user!.userId, payload);
     res.status(201).json(successResponse(result));
   } catch (error) {
     next(error);
@@ -77,6 +85,7 @@ export const registerForDrive = async (req: Request, res: Response, next: NextFu
 
 export const updateRegistrationStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('Updating registration status:', { id: req.params.id, body: req.body });
     const result = await placementService.updateRegistrationStatus(req.params.id as string, req.body);
     res.status(200).json(successResponse(result));
   } catch (error) {

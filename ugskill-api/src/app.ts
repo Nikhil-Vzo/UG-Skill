@@ -22,6 +22,7 @@ import placementRoutes from './modules/placement/placement.routes';
 import examRoutes from './modules/exam/exam.routes';
 import inviteRoutes from './modules/invite/invite.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import uploadRoutes from './modules/upload/upload.routes';
 import { activityRouter } from './modules/activity/activity.routes';
 import { aiRouter } from './modules/ai/ai.routes';
 import { globalLimiter, authLimiter, uploadLimiter, aiLimiter } from './middleware/rateLimiter';
@@ -84,9 +85,10 @@ app.use('/api/v1/reviews', reviewRoutes);
 // Placement & Jobs
 app.use('/api/v1/jobs', placementRoutes);
 
-// Activity and AI Modules
+// Activity, AI, and Storage Modules
 app.use('/api/v1/activity', activityRouter);
 app.use('/api/v1/ai', aiLimiter, aiRouter);
+app.use('/api/v1/upload', uploadRoutes);
 
 // Invite Module
 app.use('/api/v1', authLimiter, inviteRoutes);

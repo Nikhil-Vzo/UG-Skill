@@ -27,6 +27,8 @@ import { InterviewPrep } from './pages/InterviewPrep';
 import { ReadinessAnalytics } from './pages/ReadinessAnalytics';
 import { ExamPreFlight } from './pages/ExamPreFlight';
 import { LiveGD } from './pages/LiveGD';
+import { LiveInterview } from './pages/LiveInterview';
+import InterviewRoom from './pages/InterviewRoom';
 import { Leaderboards } from './pages/Leaderboards';
 import { HRDashboard } from './pages/hr/HRDashboard';
 
@@ -38,6 +40,7 @@ const CourseBuilder = lazy(() => import('./pages/admin/CourseBuilder').then(m =>
 const QuizBuilder = lazy(() => import('./pages/admin/QuizBuilder').then(m => ({ default: m.QuizBuilder })));
 import { PlacementsConfig } from './pages/admin/PlacementsConfig';
 import { ExamOps } from './pages/admin/ExamOps';
+import { DriveConfig } from './pages/admin/DriveConfig';
 
 const PageFallback = () => (
   <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -84,21 +87,24 @@ function App() {
               <Route path="placements" element={<PlacementsHub />} />
               <Route path="placements/prep" element={<InterviewPrep />} />
               <Route path="placements/analytics" element={<ReadinessAnalytics />} />
+              <Route path="placements/interview/:sessionId" element={<InterviewRoom />} />
               <Route path="placements/:driveId" element={<CompanyDetail />} />
               <Route path="community" element={<Community />} />
               <Route path="exams" element={<Exams />} />
-              <Route path="live-gd" element={<LiveGD />} />
+              <Route path="live-gd/:sessionId" element={<LiveGD />} />
+              <Route path="live-interview/:sessionId" element={<LiveInterview />} />
               <Route path="leaderboards" element={<Leaderboards />} />
 
               {/* Admin Routes */}
-              <Route path="admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><Outlet /></ProtectedRoute>}>
-                <Route path="analytics" element={<AdminDashboard />} />
-                <Route path="users" element={<UserDirectory />} />
-                <Route path="batches" element={<BatchManagement />} />
+              <Route path="admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'hr']}><Outlet /></ProtectedRoute>}>
+                <Route path="analytics" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
+                <Route path="users" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><UserDirectory /></ProtectedRoute>} />
+                <Route path="batches" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><BatchManagement /></ProtectedRoute>} />
                 <Route path="placements" element={<PlacementsConfig />} />
-                <Route path="exams" element={<ExamOps />} />
-                <Route path="courses/builder" element={<CourseBuilder />} />
-                <Route path="quizzes/builder" element={<QuizBuilder />} />
+                <Route path="placements/:driveId" element={<DriveConfig />} />
+                <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />
+                <Route path="courses/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><CourseBuilder /></ProtectedRoute>} />
+                <Route path="quizzes/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><QuizBuilder /></ProtectedRoute>} />
               </Route>
 
               <Route path="*" element={<Navigate to="/app" replace />} />

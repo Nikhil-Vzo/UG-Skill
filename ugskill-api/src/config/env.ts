@@ -28,11 +28,12 @@ const envSchema = z.object({
   // Resend Email
   RESEND_API_KEY: z.string().default(''),
   
-  // AWS S3 Storage
-  AWS_REGION: z.string().default('ap-south-1'),
-  AWS_ACCESS_KEY_ID: z.string().optional(),
-  AWS_SECRET_ACCESS_KEY: z.string().optional(),
-  AWS_S3_BUCKET: z.string().default('ugskill-storage-bucket'),
+  // AWS S3 Storage (Removed)
+  
+  // Supabase Platform
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  SUPABASE_STORAGE_BUCKET: z.string().default('ugskill-storage'),
   
   // External AI team endpoint
   AI_EXTERNAL_URL: z.string().url().optional(),

@@ -5,6 +5,7 @@ import { IconButton } from './IconButton';
 import { Menu, Search, LogOut, Settings, Bell, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { GlobalNotifications } from './GlobalNotifications';
+import { Logo } from './Logo';
 import './Navbar.css';
 
 interface NavbarProps {
@@ -53,8 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className, onMenuClick }) => {
           onClick={onMenuClick}
         />
         <div className="navbar-brand">
-          <span className="brand-text">UG</span>
-          <span className="brand-text primary">SKILL</span>
+          <Logo size="sm" showText />
         </div>
       </div>
 

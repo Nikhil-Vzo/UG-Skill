@@ -1,8 +1,10 @@
 import http from 'http';
 import app from './app';
 import { env } from './config/env';
+// Triggering restart for placement route updates
 import { connectMongo } from './config/mongodb';
 import { logger } from './lib/logger';
+import { seedAdmin } from './db/seed-admin';
 import { createSocketServer } from './sockets/socket.server';
 import { registerExamNamespace } from './sockets/exam.namespace';
 import { registerChatNamespace } from './sockets/chat.namespace';
@@ -15,6 +17,9 @@ const startServer = async () => {
   try {
     // 1. Connect dependencies
     await connectMongo();
+    
+    // Auto-seed admin user
+    await seedAdmin().catch(err => logger.error('Auto-seed Admin failed:', err));
 
     // 2. Wrap Express in a raw HTTP server so Socket.io can share the port
     const httpServer = http.createServer(app);
