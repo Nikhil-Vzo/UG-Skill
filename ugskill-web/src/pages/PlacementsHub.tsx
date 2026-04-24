@@ -149,13 +149,13 @@ export const PlacementsHub: React.FC = () => {
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const { user } = useAuthStore();
 
-  const { data: mySessions = [], isLoading: loadingSessions } = useQuery({
-    queryKey: ['my-interview-sessions', user?.userId],
+  const { data: mySessions = [] } = useQuery({
+    queryKey: ['my-interview-sessions', user?.id],
     queryFn: async () => {
-      const res = await api.get(`/placements/sessions?studentId=${user?.userId}`);
+      const res = await api.get(`/placements/sessions?studentId=${user?.id}`);
       return res.data.data || res.data || [];
     },
-    enabled: !!user?.userId,
+    enabled: !!user?.id,
   });
 
   const { data: drives = [], isLoading, isError } = useQuery<Drive[]>({
@@ -325,11 +325,11 @@ export const PlacementsHub: React.FC = () => {
               <KanbanCol key={s} title={title[s]} count={col.length} accent={accentMap[s]}>
                 {isLoading ? <DriveSkeleton /> : col.map(d => (
                   <DriveCard
-                    key={d._id}
+                    key={d.id}
                     drive={d}
-                    onClick={() => navigate(`/placements/${d._id}`)}
-                    onApply={() => handleApply(d._id)}
-                    isApplying={applyingId === d._id}
+                    onClick={() => navigate(`/placements/${d.id}`)}
+                    onApply={() => handleApply(d.id)}
+                    isApplying={applyingId === d.id}
                   />
                 ))}
               </KanbanCol>

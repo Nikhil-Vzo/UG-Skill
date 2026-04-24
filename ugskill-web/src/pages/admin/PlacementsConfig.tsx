@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../components/ui/Card';
 import { DataTable } from '../../components/ui/DataTable';
@@ -50,6 +51,7 @@ const statusVariant: Record<string, 'primary' | 'outline'> = {
 /* ---------- component ---------- */
 export const PlacementsConfig: React.FC = () => {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
     companyId: '',

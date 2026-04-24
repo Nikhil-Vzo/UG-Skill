@@ -14,7 +14,8 @@ import {
   Clock,
   ArrowRight,
   FileText,
-  BarChart3
+  BarChart3,
+  Building2
 } from 'lucide-react';
 import api from '../../lib/api';
 
@@ -127,7 +128,7 @@ export const DriveConfig: React.FC = () => {
           <Card title="Partner Company">
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
               <div style={{ width: 48, height: 48, background: 'var(--surface-well)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
-                <Building size={24} color="var(--primary)" />
+                <Building2 size={24} color="var(--primary)" />
               </div>
               <div>
                 <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{drive.companyName}</div>

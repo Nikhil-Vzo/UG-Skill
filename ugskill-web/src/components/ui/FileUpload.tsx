@@ -1,4 +1,5 @@
-import React, { useState, useRef, DragEvent, ChangeEvent } from 'react';
+import React, { useState, useRef } from 'react';
+import type { DragEvent, ChangeEvent } from 'react';
 import axios from 'axios';
 import api from '../../lib/api';
 import './FileUpload.css';
