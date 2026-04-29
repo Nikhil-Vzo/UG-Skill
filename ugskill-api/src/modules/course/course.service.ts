@@ -79,6 +79,12 @@ export class CourseService {
     return course;
   }
 
+  async replaceSections(courseId: string, sections: any[]) {
+    const course = await courseRepo.updateCourse(courseId, { sections });
+    if (!course) throw new AppError('Course not found', 404);
+    return course;
+  }
+
   async addLecture(courseId: string, sectionIdx: number, data: any) {
     const course = await courseRepo.addLectureToSection(courseId, sectionIdx, data);
     if (!course) throw new AppError('Course not found', 404);
@@ -94,7 +100,9 @@ export class CourseService {
   }
 
   async searchCourses(query?: string, filters?: any) {
-    return await courseCatalogRepo.searchCourses(query, filters);
+    // Query MongoDB directly — PG catalog is only populated via CDC/BullMQ
+    // which requires a running background worker. MongoDB is always the source of truth.
+    return await courseRepo.searchCourses(query, filters);
   }
 
   async grantBatchAccess(courseId: string, batchId: string, grantedBy: string, expiresAt?: string) {

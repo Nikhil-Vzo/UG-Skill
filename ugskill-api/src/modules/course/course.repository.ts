@@ -45,6 +45,26 @@ export class CourseRepository {
       { new: true }
     );
   }
+
+  async searchCourses(query?: string, filters?: { status?: string; category?: string }): Promise<ICourse[]> {
+    const match: any = {};
+
+    // Default to published for student-facing queries
+    if (filters?.status) {
+      match.status = filters.status;
+    }
+    if (filters?.category) {
+      match.category = filters.category;
+    }
+    if (query) {
+      match.$text = { $search: query };
+    }
+
+    return await CourseModel.find(match)
+      .select('title category difficulty status is_free price avg_rating enrollment_count lecture_count thumbnail_url tags pg_creator_id')
+      .limit(50)
+      .lean();
+  }
 }
 
 export const courseRepo = new CourseRepository();

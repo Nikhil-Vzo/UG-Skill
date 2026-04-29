@@ -38,6 +38,7 @@ import { UserDirectory } from './pages/admin/UserDirectory';
 import { BatchManagement } from './pages/admin/BatchManagement';
 const CourseBuilder = lazy(() => import('./pages/admin/CourseBuilder').then(m => ({ default: m.CourseBuilder })));
 const QuizBuilder = lazy(() => import('./pages/admin/QuizBuilder').then(m => ({ default: m.QuizBuilder })));
+import { AdminCourses } from './pages/admin/AdminCourses';
 import { PlacementsConfig } from './pages/admin/PlacementsConfig';
 import { ExamOps } from './pages/admin/ExamOps';
 import { DriveConfig } from './pages/admin/DriveConfig';
@@ -103,7 +104,9 @@ function App() {
                 <Route path="placements" element={<PlacementsConfig />} />
                 <Route path="placements/:driveId" element={<DriveConfig />} />
                 <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />
+                <Route path="courses" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><AdminCourses /></ProtectedRoute>} />
                 <Route path="courses/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><CourseBuilder /></ProtectedRoute>} />
+                <Route path="courses/:courseId/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><CourseBuilder /></ProtectedRoute>} />
                 <Route path="quizzes/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><QuizBuilder /></ProtectedRoute>} />
               </Route>
 

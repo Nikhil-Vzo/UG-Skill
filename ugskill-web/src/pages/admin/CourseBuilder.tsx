@@ -65,7 +65,15 @@ export const CourseBuilder: React.FC = () => {
   });
 
   const [localSections, setLocalSections] = useState<Section[]>([]);
-  const sections = course?.sections ?? localSections;
+
+  // Sync backend sections into local state when loaded
+  React.useEffect(() => {
+    if (course?.sections) {
+      setLocalSections(course.sections);
+    }
+  }, [course?.sections]);
+
+  const sections = localSections;
 
   const [editingLectureId, setEditingLectureId] = useState<string | null>(null);
 
@@ -76,7 +84,7 @@ export const CourseBuilder: React.FC = () => {
 
   const publishMutation = useMutation({
     mutationFn: () => publishCourse(courseId!),
-    onSuccess: () => navigate('/admin/courses'),
+    onSuccess: () => navigate('/app/admin/courses'),
   });
 
   const addModule = () => {
@@ -86,18 +94,16 @@ export const CourseBuilder: React.FC = () => {
 
   const addLecture = (sectionId: string) => {
     const newLec: Lecture = { id: `lec_${Date.now()}`, title: 'New Lesson', type: 'video' };
-    setLocalSections((prev) => {
-      const base = course?.sections ?? prev;
-      return base.map((s) =>
+    setLocalSections((prev) =>
+      prev.map((s) =>
         s.id === sectionId ? { ...s, lectures: [...s.lectures, newLec] } : s
-      );
-    });
+      )
+    );
   };
 
   const handleVideoUploaded = (sectionId: string, lectureId: string, path: string) => {
-    setLocalSections((prev) => {
-      const base = course?.sections ?? prev;
-      return base.map((s) =>
+    setLocalSections((prev) =>
+      prev.map((s) =>
         s.id === sectionId
           ? {
               ...s,
@@ -106,8 +112,8 @@ export const CourseBuilder: React.FC = () => {
               ),
             }
           : s
-      );
-    });
+      )
+    );
     setEditingLectureId(null);
   };
 
@@ -173,9 +179,9 @@ export const CourseBuilder: React.FC = () => {
       {isNew && (
         <Card>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-            To build a course curriculum, first create the course via the API or the course creation form, then navigate to <code style={{ background: 'var(--surface)', padding: '0.1rem 0.4rem', borderRadius: 4 }}>/admin/courses/:courseId/builder</code>.
+            To build a course curriculum, first create the course from the Courses dashboard.
           </p>
-          <Button onClick={() => navigate('/admin/courses/new')}>Create New Course</Button>
+          <Button onClick={() => navigate('/app/admin/courses')}>Go to Courses</Button>
         </Card>
       )}
 

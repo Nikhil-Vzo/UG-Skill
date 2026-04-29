@@ -4,24 +4,28 @@ import * as courseController from './course.controller';
 
 const router = Router();
 
-// Public / Read-only endpoints
-router.get('/', courseController.searchCourses); // Fallback for list queries matching /courses directly
+// ── Public / Read-only ──────────────────────────────────────────
+router.get('/', courseController.searchCourses);
 router.get('/search', courseController.searchCourses);
-router.get('/:id', courseController.getCourse);
 
-// Strict protected endpoints for modification
+// ── Protected modification routes ───────────────────────────────
 router.use(requireAuth);
 router.use(requireRole(['admin', 'creator']));
 
 router.post('/', courseController.createCourse);
+
+// Sections & Lectures — MUST come before /:id wildcard
+router.put('/:id/sections', courseController.replaceSections);
+router.post('/:id/sections', courseController.addSection);
+router.post('/:id/sections/:sectionIdx/lectures', courseController.addLecture);
+router.post('/:id/batch-access', courseController.grantBatchAccess);
+
+// PATCH / PUT / DELETE on a single course
+router.patch('/:id', courseController.updateCourse);
 router.put('/:id', courseController.updateCourse);
 router.delete('/:id', courseController.deleteCourse);
 
-// Sections & Lectures
-router.post('/:id/sections', courseController.addSection);
-router.post('/:id/sections/:sectionIdx/lectures', courseController.addLecture);
-
-// Batch Access (Admin only typically, but allowing creator for now as per strict requirement)
-router.post('/:id/batch-access', courseController.grantBatchAccess);
+// Wildcard read — keep last to avoid eating specific paths
+router.get('/:id', courseController.getCourse);
 
 export default router;
