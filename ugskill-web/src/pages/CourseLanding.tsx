@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronDown, ChevronRight, Star, Clock, Users, BookOpen, Play,
   Award, CheckCircle, Lock, ArrowLeft, Loader2, AlertCircle
@@ -117,6 +117,7 @@ const CourseLandingSkeleton: React.FC = () => (
 export const CourseLanding: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: course, isLoading, isError } = useQuery<CourseDetail>({
     queryKey: ['course', courseId],
@@ -128,8 +129,18 @@ export const CourseLanding: React.FC = () => {
   });
 
   const enrollMut = useMutation({
-    mutationFn: () => api.post('/lms/enrollments', { courseId }),
-    onSuccess: () => navigate(`/courses/${courseId}/player`),
+    mutationFn: () => api.post('/lms/enrollments', { 
+      enrollableType: 'course', 
+      enrollableId: courseId,
+      source: 'self'
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+      // If we're already on the landing page, we just want to show the player or success state
+      // but the current implementation navigates to /player. 
+      // Let's keep it as is if that's the intended flow.
+      navigate(`/app/courses/${courseId}/player`);
+    },
   });
 
   if (isLoading) return <CourseLandingSkeleton />;

@@ -17,7 +17,15 @@ const CATEGORY_RULES: Record<string, { roles: string[], maxBytes: number, mimes:
   course_content: {
     roles: ['creator', 'admin'],
     maxBytes: 2 * GB,
-    mimes: ['video/mp4', 'video/webm', 'application/pdf', 'image/png', 'image/jpeg', 'application/json']
+    mimes: [
+      'video/mp4', 'video/webm',
+      'application/pdf',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'image/png', 'image/jpeg', 'image/webp',
+      'text/plain', 'text/vtt',
+      'application/json'
+    ]
   },
   user_profile: {
     roles: ['*'], // All authenticated users

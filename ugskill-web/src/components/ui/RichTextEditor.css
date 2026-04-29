@@ -1,0 +1,198 @@
+/* ─── RichTextEditor ─────────────────────────────────────────── */
+
+.rte-wrapper {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  overflow: hidden;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+
+.rte-wrapper:focus-within:not(.rte-readonly) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Toolbar */
+.rte-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 0.5rem 0.625rem;
+  background: var(--surface-container, rgba(255,255,255,0.03));
+  border-bottom: 1px solid var(--border);
+}
+
+.rte-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.rte-toolbar-btn:hover:not(.disabled) {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--text-primary);
+}
+
+.rte-toolbar-btn.active {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--primary, #6366f1);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.rte-toolbar-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.rte-divider {
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Editor content area */
+.rte-content {
+  flex: 1;
+}
+
+.rte-content .ProseMirror {
+  padding: 1.125rem 1.25rem;
+  min-height: inherit;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  font-family: inherit;
+}
+
+/* Placeholder */
+.rte-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-muted);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Typography inside editor */
+.rte-content .ProseMirror h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 1.25rem 0 0.5rem;
+}
+
+.rte-content .ProseMirror h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 1rem 0 0.4rem;
+}
+
+.rte-content .ProseMirror h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0.75rem 0 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rte-content .ProseMirror p {
+  margin: 0 0 0.75rem;
+}
+
+.rte-content .ProseMirror strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.rte-content .ProseMirror em {
+  color: var(--text-secondary);
+}
+
+.rte-content .ProseMirror u {
+  text-decoration-color: var(--primary);
+}
+
+.rte-content .ProseMirror mark {
+  background: rgba(251, 191, 36, 0.25);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.rte-content .ProseMirror code {
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 0.85em;
+}
+
+.rte-content .ProseMirror pre {
+  background: #0d0d1a;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.rte-content .ProseMirror pre code {
+  background: none;
+  color: #e2e8f0;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.rte-content .ProseMirror blockquote {
+  border-left: 3px solid var(--primary, #6366f1);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.rte-content .ProseMirror ul,
+.rte-content .ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 0 0 0.75rem;
+}
+
+.rte-content .ProseMirror li {
+  margin-bottom: 0.25rem;
+}
+
+.rte-content .ProseMirror a {
+  color: var(--primary, #6366f1);
+  text-decoration: underline;
+  text-decoration-color: rgba(99, 102, 241, 0.4);
+}
+
+.rte-content .ProseMirror a:hover {
+  text-decoration-color: var(--primary, #6366f1);
+}
+
+/* Read-only mode */
+.rte-readonly .rte-content .ProseMirror {
+  padding: 0;
+  cursor: default;
+}

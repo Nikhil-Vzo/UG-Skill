@@ -14,17 +14,24 @@ export const storage = {
 
       if (error) throw error;
 
+      // Supabase's createSignedUploadUrl returns a signedUrl + token separately.
+      // The correct way to PUT is to append the token as a query param to the signedUrl.
+      // Without the token, Supabase returns 400/403 for all file types.
+      const uploadUrl = data.token
+        ? `${data.signedUrl}${data.signedUrl.includes('?') ? '&' : '?'}token=${data.token}`
+        : data.signedUrl;
+
       return {
-        signedUrl: data.signedUrl,
+        signedUrl: uploadUrl,
         path,
         bucket: env.SUPABASE_STORAGE_BUCKET,
-        token: data.token
       };
     } catch (error) {
       logger.error('Error generating pre-signed upload URL for Supabase', error);
       throw error;
     }
   },
+
 
   /**
    * Generate a presigned URL to allow a client to securely download a file

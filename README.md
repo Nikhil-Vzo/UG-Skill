@@ -2,6 +2,8 @@
 
 # 🎓 UGSkill
 
+> **Current Build Focus: 🔴 P9-P — AI-Powered Proctoring Engine**
+> Phase 8 (full API integration) is complete. The AI API for gaze/eye/face analysis is in hand. Build proctoring next.
 
 
 |  30+ PG Tables |  18 Mongo Collections |  60+ Feature Panels |  5 User Roles |  7 MCP Servers |
@@ -117,8 +119,22 @@ Seven MCP servers power the autonomous development workflow. Config lives in `~/
 🧠 Complex decision?        → Sequential Thinking (structured step-by-step)
 📊 Need a diagram?          → Draw.io MCP (ERD, flow, architecture)
 🎨 Building UI from design? → Figma MCP (extract components, styles)
-💾 Cross-session context?   → Memory (persists decisions & preferences)
+💾 Cross-session context?   → Memory MCP (persists decisions & preferences)
+🤖 Proctoring AI signals?   → AI API (gaze / eye / face / head-pose analysis)
 ```
+
+### Memory & Sequential Thinking — How We Use Them
+
+| Scenario | Tool | How |
+|---|---|---|
+| Starting a new session | **Memory MCP** | Read memory graph to restore project context — no need to re-explain the stack |
+| Architecture decision | **Sequential Thinking** | Run multi-step structured reasoning before committing to an approach |
+| Proctoring signal fusion | **Sequential Thinking** | Model gaze + face + tab signals into a unified risk score step-by-step |
+| Remembering a decision | **Memory MCP** | Save `{ key: 'project.focus', value: 'AI proctoring' }` after each major decision |
+| Cross-DB bug | **Sequential Thinking** | Reason through PG ↔ Mongo CDC sync issues step-by-step |
+
+> [!NOTE]
+> The Memory MCP knowledge graph persists across sessions. Key memory items are also mirrored in `TODO.md` under **Memory Anchors** so they survive even if the MCP graph is reset.
 
 ---
 
@@ -603,17 +619,24 @@ ugskill-web/
 - [x] **Chunk F8: Admin — Placements & Exam Ops** — PlacementsConfig (drive + eligibility configurator with live preview), ExamOps (live proctoring command center with incident log)
 - [x] **Chunk F9: Platform-wide Polish** — AIChatbot (floating global sidebar), GlobalNotifications (header bell dropdown), LiveGD (video-call GD grid), Leaderboards (podium + ranked table)
 
-### Phase 8 — API Integration & Real-Time Hookup 🔄
-- [x] **I1: Auth Store** — Real JWT login/register/refresh/logout; tokens in JS memory; devLogin bypass removed
-- [x] **I2: Dashboard Store** — Real API endpoints for streaks, enrollments, assignments
-- [x] **I3: Student LMS Mock Removal** — Discover, CourseLanding, VideoPlayer, Exams, ExamInterface, AssignmentSubmit all use `useQuery`
-- [x] **I4: Placements Mock Removal** — PlacementsHub, CompanyDetail, InterviewPrep, ReadinessAnalytics fully API-integrated
-- [x] **I5: Community/Social Mock Removal** — Community (infinite query + like/bookmark/publish), Leaderboards (scope tabs + my rank), LiveGD (API session + leave)
-- [x] **I7: New Pages Built** — LiveInterview, Profile, Notifications, CertificateViewer all created with real API calls
-- [ ] **I6: Admin Mock Removal** — AdminDashboard, UserDirectory, BatchManagement, PlacementsConfig, ExamOps, CourseBuilder, QuizBuilder
-- [ ] **I8: Socket.io Client** — `lib/socket.ts` singleton + Exam / Proctoring / GD / Interview / Leaderboard namespaces
-- [ ] **I9: Performance** — React.lazy + Suspense, staleTime tuning, error boundary, toast system
-- [ ] **I10: Security / QA / Deployment** — E2E tests, cross-browser, Vercel deploy
+### Phase 9 — AI Proctoring (Current Priority 🔴)
+- [ ] **P9-P (FIRST):** AI-powered proctoring engine
+  - Backend: `src/modules/proctoring/` module + AI API client (`aiProctoring.ts`)
+  - AI API signals: gaze direction, eye presence, face detection, head pose, confidence score
+  - Violation scoring engine: LOW → MEDIUM → HIGH → CRITICAL tiers + unified `riskScore`
+  - BullMQ async frame analysis job (non-blocking AI API calls)
+  - REST: `POST /proctoring/frame`, `GET /violations`, `GET /summary`, `POST /override`
+  - WebSocket upgrades: `proctoring:ai-alert`, `proctoring:warning`, `proctoring:terminated`
+  - Frontend: frame capture every 5s in `ExamInterface.tsx`, gaze warning overlay, upgraded pre-flight
+  - Admin: risk-score grid in `ExamOps.tsx`, new `ProctoringReport.tsx` page
+  - DB: extend `exam_proctoring_events` schema + add `proctoringConfig` to `exams` PG table
+- [ ] P9-A: Payments (Razorpay/Stripe)
+- [ ] P9-B: Transactional email (Resend/SendGrid)
+- [ ] P9-D: Coding judge (Judge0)
+- [ ] P9-E: Full AI integrations (chatbot, readiness, mock interview)
+- [ ] P9-F/G: Instructor grading + analytics
+- [ ] P9-H: Mobile app (PWA first)
+- [ ] P9-I: Multi-tenancy (SaaS)
 
 ---
 
@@ -645,6 +668,8 @@ ugskill-web/
 | I5 Shipped | Community/Social pages API-integrated | Community (infinite scroll + like/bookmark), Leaderboards (scope tabs), LiveGD (session fetch/leave) | Apr 20, 2026 |
 | I7 Shipped | 4 new pages built | LiveInterview (fullscreen room), Profile (edit + password), Notifications (paginated), CertificateViewer (card + verify) | Apr 20, 2026 |
 | useDebounce Hook | `lib/useDebounce.ts` | Shared debounce for search inputs across Community, Discover, UserDirectory | Apr 20, 2026 |
+| Phase 8 Complete | All API integration done | Full I1–I10 done; real auth, real data, sockets wired, deployed | Apr 29, 2026 |
+| Phase 9 Priority Set | P9-P (AI Proctoring) is #1 next build | AI API in hand for gaze/eye/face. Existing: `exam_proctoring_events` + `proctoring.ws.ts` | Apr 29, 2026 |
 
 ---
 

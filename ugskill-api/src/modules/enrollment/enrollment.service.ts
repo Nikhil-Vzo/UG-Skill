@@ -1,6 +1,6 @@
 import { enrollmentRepo } from './enrollment.repository';
-import { courseCatalogRepo } from '../course/course-catalog.repository';
-import { roadmapCatalogRepo } from '../roadmap/roadmap-catalog.repository';
+import { courseRepo } from '../course/course.repository';
+import { roadmapRepo } from '../roadmap/roadmap.repository';
 import { AppError } from '../../lib/errors';
 
 export class EnrollmentService {
@@ -9,11 +9,11 @@ export class EnrollmentService {
 
     // Check if item exists and is published
     if (enrollableType === 'course') {
-      const course = await courseCatalogRepo.getCatalogById(enrollableId);
+      const course = await courseRepo.getCourseById(enrollableId);
       if (!course) throw new AppError('Course not found', 404);
       if (course.status !== 'published') throw new AppError('Course cannot be enrolled in at this time', 400);
     } else if (enrollableType === 'roadmap') {
-      const roadmap = await roadmapCatalogRepo.getCatalogById(enrollableId);
+      const roadmap = await roadmapRepo.getRoadmapById(enrollableId);
       if (!roadmap) throw new AppError('Roadmap not found', 404);
       if (roadmap.status !== 'published') throw new AppError('Roadmap cannot be enrolled in at this time', 400);
     }

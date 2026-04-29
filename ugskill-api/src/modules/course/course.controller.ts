@@ -7,7 +7,12 @@ import { z } from 'zod';
 export const createCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = createCourseSchema.parse(req.body);
-    const course = await courseService.createCourse(data, req.user!.userId);
+    const mappedData: any = { ...data };
+    if ('subCategory' in data) { mappedData.sub_category = data.subCategory; delete mappedData.subCategory; }
+    if ('thumbnailUrl' in data) { mappedData.thumbnail_url = data.thumbnailUrl; delete mappedData.thumbnailUrl; }
+    if ('isFree' in data) { mappedData.is_free = data.isFree; delete mappedData.isFree; }
+
+    const course = await courseService.createCourse(mappedData, req.user!.userId);
     res.status(201).json(successResponse(course));
   } catch (error) {
     next(error);
@@ -26,7 +31,12 @@ export const getCourse = async (req: Request, res: Response, next: NextFunction)
 export const updateCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = updateCourseSchema.parse(req.body);
-    const course = await courseService.updateCourse(req.params.id as string, data);
+    const mappedData: any = { ...data };
+    if ('subCategory' in data) { mappedData.sub_category = data.subCategory; delete mappedData.subCategory; }
+    if ('thumbnailUrl' in data) { mappedData.thumbnail_url = data.thumbnailUrl; delete mappedData.thumbnailUrl; }
+    if ('isFree' in data) { mappedData.is_free = data.isFree; delete mappedData.isFree; }
+
+    const course = await courseService.updateCourse(req.params.id as string, mappedData);
     res.status(200).json(successResponse(course));
   } catch (error) {
     next(error);

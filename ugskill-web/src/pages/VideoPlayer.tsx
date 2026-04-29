@@ -4,13 +4,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronLeft, ChevronRight, Play, CheckCircle,
   MessageSquare, FileText, Lightbulb, Volume2, Maximize, Settings,
-  Loader2, Send, BookOpen
+  Loader2, Send, BookOpen, ExternalLink, Download, AlignLeft, Link as LinkIcon
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/loaders/Skeleton';
 import api from '../lib/api';
 import { useDebounce } from '../hooks/useDebounce';
+
+/* ─── Embed URL helpers ─── */
+function getYouTubeEmbed(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? `https://www.youtube-nocookie.com/embed/${m[1]}?rel=0&modestbranding=1` : null;
+}
+function getVimeoEmbed(url: string): string | null {
+  const m = url.match(/vimeo\.com\/(\d+)/);
+  return m ? `https://player.vimeo.com/video/${m[1]}` : null;
+}
 
 /* ─────────────── Types ─────────────── */
 interface Lecture {
@@ -19,7 +29,12 @@ interface Lecture {
   duration?: string;
   completed: boolean;
   isFree?: boolean;
+  type?: 'video' | 'document' | 'external_link' | 'text';
   videoUrl?: string;
+  video_url?: string;
+  document_url?: string;
+  external_url?: string;
+  content?: string;
   description?: string;
 }
 
@@ -212,46 +227,114 @@ export const VideoPlayer: React.FC = () => {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* ─── Left: Video + Tabs ─── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-          {/* Video Frame */}
+          {/* Content Frame — branches by lecture type */}
           <div style={{ background: '#000', aspectRatio: '16/9', width: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', maxHeight: '60vh' }}>
-            {lecture?.videoUrl ? (
-              <video
-                key={lecture.videoUrl}
-                src={lecture.videoUrl}
-                controls
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                onEnded={() => {
-                  if (!activeLecture?.completed) completeMut.mutate();
-                }}
-              />
-            ) : (
-              <>
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 50%, #0a0a1a 100%)' }} />
-                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                  {lectureLoading ? (
-                    <Loader2 size={36} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-glow)' }} />
-                  ) : (
-                    <>
-                      <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(99,102,241,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(99,102,241,0.5)', cursor: 'default' }}>
-                        <Play size={28} color="white" fill="white" />
-                      </div>
-                      <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>{activeTitle || 'Select a lecture'}</span>
-                    </>
-                  )}
-                </div>
-                {/* Fake controls bar for non-video UI */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1rem', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <Play size={18} color="white" />
-                  <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: 2 }}>
-                    <div style={{ width: '0%', height: '100%', background: 'var(--primary-glow)', borderRadius: 2 }} />
+            {(() => {
+              const type = lecture?.type ?? 'video';
+              const videoSrc = lecture?.video_url ?? lecture?.videoUrl;
+
+              /* ── VIDEO ── */
+              if (type === 'video') {
+                return videoSrc ? (
+                  <video
+                    key={videoSrc}
+                    src={videoSrc}
+                    controls
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    onEnded={() => { if (!activeLecture?.completed) completeMut.mutate(); }}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                    {lectureLoading
+                      ? <Loader2 size={36} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-glow)' }} />
+                      : <>
+                          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(99,102,241,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(99,102,241,0.5)' }}>
+                            <Play size={28} color="white" fill="white" />
+                          </div>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>{activeTitle || 'Select a lecture'}</span>
+                        </>
+                    }
                   </div>
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem' }}>0:00 / {activeLecture?.duration ?? '--'}</span>
-                  <Volume2 size={16} color="rgba(255,255,255,0.7)" />
-                  <Settings size={16} color="rgba(255,255,255,0.7)" />
-                  <Maximize size={16} color="rgba(255,255,255,0.7)" />
-                </div>
-              </>
-            )}
+                );
+              }
+
+              /* ── DOCUMENT ── */
+              if (type === 'document') {
+                const docUrl = lecture?.document_url;
+                return docUrl ? (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#1a1a2e' }}>
+                    <iframe
+                      src={`${docUrl}#toolbar=0`}
+                      style={{ flex: 1, border: 'none', width: '100%', height: '100%' }}
+                      title={activeTitle}
+                    />
+                    <div style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'flex-end' }}>
+                      <a href={docUrl} download target="_blank" rel="noopener noreferrer"
+                        style={{ color: 'var(--primary-glow)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', textDecoration: 'none' }}>
+                        <Download size={14} /> Download
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
+                    <FileText size={40} />
+                    <span style={{ fontSize: '0.875rem' }}>Document not yet uploaded</span>
+                  </div>
+                );
+              }
+
+              /* ── EXTERNAL LINK ── */
+              if (type === 'external_link') {
+                const extUrl = lecture?.external_url;
+                if (!extUrl) return (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
+                    <LinkIcon size={40} />
+                    <span style={{ fontSize: '0.875rem' }}>No link set</span>
+                  </div>
+                );
+                const ytEmbed = getYouTubeEmbed(extUrl);
+                const vimeoEmbed = getVimeoEmbed(extUrl);
+                const embedSrc = ytEmbed ?? vimeoEmbed;
+                return embedSrc ? (
+                  <iframe
+                    key={embedSrc}
+                    src={embedSrc}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={activeTitle}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                    <LinkIcon size={40} color="rgba(255,255,255,0.4)" />
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>{activeTitle}</span>
+                    <a href={extUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.25rem', background: 'rgba(99,102,241,0.85)', color: '#fff', borderRadius: '0.5rem', textDecoration: 'none', fontWeight: 600, fontSize: '0.875rem' }}>
+                      <ExternalLink size={15} /> Open Link
+                    </a>
+                  </div>
+                );
+              }
+
+              /* ── TEXT / RICH TEXT ── */
+              if (type === 'text') {
+                return (
+                  <div style={{ width: '100%', height: '100%', overflowY: 'auto', background: 'var(--surface-root, #0e0e1a)', display: 'flex', justifyContent: 'center', padding: '2rem 1rem', boxSizing: 'border-box' }}>
+                    <article style={{ maxWidth: 720, width: '100%', color: 'var(--text-high, #e2e8f0)', lineHeight: 1.8, fontSize: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--primary-glow, #818cf8)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        <AlignLeft size={14} /> Reading Lesson
+                      </div>
+                      {lecture?.content
+                        ? <div className="rte-content" dangerouslySetInnerHTML={{ __html: lecture.content }} />
+                        : <p style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>No content written yet.</p>
+                      }
+                    </article>
+                  </div>
+                );
+              }
+
+              return null;
+            })()}
           </div>
 
           {/* Mark Complete bar */}
