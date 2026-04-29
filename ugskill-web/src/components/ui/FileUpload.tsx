@@ -75,7 +75,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     try {
       setIsUploading(true);
 
-      // 1. Get Presigned URL from Backend Gatekeeper
+      // 1. Get presigned URL from our backend gatekeeper (validates role, MIME, size)
       const response = await api.post('/upload/presigned', {
         fileName: file.name,
         fileType: file.type,
@@ -85,10 +85,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       const { signedUrl, path } = response.data.data;
 
-      // 2. Upload Directly to Supabase using the pre-signed URL
+      // 2. Upload directly to Supabase Storage using the signed URL.
+      //    Supabase signed upload URLs are pre-authorized via the URL signature
+      //    itself — do NOT add an Authorization header, it breaks the request.
       await axios.put(signedUrl, file, {
         headers: {
           'Content-Type': file.type,
+          // No Authorization header — Supabase signed URLs authenticate via query params
         },
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -98,7 +101,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         }
       });
 
-      // 3. Complete
+      // 3. Complete — call back with the storage path so parent can save it
       setIsUploading(false);
       onUploadComplete(path);
 
@@ -106,7 +109,20 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setIsUploading(false);
       setProgress(0);
       
-      const message = err.response?.data?.error?.message || err.message || 'An error occurred during upload';
+      // Log details so we can see Supabase error responses
+      console.error('[FileUpload] Upload failed:', {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        message: err.message,
+      });
+
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Upload failed. Check file type and size limits.';
       setErrorMsg(message);
       if (onError) onError(message);
     }

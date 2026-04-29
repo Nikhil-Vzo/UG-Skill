@@ -43,10 +43,15 @@ export const Discover: React.FC = () => {
   });
 
   const enrollMut = useMutation({
-    mutationFn: (courseId: string) => api.post('/lms/enrollments', { courseId }),
+    mutationFn: (courseId: string) =>
+      api.post('/lms/enrollments', {
+        enrollableType: 'course',
+        enrollableId: courseId,
+        source: 'self',
+      }),
     onSuccess: (_, courseId) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      navigate(`/courses/${courseId}`);
+      navigate(`/app/courses/${courseId}`);
     },
   });
 
@@ -160,7 +165,7 @@ export const Discover: React.FC = () => {
                 key={course._id}
                 className="surface-card"
                 style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.2s' }}
-                onClick={() => navigate(`/courses/${course._id}`)}
+                onClick={() => navigate(`/app/courses/${course._id}`)}
                 onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-3px)')}
                 onMouseLeave={e => (e.currentTarget.style.transform = '')}
               >

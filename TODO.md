@@ -1,6 +1,10 @@
 # UGSkill — Project Progress Tracker
 
-> Last updated: April 21, 2026
+> Last updated: April 29, 2026
+
+> [!IMPORTANT]
+> **🎯 Current Focus: AI-Powered Proctoring Engine (Phase 9-P)**
+> This is the #1 next build priority. The AI API for gaze tracking, eye detection, and behavioural analysis is ready. Build the proctoring module before any other Phase 9 features.
 
 ---
 
@@ -901,11 +905,138 @@ These backend APIs are fully tested and ready, but the frontend has no buttons o
 
 ---
 
+## 🧠 Sequential Memory & Context — MCP Tooling Notes
+
+> These notes exist so the AI assistant has persistent context across sessions. The Memory MCP stores this as a knowledge graph so it doesn't need to be re-explained each session.
+
+### Active Memory Items (persisted via Memory MCP)
+
+| Memory Key | Value |
+|---|---|
+| `project.name` | UGSkill — LMS + Placement + Exam hybrid platform |
+| `project.status` | Phase 8 complete (API integration). Phase 9 starting with Proctoring. |
+| `project.focus` | AI-powered proctoring engine is the #1 priority |
+| `project.ai_api` | External AI API available for gaze tracking, eye movement, tab detection, face presence |
+| `project.db.pg` | Supabase PostgreSQL — 30+ tables, RLS enabled, Drizzle ORM |
+| `project.db.mongo` | MongoDB local — 18 collections, Mongoose ODM |
+| `project.backend` | Express.js + TypeScript, `ugskill-api/` |
+| `project.frontend` | React 19 + Vite 6 + Vanilla CSS, `ugskill-web/` |
+| `project.design` | Midnight Navy design system, Vanilla CSS tokens |
+| `project.proctoring.existing` | `exam_proctoring_events` Mongo collection exists, `proctoring.ws.ts` Socket.io namespace exists |
+| `project.proctoring.ai_signals` | Gaze direction, eye presence, face detection, tab switch, copy-paste, full-screen exit |
+| `project.proctoring.scope` | Cross-functional: Exams, Video MCQs/Quizzes, Placement Mock Interviews |
+| `project.payments` | Razorpay integrated (convenience fee label) |
+
+### Sequential Thinking Usage
+
+Always use `Sequential Thinking MCP` before:
+- Architecture decisions (new module design)
+- Debugging cross-cutting issues (PG ↔ Mongo sync)
+- Multi-step reasoning for scoring or ranking algorithms
+- Proctoring signal fusion logic (combining AI API signals with rule-based flags)
+
+### Memory MCP Usage
+
+- **Save** decisions here as they are made (e.g., "AI proctoring API endpoint chosen: POST /ai/analyze-frame")
+- **Read** at the start of each new session to restore context
+- **Update** when any major phase completes or a new tool/dependency is added
+
+---
+
 ## Phase 9: Post-MVP / Scale — 🔮 FUTURE
+
+> [!IMPORTANT]
+> **Build Order within Phase 9: P → A → B → D → E → rest**
+> Proctoring (P9-P) must ship first — it is the core differentiator. AI API is already in hand.
 
 > After Phase 8 ships, UGSkill is a **real, deployable, production-grade platform.**
 > The items below turn it from an MVP into a **business.**
-> None of these are required for launch — do them after real users are on-board.
+> **Build P9-P (Proctoring AI) FIRST** — it is the #1 differentiator and the AI API is already available.
+
+---
+
+### 🔴 P9-P — AI-Powered Proctoring Engine ← **BUILD THIS FIRST**
+
+> **Context:** The platform already has basic tab-switch detection and `exam_proctoring_events` Mongo collection. We now have an external **AI API** that can analyze webcam frames and return:
+> - **Gaze direction** (looking away from screen)
+> - **Eye presence** (eyes closed / looking down)
+> - **Face detection** (no face / multiple faces)
+> - **Head pose estimation** (turned away)
+> This API makes UGSkill's proctoring genuinely AI-powered, not just rule-based.
+
+#### Backend — Proctoring AI Integration
+- [ ] **P9-P.1** Create `src/modules/proctoring/` module
+  - `proctoring.routes.ts` — REST endpoints for frame submission and violation queries
+  - `proctoring.service.ts` — orchestrates AI API calls + violation logic
+  - `proctoring.repository.ts` — reads/writes `exam_proctoring_events` (Mongo)
+  - `proctoring.controller.ts` — Express handlers
+- [ ] **P9-P.2** AI API client (`src/lib/aiProctoring.ts`)
+  - `POST /ai/analyze-frame` — sends base64 webcam frame, receives `{ gaze, facePresent, eyesOpen, headPose, confidence }`
+  - Add retry logic + timeout (AI API may be slow)
+  - Batch frame analysis with configurable interval (default: every 5s during exam)
+- [ ] **P9-P.3** Violation scoring engine (`proctoring.service.ts`)
+  - Define severity tiers: `LOW` (single gaze-away) → `MEDIUM` (3x in 60s) → `HIGH` (no face > 10s) → `CRITICAL` (multiple faces)
+  - Aggregate signals: gaze + eye + face + tab + copy-paste into unified `riskScore`
+  - Auto-terminate exam at `riskScore > threshold` (configurable per exam in `exams` table)
+- [ ] **P9-P.4** Proctoring REST endpoints
+  - `POST /api/v1/proctoring/frame` — student submits webcam frame (base64), triggers AI analysis async
+  - `GET /api/v1/proctoring/attempts/:attemptId/violations` — admin fetches violations list
+  - `GET /api/v1/proctoring/attempts/:attemptId/summary` — risk score + violation count + timeline
+  - `POST /api/v1/proctoring/attempts/:attemptId/override` — admin clears a false positive
+- [ ] **P9-P.5** WebSocket proctoring namespace upgrade (`src/sockets/tracking.namespace.ts`)
+  - Emit `proctoring:ai-alert` to admin room when AI detects HIGH/CRITICAL violation
+  - Emit `proctoring:warning` to student when violation threshold crossed (warn before terminate)
+  - Emit `proctoring:terminated` when exam auto-terminated
+- [ ] **P9-P.6** BullMQ job: `aiFrameAnalysis.job.ts`
+  - Async frame analysis queue — student emits frame → job queued → AI API called → result stored → WebSocket alert if flagged
+  - Prevents blocking HTTP thread on AI API latency
+- [ ] **P9-P.7** Admin proctoring report endpoint
+  - `GET /api/v1/admin/exams/:examId/proctoring-report` — per-student violation summary, risk score, flagged frame timestamps
+
+#### Frontend — Proctoring UI Upgrades
+- [ ] **P9-P.8** Webcam frame capture in `ExamInterface.tsx`
+  - Every 5s (configurable): capture frame from `<video>` via `<canvas>` → base64
+  - `POST /api/v1/proctoring/frame` in background (non-blocking)
+  - Show live "AI Monitoring Active" badge with pulsing green dot
+- [ ] **P9-P.9** Gaze warning overlay
+  - When `proctoring:warning` received: show non-dismissable overlay banner (red): "⚠️ Gaze violation detected. Repeated violations may terminate your exam."
+  - Show violation count: "2 of 5 warnings used"
+- [ ] **P9-P.10** Pre-flight camera check upgrade (`ExamInterface.tsx`)
+  - Add real-time face detection using AI API during pre-flight
+  - Block exam start if no face detected for > 5s
+  - Show live feedback: "✅ Face detected", "⚠️ Poor lighting", "❌ Look directly at camera"
+- [ ] **P9-P.11** Admin proctoring command center upgrades (`ExamOps.tsx`)
+  - Live grid of students with colour-coded risk score (green/yellow/orange/red)
+  - Click student tile → drawer with: violation timeline, AI confidence scores, flagged frame thumbnails
+  - "Override" button to clear false positive (calls `POST /override`)
+  - "Terminate Exam" button per student (calls `POST /terminate`)
+  - Summary KPI strip: `Critical Alerts`, `High Risk Students`, `Avg Risk Score`
+- [ ] **P9-P.12** Post-exam proctoring report (new page: `pages/admin/ProctoringReport.tsx`)
+  - Per-student: violation count, risk score, flagged timestamps, AI confidence breakdown
+  - Download as PDF (using existing PDF utility)
+  - Filter by: risk level, violation type, time range
+
+#### Schema / DB
+- [ ] **P9-P.13** Extend `exam_proctoring_events` Mongo schema
+  ```js
+  {
+    attemptId, examId, studentId,
+    type: 'gaze_away' | 'no_face' | 'multiple_faces' | 'eyes_closed' | 'tab_switch' | 'copy_paste' | 'fullscreen_exit',
+    severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+    aiConfidence: Number,          // 0–1, from AI API
+    gazeDirection: String,         // 'left' | 'right' | 'down' | 'up'
+    frameTimestamp: Date,
+    riskScoreAtEvent: Number,       // cumulative risk score at this point
+    overriddenBy: String,           // admin userId if false-positive cleared
+    overrideReason: String
+  }
+  ```
+- [ ] **P9-P.14** Add `proctoringConfig` to `exams` PG table
+  - `gaze_threshold` (int, default 5) — max gaze-away events before warning
+  - `face_timeout_seconds` (int, default 10) — auto-terminate if no face for this long
+  - `allow_multiple_faces` (bool, default false)
+  - `auto_terminate_score` (int, default 80) — risk score threshold for auto-terminate
+  - `frame_capture_interval_seconds` (int, default 5)
 
 ---
 
@@ -1023,10 +1154,26 @@ These backend APIs are fully tested and ready, but the frontend has no buttons o
 | Stage | Milestone | Can you launch? |
 |-------|-----------|-----------------|
 | ✅ Frontend (F1–F9) | Full UI, mock data, build passes | Demo only |
-| 🔜 Phase 8 (I1–I10) | Real API, real auth, sockets, deployed | **Yes — launch MVP** |
+| ✅ Phase 8 (I1–I10) | Real API, real auth, sockets, deployed | **Yes — launched MVP** |
+| 🔴 **P9-P — Proctoring AI** | **AI gaze tracking + face detection + risk scoring** | **#1 PRIORITY — build now** |
 | 🔮 P9-A/B | Payments + email | Monetise + notify users |
 | 🔮 P9-C/D | Push + coding judge | Competitive exam platform |
 | 🔮 P9-E | AI features | Premium tier differentiation |
 | 🔮 P9-F/G | Grading + analytics | Institutional / B2B sales |
 | 🔮 P9-H | Mobile app | Mass market reach |
 | 🔮 P9-I | Multi-tenancy | SaaS business |
+
+---
+
+## Memory Anchors (for AI Assistant Continuity)
+
+> These are quick-recall facts the assistant should always know without re-reading the full codebase.
+
+- **Next action**: Build `P9-P` (AI Proctoring) — start with backend `src/modules/proctoring/` + AI API client
+- **AI API**: Available for gaze, eye, face, head-pose analysis. POST base64 frame, receive JSON signal data.
+- **Existing hooks**: `exam_proctoring_events` Mongo collection ✅, `proctoring.ws.ts` Socket.io namespace ✅, `ExamInterface.tsx` already captures tab-switch events ✅
+- **DB**: Supabase project `oemnltyocalaqeccagkk`, MongoDB `localhost:27017`
+- **Design system**: Midnight Navy tokens in `ugskill-web/src/index.css` — do NOT use Tailwind
+- **API versioning**: All endpoints at `/api/v1/...`
+- **State rule**: React Query = server state. Zustand = UI state. Never mix.
+- **Auth**: JWT in JS memory (`tokenStore`), refresh token in body. No localStorage.

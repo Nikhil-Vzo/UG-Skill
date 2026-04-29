@@ -7,6 +7,7 @@ const router = Router();
 // ── Public / Read-only ──────────────────────────────────────────
 router.get('/', courseController.searchCourses);
 router.get('/search', courseController.searchCourses);
+router.get('/:id', courseController.getCourse); // Allow students to view course details
 
 // ── Protected modification routes ───────────────────────────────
 router.use(requireAuth);
@@ -24,8 +25,5 @@ router.post('/:id/batch-access', courseController.grantBatchAccess);
 router.patch('/:id', courseController.updateCourse);
 router.put('/:id', courseController.updateCourse);
 router.delete('/:id', courseController.deleteCourse);
-
-// Wildcard read — keep last to avoid eating specific paths
-router.get('/:id', courseController.getCourse);
 
 export default router;
