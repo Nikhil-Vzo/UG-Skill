@@ -840,6 +840,67 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 
 ---
 
+## Phase 8.5: Launch Blockers & Final API Wiring (The "Godmode" Checklist)
+
+This section maps exactly what is working today, what you can test right now, and the critical blockers that must be resolved to declare the platform "Production Ready".
+
+### 🧪 1. End-to-End Features You Can Test Right Now
+
+The following flows have fully matched Frontend UI and Backend Controllers. You can test these today in the browser:
+
+- [x] **Authentication Flow**: Register a new student, log in, verify JWT tokens are stored in memory, and log out.
+- [x] **LMS Discovery**: Navigate to "Discover", search for courses, filter by category.
+- [x] **LMS Enrollment**: Click "Enroll" on a course and see it added to your Dashboard.
+- [x] **LMS Video Player**: Open an enrolled course, watch the video, and click "Mark Complete" (updates PG database).
+- [x] **Assignments Upload**: Drag and drop a file in the Assignment Submit UI (hits the S3 presigned URL flow).
+- [x] **Placements Hub**: View the Kanban board of active company drives and click "Apply".
+- [x] **Creator Builders**: Log in as an Admin/Creator, open the Course Builder, and dynamically add modules and lectures.
+- [x] **Live WebSockets**: Open an exam, watch the synchronized server countdown timer, and trigger a proctoring tab-switch alert.
+
+### 🚨 2. CRITICAL BLOCKERS (API Contract Mismatches)
+
+These features have UI built and backend logic written, but they are speaking different languages. **These must be fixed first.**
+
+- [ ] **Fix Certificates Flow** 
+  - *Current State*: Frontend calls `GET /lms/certificates/:id`. Backend only has `GET /verify/:uuid` and `POST /generate`.
+  - *Action*: Add `getCertificateById` controller to `certificate.routes.ts`.
+- [ ] **Fix Readiness Analytics**
+  - *Current State*: Frontend calls `GET /placements/readiness/me/insights`. Backend only has `GET /readiness-scores` (a generic list).
+  - *Action*: Create a specific `GET /me` route in `placement.routes.ts` that returns the radar chart data and AI insights.
+- [ ] **Fix Mock Interviews Scheduling**
+  - *Current State*: Frontend "Schedule Mock" button hits `POST /placements/sessions/mock`. Backend expects `POST /mock-attempts`.
+  - *Action*: Update `InterviewPrep.tsx` to hit `/mock-attempts`, or alias the route in the backend.
+
+### 🚧 3. THE "STUBBED" FEATURES (Backend is Fake)
+
+Right now, `app.ts` is intercepting several frontend requests and returning empty arrays `[]` so the React app doesn't crash. We must build the backend for these, or hide the UI buttons for V1 Launch.
+
+- [ ] **Community Feed & Social**
+  - *Action*: Remove `/community` from `stubRouter`. Wire up `GET /community/posts`, `POST /community/posts`, and the Like/Bookmark mutations.
+- [ ] **Global Leaderboards**
+  - *Action*: Remove `/leaderboards` from `stubRouter`. Implement the Redis-backed leaderboard queries in a new `leaderboard.controller.ts`.
+- [ ] **Student Streaks (Dashboard)**
+  - *Action*: Remove `/lms/streaks` from `stubRouter`. Implement logic to calculate consecutive login days from `activity_events`.
+- [ ] **Notifications Dropdown**
+  - *Action*: Remove `/notifications` from `stubRouter`. Connect to the `notification_logs` table.
+- [ ] **Student Notes (Video Player)**
+  - *Action*: Remove `/lms/notes` from `stubRouter`. The frontend currently auto-saves notes, but they go into the void. Build the Mongo repository for it.
+- [ ] **Admin Live Exam Ops**
+  - *Action*: Remove `/admin/exams/live` from `stubRouter`. Fetch currently active sessions from `exam_attempts`.
+
+### 👻 4. ORPHANED BACKEND FEATURES (Missing Frontend UI)
+
+These backend APIs are fully tested and ready, but the frontend has no buttons or pages to access them.
+
+- [ ] **Course Reviews**
+  - *Action*: Build a Review component at the bottom of `CourseLanding.tsx` to submit and read 5-star ratings.
+- [ ] **Peer Groups & Study Sessions**
+  - *Action*: Create a new `/peer-groups` UI page in the student portal, allowing students to form groups and book live video sessions.
+- [ ] **Admin Invites**
+  - *Action*: Add an "Invite User" button in the `UserDirectory.tsx` admin panel to generate HR/Faculty invite links.
+
+---
+
 ## Phase 9: Post-MVP / Scale — 🔮 FUTURE
 
 > After Phase 8 ships, UGSkill is a **real, deployable, production-grade platform.**

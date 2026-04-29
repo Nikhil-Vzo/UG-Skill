@@ -35,7 +35,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
 ];
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { icon: <PenTool size={18} strokeWidth={2.5} />, label: 'Course Builder', to: '/app/admin/courses/builder' },
+  { icon: <PenTool size={18} strokeWidth={2.5} />, label: 'Courses', to: '/app/admin/courses' },
   { icon: <Target size={18} strokeWidth={2.5} />, label: 'Quiz Builder', to: '/app/admin/quizzes/builder' },
   { icon: <CalendarDays size={18} strokeWidth={2.5} />, label: 'Exam Operations', to: '/app/admin/exams' },
   { icon: <Building2 size={18} strokeWidth={2.5} />, label: 'Placements Manager', to: '/app/admin/placements' },

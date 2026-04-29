@@ -89,7 +89,7 @@ export const Login: React.FC = () => {
         </div>
 
         <div className="sidebar-footer">
-          <p>© 2024 UGSkill Cognitive Ecosystem. All rights reserved.</p>
+          <p>© 2026 UGSkill Cognitive Ecosystem. All rights reserved.</p>
         </div>
       </aside>
 

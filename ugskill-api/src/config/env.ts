@@ -28,7 +28,7 @@ const envSchema = z.object({
   // Resend Email
   RESEND_API_KEY: z.string().default(''),
   
-  // AWS S3 Storage (Removed)
+  // AWS S3 Storage (Removed yuck card details mangta hai loduuu sala)
   
   // Supabase Platform
   SUPABASE_URL: z.string().url(),

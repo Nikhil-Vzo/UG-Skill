@@ -52,6 +52,15 @@ export const addSection = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+export const replaceSections = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const course = await courseService.replaceSections(req.params.id as string, req.body.sections);
+    res.status(200).json(successResponse(course));
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const addLecture = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = createLectureSchema.parse(req.body);

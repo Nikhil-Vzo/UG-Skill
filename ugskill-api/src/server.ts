@@ -1,7 +1,6 @@
 import http from 'http';
 import app from './app';
 import { env } from './config/env';
-// Triggering restart for placement route updates
 import { connectMongo } from './config/mongodb';
 import { logger } from './lib/logger';
 import { seedAdmin } from './db/seed-admin';

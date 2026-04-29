@@ -1,0 +1,11 @@
+# .graphifyignore
+graphify/
+node_modules/
+dist/
+.git/
+.gemini/
+tests/
+worked/
+fixtures/
+*.test.ts
+*.test.js
