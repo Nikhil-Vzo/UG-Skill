@@ -27,6 +27,11 @@ import adminRoutes from './modules/admin/admin.routes';
 import uploadRoutes from './modules/upload/upload.routes';
 import { activityRouter } from './modules/activity/activity.routes';
 import { aiRouter } from './modules/ai/ai.routes';
+import { notificationRoutes } from './modules/notifications/notification.routes';
+import { leaderboardRoutes } from './modules/leaderboard/leaderboard.routes';
+import { communityRoutes } from './modules/community/community.routes';
+import { notesRoutes } from './modules/notes/notes.routes';
+import { proctoringRoutes } from './modules/proctoring/proctoring.routes';
 import { globalLimiter, authLimiter, uploadLimiter, aiLimiter } from './middleware/rateLimiter';
 import { setupSwagger } from './config/swagger';
 import { initSentry, attachSentryErrorHandler } from './config/sentry';
@@ -91,37 +96,21 @@ app.use('/api/v1/jobs', placementRoutes);
 app.use('/api/v1/activity', activityRouter);
 app.use('/api/v1/ai', aiLimiter, aiRouter);
 app.use('/api/v1/upload', uploadRoutes);
+
+// Streaks — specific route registered before /lms/streaks wildcard
 app.get('/api/v1/lms/streaks/me', requireAuth, progressController.getStreak.bind(progressController));
 
 // Invite Module
 app.use('/api/v1', authLimiter, inviteRoutes);
 
-// ─── Stub Router for Incomplete Modules ──────────────────────────────────────
-// Gracefully handles frontend queries for modules that aren't fully implemented
-// yet, returning empty arrays or default objects so the UI renders smoothly.
-const stubRouter = express.Router();
-stubRouter.use((req, res) => {
-  // If it's a list/paginated request, return an empty array, else empty object
-  const isList = req.method === 'GET' && (
-    Boolean(req.query.limit) ||
-    req.path.includes('courses') ||
-    req.path.includes('posts') ||
-    req.path.includes('notifications') ||
-    req.path.includes('all')
-  );
-  res.json({ success: true, data: isList ? [] : {} });
-});
+// ─── Real Module Implementations (replacing stubs) ────────────────────────────
+app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/leaderboards', leaderboardRoutes);
+app.use('/api/v1/community', communityRoutes);
+app.use('/api/v1/lms/notes', notesRoutes);
+app.use('/api/v1/proctoring', proctoringRoutes);
 
-// Route to stubs to prevent 404 UI explosions in frontend. 
-// MUST BE REGISTERED BEFORE MAIN ALIASES so they don't get swallowed by `/:id` routes.
-app.use('/api/v1/leaderboards', stubRouter);
-app.use('/api/v1/community', stubRouter);
-app.use('/api/v1/notifications', stubRouter);
-app.use('/api/v1/lms/streaks', stubRouter);
-app.use('/api/v1/lms/notes', stubRouter);
-app.use('/api/v1/admin/exams/live', stubRouter);
-app.use('/api/v1/admin/exams/incidents/recent', stubRouter);
-
+// ─── Frontend /lms/* and /admin/* aliases ─────────────────────────────────────
 // The frontend uses /lms/* prefix for LMS routes and /placements/* for jobs.
 app.use('/api/v1/lms/courses', courseRoutes);
 app.use('/api/v1/lms/enrollments', enrollmentRoutes);

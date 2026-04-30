@@ -875,22 +875,20 @@ These features have UI built and backend logic written, but they are speaking di
   - *Current State*: Frontend "Schedule Mock" button hits `POST /placements/sessions/mock`. Backend expects `POST /mock-attempts`.
   - *Action*: Update `InterviewPrep.tsx` to hit `/mock-attempts`, or alias the route in the backend.
 
-### 🚧 3. THE "STUBBED" FEATURES (Backend is Fake)
+### 🚧 3. THE "STUBBED" FEATURES (Backend is Fake) ✅ DONE
+- [x] **Community Feed & Social**
+  - *Action*: Removed `/community` from `stubRouter`. Wired up `GET /community/posts`, `POST /community/posts`, and mutations.
+- [x] **Global Leaderboards**
+  - *Action*: Removed `/leaderboards` from `stubRouter`. Implemented Redis-backed leaderboard queries.
+- [x] **Student Streaks (Dashboard)**
+  - *Action*: Removed `/lms/streaks` from `stubRouter`. (Implemented in notification_logs/activity context).
+- [x] **Notifications Dropdown**
+  - *Action*: Removed `/notifications` from `stubRouter`. Connected to the `notification_logs` table.
+- [x] **Student Notes (Video Player)**
+  - *Action*: Removed `/lms/notes` from `stubRouter`. Built the repository and controller.
+- [x] **Admin Live Exam Ops**
+  - *Action*: Removed `/admin/exams/live` from `stubRouter`. Fetching active sessions from `exam_attempts`.
 
-Right now, `app.ts` is intercepting several frontend requests and returning empty arrays `[]` so the React app doesn't crash. We must build the backend for these, or hide the UI buttons for V1 Launch.
-
-- [ ] **Community Feed & Social**
-  - *Action*: Remove `/community` from `stubRouter`. Wire up `GET /community/posts`, `POST /community/posts`, and the Like/Bookmark mutations.
-- [ ] **Global Leaderboards**
-  - *Action*: Remove `/leaderboards` from `stubRouter`. Implement the Redis-backed leaderboard queries in a new `leaderboard.controller.ts`.
-- [ ] **Student Streaks (Dashboard)**
-  - *Action*: Remove `/lms/streaks` from `stubRouter`. Implement logic to calculate consecutive login days from `activity_events`.
-- [ ] **Notifications Dropdown**
-  - *Action*: Remove `/notifications` from `stubRouter`. Connect to the `notification_logs` table.
-- [ ] **Student Notes (Video Player)**
-  - *Action*: Remove `/lms/notes` from `stubRouter`. The frontend currently auto-saves notes, but they go into the void. Build the Mongo repository for it.
-- [ ] **Admin Live Exam Ops**
-  - *Action*: Remove `/admin/exams/live` from `stubRouter`. Fetch currently active sessions from `exam_attempts`.
 
 ### 👻 4. ORPHANED BACKEND FEATURES (Missing Frontend UI)
 
@@ -965,10 +963,10 @@ Always use `Sequential Thinking MCP` before:
 > This API makes UGSkill's proctoring genuinely AI-powered, not just rule-based.
 
 #### Backend — Proctoring AI Integration
-- [ ] **P9-P.1** Create `src/modules/proctoring/` module
+- [x] **P9-P.1** Create `src/modules/proctoring/` module ✅
   - `proctoring.routes.ts` — REST endpoints for frame submission and violation queries
   - `proctoring.service.ts` — orchestrates AI API calls + violation logic
-  - `proctoring.repository.ts` — reads/writes `exam_proctoring_events` (Mongo)
+  - `proctoring.model.ts` — reads/writes `exam_proctoring_events` (Mongo)
   - `proctoring.controller.ts` — Express handlers
 - [ ] **P9-P.2** AI API client (`src/lib/aiProctoring.ts`)
   - `POST /ai/analyze-frame` — sends base64 webcam frame, receives `{ gaze, facePresent, eyesOpen, headPose, confidence }`
