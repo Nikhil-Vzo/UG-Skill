@@ -1,0 +1,36 @@
+UGSkill Non-Technical Progress Log
+Updated: April 30, 2026
+
+Purpose:
+This file gives Antigravity IDE and non-technical stakeholders a quick plain-English view of what was completed most recently.
+
+Latest completed work:
+1. Chunks I1 to I3 were completed and verified.
+2. Student-facing route gaps were closed:
+   - Notifications page
+   - Profile page
+   - Certificate viewer
+   - Live GD route
+   - Live Interview route behavior
+3. Authentication flow is now using real backend wiring instead of demo bypass behavior.
+4. Student LMS screens are connected to live APIs or supported backend aliases:
+   - Dashboard
+   - Discover
+   - My Courses
+   - Course Landing
+   - Video Player
+   - Assignment Submit
+   - Quiz attempts
+   - Course reviews
+5. Several navigation buttons that previously pointed to incomplete or incorrect routes now work correctly.
+6. A `donebycodex.txt` file was added with implementation notes and verification details.
+7. `TODO.md` was updated so the completed chunk items are clearly marked as done by Codex.
+
+Verification summary:
+- Backend build passed.
+- Frontend build passed.
+- Browser smoke testing passed for the main student flows touched in I1 to I3.
+- API smoke testing passed on the updated backend instance running on port 4010.
+
+Important operational note:
+The normal backend on port 4000 looked like an older already-running process during verification. The updated code was tested on port 4010. Restart the usual backend process when continuing work so port 4000 reflects the latest code.

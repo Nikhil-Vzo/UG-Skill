@@ -4,6 +4,32 @@ A high-level overview of milestone completions and feature deliveries, recorded 
 
 ================================================================================
 
+## [April 30, 2026] - Phase 8 Chunks I1-I3 Completed and Verified
+*Impact: The student-facing platform is now substantially closer to a true live product. Core auth, dashboard behavior, student learning flows, and several missing app pages are no longer demo-only wiring; they are connected, tested, and documented.*
+
+### Auth and Session Reliability
+- Login, signup, forgot password, reset password, logout, and token refresh flows are now aligned with the real backend contract.
+- The old development-only login bypass is no longer part of the production path.
+- Session expiry now clears local auth state cleanly and returns users to the login screen.
+
+### Student Experience Completion
+- Notifications, Profile, Certificate Viewer, Live GD entry, and Live Interview routes are now properly mounted in the app.
+- "Resume", "Continue", Settings, and Live Sessions buttons now lead to the correct screens instead of dead ends or partial routes.
+- Course Landing now includes a live review section so students can read and submit course feedback.
+
+### LMS and Backend Wiring
+- Dashboard, Discover, My Courses, Course Landing, Video Player, Assignment Submit, Quiz attempts, and Reviews now use working LMS routes or compatible backend aliases.
+- Assignment submission was upgraded to use the real upload flow: request upload URL, upload asset, then submit the assignment record.
+- Several backend response contracts and route aliases were added so the frontend receives usable `data` payloads consistently.
+
+### Verification and QA
+- Backend build passed successfully.
+- Frontend production build passed successfully.
+- Browser smoke testing confirmed working student login, dashboard load, course resume flow, discover flow, notifications page, profile page, interview prep, and Live GD navigation.
+- A separate backend process on port 4010 was used for verification because the long-running process on port 4000 appeared to be serving older code.
+
+================================================================================
+
 ## [April 21, 2026] — Pre-Real-Time Polish & Socket.io Scaffold 🛠️
 *Impact: Polished community features, integrated local media streams for live GDs, and laid the foundation for real-time Socket.io communication across the platform.*
 
