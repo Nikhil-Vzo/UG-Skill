@@ -8,6 +8,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.post('/', enrollmentController.enroll);
+router.get('/mine', enrollmentController.getMyEnrollments);
 router.get('/my-enrollments', enrollmentController.getMyEnrollments);
 router.get('/check-access/:type/:id', enrollmentController.checkAccess);
 

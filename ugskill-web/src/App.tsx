@@ -31,6 +31,9 @@ import { LiveInterview } from './pages/LiveInterview';
 import InterviewRoom from './pages/InterviewRoom';
 import { Leaderboards } from './pages/Leaderboards';
 import { HRDashboard } from './pages/hr/HRDashboard';
+import { Notifications } from './pages/Notifications';
+import { Profile } from './pages/Profile';
+import { CertificateViewer } from './pages/CertificateViewer';
 
 // Admin Pages
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -92,6 +95,10 @@ function App() {
               <Route path="placements/:driveId" element={<CompanyDetail />} />
               <Route path="community" element={<Community />} />
               <Route path="exams" element={<Exams />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="certificates/:id" element={<CertificateViewer />} />
+              <Route path="live-gd" element={<LiveGD />} />
               <Route path="live-gd/:sessionId" element={<LiveGD />} />
               <Route path="live-interview/:sessionId" element={<LiveInterview />} />
               <Route path="leaderboards" element={<Leaderboards />} />

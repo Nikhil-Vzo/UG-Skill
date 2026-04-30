@@ -6,7 +6,7 @@ export const submitAssignmentSchema = z.object({
     assignmentId: z.string().min(1, 'Assignment ID is required'),
   }),
   body: z.object({
-    fileUrls: z.array(z.string().url()).optional(),
+    fileUrls: z.array(z.string().min(1)).optional(),
     textContent: z.string().optional(),
   }).refine(data => data.fileUrls || data.textContent, {
     message: 'Either fileUrls or textContent must be provided',

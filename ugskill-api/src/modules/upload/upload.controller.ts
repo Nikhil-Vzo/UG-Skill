@@ -35,7 +35,7 @@ const CATEGORY_RULES: Record<string, { roles: string[], maxBytes: number, mimes:
   assignment_submission: {
     roles: ['*'], // All authenticated users
     maxBytes: 50 * MB,
-    mimes: ['application/pdf', 'application/zip', 'application/x-rar-compressed']
+    mimes: ['application/pdf', 'application/zip', 'application/x-zip-compressed', 'application/x-rar-compressed']
   }
 };
 

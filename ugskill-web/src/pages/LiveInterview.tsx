@@ -43,7 +43,7 @@ export const LiveInterview: React.FC = () => {
     mutationFn: () => api.post(`/placements/sessions/${sessionId}/end`),
     onSuccess: () => {
       setSessionEnded(true);
-      setTimeout(() => navigate('/placements/prep'), 3000);
+      setTimeout(() => navigate('/app/placements/prep'), 3000);
     },
   });
 
@@ -67,7 +67,7 @@ export const LiveInterview: React.FC = () => {
 
     const onSessionEnded = () => {
       setSessionEnded(true);
-      setTimeout(() => navigate('/placements/prep'), 3000);
+      setTimeout(() => navigate('/app/placements/prep'), 3000);
     };
 
     intSocket.on('notes:synced', onNotesSynced);
@@ -81,6 +81,8 @@ export const LiveInterview: React.FC = () => {
   }, [sessionId, sessionEnded, navigate]);
 
   const displayNotes = liveNotes ?? session?.notes;
+  const interviewerName = session?.interviewerName ?? 'Interviewer';
+  const candidateName = session?.candidateName ?? 'Candidate';
 
   const formatTime = (secs: number) => {
     const h = Math.floor(secs / 3600);
@@ -96,7 +98,7 @@ export const LiveInterview: React.FC = () => {
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', background: '#0a0a0a', color: '#ccc' }}>
         <AlertCircle size={40} style={{ opacity: 0.4 }} />
         <p>No session ID specified.</p>
-        <Button variant="outline" onClick={() => navigate('/placements/prep')}>Back to Prep</Button>
+        <Button variant="outline" onClick={() => navigate('/app/placements/prep')}>Back to Prep</Button>
       </div>
     );
   }
@@ -128,7 +130,7 @@ export const LiveInterview: React.FC = () => {
       <div style={{ height: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', color: '#ccc' }}>
         <AlertCircle size={40} style={{ color: '#ef4444', opacity: 0.6 }} />
         <p>Failed to load interview session.</p>
-        <Button variant="outline" onClick={() => navigate('/placements/prep')}>Back to Prep</Button>
+        <Button variant="outline" onClick={() => navigate('/app/placements/prep')}>Back to Prep</Button>
       </div>
     );
   }
@@ -140,7 +142,7 @@ export const LiveInterview: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 6px #ef4444' }}></div>
           <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em' }}>LIVE INTERVIEW</span>
-          <span style={{ color: '#666', fontSize: '0.875rem' }}>— {session.interviewerName} with {session.candidateName}</span>
+          <span style={{ color: '#666', fontSize: '0.875rem' }}>- {interviewerName} with {candidateName}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#888', fontSize: '0.875rem' }}>
@@ -166,10 +168,10 @@ export const LiveInterview: React.FC = () => {
           {/* Interviewer tile */}
           <div style={{ background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', border: '2px solid #222' }}>
             <div style={{ width: 80, height: 80, background: '#1e3a5f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#60a5fa', fontWeight: 'bold' }}>
-              {session.interviewerName?.charAt(0) ?? 'I'}
+              {interviewerName.charAt(0) || 'I'}
             </div>
             <div style={{ position: 'absolute', bottom: '0.75rem', left: '0.75rem', background: 'rgba(0,0,0,0.7)', padding: '0.25rem 0.75rem', fontSize: '0.8125rem', color: '#fff' }}>
-              {session.interviewerName} (Interviewer)
+              {interviewerName} (Interviewer)
             </div>
           </div>
 
@@ -177,7 +179,7 @@ export const LiveInterview: React.FC = () => {
           <div style={{ background: '#0d1117', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', border: '2px solid var(--primary-glow)' }}>
             {videoOn ? (
               <div style={{ width: 80, height: 80, background: 'var(--primary-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: 'var(--primary-glow)', fontWeight: 'bold' }}>
-                {session.candidateName?.charAt(0) ?? 'C'}
+                {candidateName.charAt(0) || 'C'}
               </div>
             ) : (
               <div style={{ color: '#555', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
@@ -186,7 +188,7 @@ export const LiveInterview: React.FC = () => {
               </div>
             )}
             <div style={{ position: 'absolute', bottom: '0.75rem', left: '0.75rem', background: 'rgba(0,0,0,0.7)', padding: '0.25rem 0.75rem', fontSize: '0.8125rem', color: '#fff' }}>
-              {session.candidateName} (You)
+              {candidateName} (You)
             </div>
             {!micOn && (
               <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', color: '#ef4444' }}>

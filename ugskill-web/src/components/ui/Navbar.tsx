@@ -102,7 +102,13 @@ export const Navbar: React.FC<NavbarProps> = ({ className, onMenuClick }) => {
                 </div>
               </div>
               
-              <button className="dropdown-item">
+              <button
+                className="dropdown-item"
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  navigate('/app/profile');
+                }}
+              >
                 <Settings size={16} />
                 <span>Account Settings</span>
               </button>

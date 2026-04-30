@@ -57,7 +57,7 @@ export const Courses: React.FC = () => {
               <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
                 You were making great progress with {courses[0].instructor}. You are 15 minutes away from finishing Module 2!
               </p>
-              <button className="base-btn btn-primary btn-md" onClick={() => navigate(`/courses/${courses[0].id}/player`)}>Resume Course</button>
+              <button className="base-btn btn-primary btn-md" onClick={() => navigate(`/app/courses/${courses[0].id}/player`)}>Resume Course</button>
             </div>
             <div style={{ flex: 1, minWidth: '250px' }}>
               {/* Could be a thumbnail in a real app, currently just an aesthetic block */}
@@ -82,7 +82,7 @@ export const Courses: React.FC = () => {
             <p style={{ color: 'var(--on-surface-variant)' }}>You have not enrolled in any courses yet.</p>
           ) : (
             courses.map(course => (
-              <CourseCard key={course.id} course={course} onContinue={(id) => navigate(`/courses/${id}/player`)} />
+              <CourseCard key={course.id} course={course} onContinue={(id) => navigate(`/app/courses/${id}/player`)} />
             ))
           )}
         </div>

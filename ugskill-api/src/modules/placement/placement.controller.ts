@@ -234,8 +234,34 @@ export const getPlacementSession = async (req: Request, res: Response, next: Nex
 
 export const listPlacementSessions = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await placementService.listPlacementSessions(req.query);
+    const query = { ...req.query };
+    if (query.studentId === 'me') query.studentId = req.user?.userId;
+    if (query.type === 'upcoming') query.status = 'scheduled';
+    delete query.type;
+
+    const result = await placementService.listPlacementSessions(query);
     res.status(200).json(successResponse(result));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const scheduleMockSession = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await placementService.scheduleMockSession(req.user!.userId);
+    res.status(201).json(successResponse(result, { message: 'Mock interview scheduled' }));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const endPlacementSession = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await placementService.updatePlacementSessionStatus(req.params.id as string, {
+      status: 'completed',
+      endedAt: new Date().toISOString(),
+    });
+    res.status(200).json(successResponse(result, { message: 'Placement session ended' }));
   } catch (error) {
     next(error);
   }
@@ -325,6 +351,15 @@ export const listGDSessions = async (req: Request, res: Response, next: NextFunc
   try {
     const result = await placementService.listGDSessions(req.query);
     res.status(200).json(successResponse(result));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const leaveGDSession = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await placementService.leaveGDSession(req.params.id as string, req.user!.userId);
+    res.status(200).json(successResponse(result, { message: 'Left GD session' }));
   } catch (error) {
     next(error);
   }

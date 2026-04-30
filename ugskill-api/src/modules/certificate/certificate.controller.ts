@@ -10,7 +10,17 @@ export class CertificateController {
 
       const result = await certificateService.generateCertificate(studentId, courseId, courseTitle);
 
-      res.status(201).json(successResponse(result.message, result.certificate));
+      res.status(201).json(successResponse(result.certificate, { message: result.message }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const cert = await certificateService.getById(req.params.id as string, req.user!.userId);
+
+      res.status(200).json(successResponse(cert));
     } catch (error) {
       next(error);
     }
@@ -22,7 +32,7 @@ export class CertificateController {
 
       const cert = await certificateService.verify(verificationUuid);
 
-      res.status(200).json(successResponse('Certificate is valid', cert));
+      res.status(200).json(successResponse(cert, { message: 'Certificate is valid' }));
     } catch (error) {
       next(error);
     }

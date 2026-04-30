@@ -662,6 +662,15 @@ export const removeGDParticipantPg = async (id: string) => {
   return participant;
 };
 
+export const markGDParticipantLeft = async (gdSessionId: string, studentId: string) => {
+  const [participant] = await db
+    .update(gdParticipants)
+    .set({ leftAt: new Date() })
+    .where(and(eq(gdParticipants.gdSessionId, gdSessionId), eq(gdParticipants.studentId, studentId)))
+    .returning();
+  return participant || null;
+};
+
 // ==========================================
 // 5.9 - LIVE INTERVIEW SLOTS / BOOKINGS
 // ==========================================

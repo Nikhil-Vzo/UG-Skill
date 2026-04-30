@@ -285,7 +285,7 @@ export const updatePlacementSessionStatus = async (id: string, data: UpdatePlace
   const newStatus = data.status;
 
   const validTransitions: Record<string, string[]> = {
-    'scheduled': ['in_progress', 'cancelled'],
+    'scheduled': ['in_progress', 'completed', 'cancelled'],
     'in_progress': ['completed', 'cancelled'],
     'completed': ['passed', 'failed'],
     'passed': [],
@@ -315,6 +315,29 @@ export const updatePlacementSessionStatus = async (id: string, data: UpdatePlace
 
 export const listPlacementSessions = async (query: PlacementSessionQuery) => {
   return await placementRepo.listPlacementSessionsPg(query);
+};
+
+export const scheduleMockSession = async (studentId: string) => {
+  const session = await placementRepo.insertPlacementSessionPg({
+    studentId,
+    sessionType: 'mock_interview',
+    status: 'scheduled',
+  });
+
+  const attempt = await placementRepo.insertMockAttemptMongo({
+    pg_session_id: session.id,
+    pg_student_id: studentId,
+    session_type: 'mock_interview',
+  });
+
+  const updatedSession = await placementRepo.updatePlacementSessionPg(session.id, {
+    mongoAttemptId: attempt._id.toString(),
+  });
+
+  return {
+    session: updatedSession ?? session,
+    attempt,
+  };
 };
 
 // --- MOCK INTERVIEW ATTEMPTS (5.7) ---
@@ -388,6 +411,21 @@ export const getGDSession = async (id: string) => {
 
 export const listGDSessions = async (query: GDSessionQuery) => {
   return await placementRepo.listGDSessionsPg(query);
+};
+
+export const leaveGDSession = async (sessionId: string, studentId: string) => {
+  const session = await placementRepo.getGDSessionByIdPg(sessionId);
+  if (!session) {
+    throw new NotFoundError('GD session not found');
+  }
+
+  const participant = await placementRepo.markGDParticipantLeft(sessionId, studentId);
+  return {
+    sessionId,
+    studentId,
+    left: true,
+    participant,
+  };
 };
 
 export const addGDParticipant = async (sessionId: string, data: AddGDParticipantInput) => {
@@ -535,4 +573,3 @@ export const ingestProctoringEvent = async (data: IngestProctoringEventInput, st
 export const listProctoringEvents = async (query: ProctoringEventQuery) => {
   return await placementRepo.listProctoringEventsMongo(query);
 };
-

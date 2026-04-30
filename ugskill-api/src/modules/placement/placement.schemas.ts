@@ -211,9 +211,10 @@ export const placementSessionQuerySchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).transform(Number).optional(),
     limit: z.string().regex(/^\d+$/).transform(Number).optional(),
-    studentId: z.string().uuid().optional(),
+    studentId: z.union([z.string().uuid(), z.literal('me')]).optional(),
     driveId: z.string().uuid().optional(),
     companyId: z.string().uuid().optional(),
+    type: z.string().optional(),
     status: z.string().optional()
   })
 });

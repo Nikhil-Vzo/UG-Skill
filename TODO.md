@@ -310,6 +310,8 @@
 
 ## Phase 8: API Integration & Real-Time Hookup — 🔄 IN PROGRESS
 
+> Codex update (April 30, 2026): chunks I1-I3 are completed and browser/API smoke-tested against the updated backend on port 4010.
+
 > Everything below turns the frontend from a "demo" into a live, working product.
 > All file paths relative to `ugskill-web/src/`.
 
@@ -340,17 +342,15 @@ The auth store is structurally complete but has a dev bypass that must be remove
 
 The store calls real API endpoints but the backend routes need to exist and the mock fallback user needs to be replaced.
 
-- [ ] **Remove hardcoded mock user** (lines 49–53): `{ name: 'Alex Student', email: 'alex@ugskill.edu', role: 'student' }`
-  - Replace: `user` should come from `useAuthStore().user` — don't duplicate in dashboard store
-- [x] **Fix API endpoint paths** — current: `/dashboard/courses`, `/dashboard/assessments`, `/dashboard/activities`
-  - Correct to match backend: `GET /api/v1/lms/enrollments/mine`, `GET /api/v1/lms/assignments/pending`, `GET /api/v1/events/mine`
+- [x] **Remove hardcoded mock user** (verified by Codex) — dashboard user data comes from `useAuthStore().user`; dashboard.store no longer duplicates user state
+- [x] **Fix API endpoint paths** — dashboard store now uses `GET /api/v1/lms/enrollments/mine`, `GET /api/v1/lms/courses/:id`, and `GET /api/v1/progress/summary/:courseId`
 - [x] **Replace mock `streakDays`** in `pages/Dashboard.tsx`
   - Fetched from `GET /api/v1/lms/streaks/me` → array of 7 booleans
 - [x] **Replace hardcoded `45%` progress** in Dashboard widget — use real `course.progress` from API response
 - [x] **Replace `T-MINUS 2 DAYS`** text — computed from `assm.closingDate`
 - [x] **Add `onContinue` navigation** in `Courses.tsx` — `navigate('/courses/${id}/player')`
 - [x] **`useExamsStore` not needed** — Exams.tsx now uses React Query directly
-- [ ] **Create `usePlacementsStore`** — PlacementsHub.tsx still uses inline const `DRIVES` array (I4)
+- [x] **Placements live data path verified by Codex** — PlacementsHub.tsx already uses React Query/live API data; no inline `DRIVES` mock remains
 
 ---
 
@@ -641,7 +641,7 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 | **Backend — Chunk 8: Real-Time** | ✅ Done | 11/11 |
 | **Frontend — F1–F9** | ✅ Done | Build passing, 29 routes |
 | **Phase 8 — I1: Auth Store** | ✅ Done | 14/14 items |
-| **Phase 8 — I2: Dashboard Store** | 🔄 In Progress | 2 open: remove mock user, create usePlacementsStore |
+| **Phase 8 — I2: Dashboard Store** | ✅ Done by Codex | 8/8 items, browser/API smoke-tested |
 | **Phase 8 — I3: Student Pages Mock Removal** | ✅ Done | Discover, CourseLanding, VideoPlayer, Exams, ExamInterface, AssignmentSubmit |
 | **Phase 8 — I4: Placements Mock Removal** | ✅ Done | CompanyDetail, InterviewPrep, ReadinessAnalytics |
 | **Phase 8 — I5: Community/Social Mock Removal** | ✅ Done | Community, Leaderboards, LiveGD |
@@ -657,42 +657,42 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 ### Chunk I1 — Missing Frontend Pages
 *Pages that are referenced but not yet built or wired up.*
 
-- [ ] **Live Interview Room** (`/live-interview/:sessionId`) — Video tiles for 1-on-1 interview, interviewer notes panel, recording indicator, end-session button
-- [ ] **InterviewPrep buttons wired** — "Schedule Mock" and "Join GD" buttons need `onClick` → navigate to correct route
-- [ ] **Notifications page** (`/notifications`) — full list view of all notifications (currently only dropdown)
-- [ ] **My Profile / Settings page** (`/profile`) — edit name, photo, password, preferences
-- [ ] **Certificate viewer** (`/certificates/:id`) — display earned course certificates
-- [ ] **Course Reviews section** — add review form + list on CourseLanding page
+- [x] **Live Interview Room** (`/app/live-interview/:sessionId`) — wired into router with video tiles, fallback names, recording/end-session controls, and back navigation to placement prep
+- [x] **InterviewPrep buttons wired** — "Schedule Mock" opens confirm modal and calls `POST /api/v1/placements/sessions/mock`; "Join Live GD" navigates to `/app/live-gd` or `/app/live-gd/:sessionId`
+- [x] **Notifications page** (`/app/notifications`) — mounted in router and reachable from notification dropdown
+- [x] **My Profile / Settings page** (`/app/profile`) — mounted in router, settings links wired, profile save uses `PUT /api/v1/users/me`, password form uses `PATCH /api/v1/auth/change-password`
+- [x] **Certificate viewer** (`/app/certificates/:id`) — mounted in router and backed by `GET /api/v1/lms/certificates/:id`
+- [x] **Course Reviews section** — review form + list added on CourseLanding via live review endpoints
 
 ---
 
 ### Chunk I2 — Real Authentication
 *Replace devLogin bypass with real JWT flow.*
 
-- [ ] Wire Login form → `POST /api/v1/auth/login` (Axios via `api.ts`)
-- [ ] Wire Signup form → `POST /api/v1/auth/register`
-- [ ] Wire ForgotPassword form → `POST /api/v1/auth/forgot-password`
-- [ ] Wire ResetPassword form → `POST /api/v1/auth/reset-password`
-- [ ] Implement JWT refresh token rotation in `api.ts` interceptor (auto-retry on 401)
-- [ ] Store access token in memory, refresh token in HTTP-only cookie
-- [ ] Remove `devLogin()` bypass before production
-- [ ] Handle session expiry gracefully — redirect to `/login` with message
+- [x] Wire Login form → `POST /api/v1/auth/login` (Axios via `api.ts`), tested through browser login
+- [x] Wire Signup form → `POST /api/v1/auth/register`
+- [x] Wire ForgotPassword form → `POST /api/v1/auth/forgot-password`
+- [x] Wire ResetPassword form → `POST /api/v1/auth/reset-password`
+- [x] Implement JWT refresh token rotation in `api.ts` interceptor (auto-retry on 401)
+- [x] Store access token and refresh token in memory (backend returns refresh token in response body; no cookie is emitted by this backend)
+- [x] Remove `devLogin()` bypass before production
+- [x] Handle session expiry gracefully — clear tokens and redirect to `/login`
 
 ---
 
 ### Chunk I3 — Student LMS API
 *Replace all mock data in student-facing pages.*
 
-- [ ] Dashboard → `GET /api/v1/dashboard` (enrolled courses, streak, assessments)
-- [ ] Discover catalog → `GET /api/v1/courses` (paginated, search, filter)
-- [ ] My Courses → `GET /api/v1/enrollments/mine`
-- [ ] Course Landing → `GET /api/v1/courses/:id`
-- [ ] Enroll button → `POST /api/v1/enrollments`
-- [ ] VideoPlayer → `GET /api/v1/courses/:id/lectures/:lectureId`
-- [ ] Mark lecture complete → `POST /api/v1/courses/:id/lectures/:lectureId/complete`
-- [ ] AssignmentSubmit → `GET` assignment details + `POST /api/v1/assignments/:id/submit`
-- [ ] Quiz attempts → `POST /api/v1/quizzes/:id/attempt`
-- [ ] Course reviews → `GET` + `POST /api/v1/courses/:id/reviews`
+- [x] Dashboard → `GET /api/v1/lms/enrollments/mine`, `GET /api/v1/progress/summary/:courseId`, `GET /api/v1/lms/streaks/me`
+- [x] Discover catalog → `GET /api/v1/lms/courses` (paginated, search, filter)
+- [x] My Courses → `GET /api/v1/lms/enrollments/mine`
+- [x] Course Landing → `GET /api/v1/lms/courses/:id`
+- [x] Enroll button → `POST /api/v1/lms/enrollments`
+- [x] VideoPlayer → `GET /api/v1/lms/courses/:courseId/lectures/:lectureId`
+- [x] Mark lecture complete → `POST /api/v1/lms/courses/:courseId/lectures/:lectureId/complete`
+- [x] AssignmentSubmit → `GET /api/v1/lms/assignments/:courseId/:assignmentId` + `POST /api/v1/lms/assignments/:courseId/:assignmentId/submit`
+- [x] Quiz attempts → `POST /api/v1/lms/quizzes/:id/attempt`
+- [x] Course reviews → `GET /api/v1/reviews/:courseId` + `POST /api/v1/reviews/:courseId` with course-route aliases
 
 ---
 

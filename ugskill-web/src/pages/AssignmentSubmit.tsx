@@ -15,7 +15,7 @@ interface UploadedFile {
 }
 
 export const AssignmentSubmit: React.FC = () => {
-  const { assignmentId } = useParams<{ assignmentId: string }>();
+  const { courseId, assignmentId } = useParams<{ courseId: string; assignmentId: string }>();
   const navigate = useNavigate();
   const fileRefs = useRef<File[]>([]);
 
@@ -29,19 +29,19 @@ export const AssignmentSubmit: React.FC = () => {
 
   // Fetch assignment details
   const { data: ASSIGNMENT, isLoading: loadingAssignment } = useQuery({
-    queryKey: ['assignment', assignmentId],
+    queryKey: ['assignment', courseId, assignmentId],
     queryFn: async () => {
-      const res = await api.get(`/lms/assignments/${assignmentId}`);
+      const res = await api.get(`/lms/assignments/${courseId}/${assignmentId}`);
       return res.data.data ?? res.data;
     },
-    enabled: !!assignmentId,
+    enabled: !!courseId && !!assignmentId,
     // Fallback shape while loading
     placeholderData: {
       title: 'Loading...',
       course: '',
       dueDate: '',
       maxFiles: 3,
-      allowedTypes: ['.zip', '.pdf', '.tsx', '.jsx'],
+      allowedTypes: ['.zip', '.pdf', '.rar'],
       description: '',
     },
   });
@@ -100,26 +100,49 @@ export const AssignmentSubmit: React.FC = () => {
     if (fileRefs.current.length === 0) return;
     setStatus('submitting');
     setUploadProgress(0);
+    let progressInterval: number | undefined;
 
     try {
-      const formData = new FormData();
-      fileRefs.current.forEach(f => formData.append('files', f));
-      if (comment.trim()) formData.append('note', comment.trim());
-
       // Simulate progress bar during upload
-      const progressInterval = setInterval(() => {
+      progressInterval = window.setInterval(() => {
         setUploadProgress(p => Math.min(p + 15, 90));
       }, 200);
 
-      const res = await api.put(`/lms/assignments/${assignmentId}/submit`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const normalizeMime = (file: File) => {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (ext === 'zip') return 'application/zip';
+        if (ext === 'rar') return 'application/x-rar-compressed';
+        return file.type || 'application/pdf';
+      };
+
+      const fileUrls = await Promise.all(fileRefs.current.map(async (file) => {
+        const presigned = await api.post('/upload/presigned', {
+          fileName: file.name,
+          fileType: normalizeMime(file),
+          fileSize: file.size,
+          category: 'assignment_submission',
+        });
+        const upload = presigned.data.data ?? presigned.data;
+        const uploadRes = await fetch(upload.signedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': normalizeMime(file) },
+          body: file,
+        });
+        if (!uploadRes.ok) throw new Error(`Upload failed for ${file.name}`);
+        return upload.path;
+      }));
+
+      const res = await api.post(`/lms/assignments/${courseId}/${assignmentId}/submit`, {
+        fileUrls,
+        textContent: comment.trim() || undefined,
       });
 
-      clearInterval(progressInterval);
+      if (progressInterval) window.clearInterval(progressInterval);
       setUploadProgress(100);
-      setSubmissionId(res.data.data?.submissionId ?? res.data?.submissionId ?? null);
+      setSubmissionId(res.data.data?.id ?? res.data.data?.submissionId ?? res.data?.id ?? null);
       setStatus('success');
     } catch {
+      if (progressInterval) window.clearInterval(progressInterval);
       setStatus('error');
       setUploadProgress(0);
     }

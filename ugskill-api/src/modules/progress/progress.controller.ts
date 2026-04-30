@@ -10,7 +10,7 @@ export class ProgressController {
 
       const result = await progressService.markLectureComplete(studentId, courseId as string, lectureId as string);
 
-      res.status(200).json(successResponse(result.message, result.progress));
+      res.status(200).json(successResponse(result.progress, { message: result.message }));
     } catch (error) {
       next(error);
     }
@@ -23,7 +23,7 @@ export class ProgressController {
 
       const summary = await progressService.getProgressSummary(studentId, courseId as string);
 
-      res.status(200).json(successResponse('Progress summary retrieved', summary));
+      res.status(200).json(successResponse(summary, { message: 'Progress summary retrieved' }));
     } catch (error) {
       next(error);
     }
@@ -35,7 +35,7 @@ export class ProgressController {
 
       const streak = await progressService.getStudentStreak(studentId);
 
-      res.status(200).json(successResponse('Student streak retrieved', streak));
+      res.status(200).json(successResponse(streak, { message: 'Student streak retrieved' }));
     } catch (error) {
       next(error);
     }

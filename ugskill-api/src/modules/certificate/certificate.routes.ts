@@ -14,6 +14,12 @@ router.post(
 );
 
 router.get(
+  '/:id',
+  requireAuth,
+  certificateController.getById.bind(certificateController)
+);
+
+router.get(
   '/verify/:verificationUuid',
   validate(verifyCertificateSchema),
   certificateController.verify.bind(certificateController)

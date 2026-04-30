@@ -1,7 +1,43 @@
 import { assignmentRepository } from './assignment.repository';
+import { courseRepo } from '../course/course.repository';
 import { AppError } from '../../lib/errors';
 
 export class AssignmentService {
+  async getAssignmentDetails(courseId: string, assignmentId: string) {
+    const course = await courseRepo.getCourseById(courseId);
+    if (!course) {
+      throw new AppError('Course not found', 404);
+    }
+
+    const sections = course.sections ?? [];
+    let assignment: any = null;
+
+    for (const section of sections) {
+      const sectionAssignments = Array.isArray(section.assignments) ? section.assignments : [];
+      assignment = sectionAssignments.find((item: any) => String(item._id ?? item.id ?? item.assignmentId) === assignmentId);
+      if (assignment) break;
+
+      const lectures = Array.isArray(section.lectures) ? section.lectures : [];
+      for (const lecture of lectures) {
+        const lectureAssignments = Array.isArray(lecture.assignments) ? lecture.assignments : [];
+        assignment = lectureAssignments.find((item: any) => String(item._id ?? item.id ?? item.assignmentId) === assignmentId);
+        if (assignment) break;
+      }
+      if (assignment) break;
+    }
+
+    return {
+      id: assignmentId,
+      courseId,
+      course: course.title,
+      title: assignment?.title ?? 'Course Assignment',
+      dueDate: assignment?.dueDate ?? assignment?.due_date ?? 'TBD',
+      maxFiles: assignment?.maxFiles ?? assignment?.max_files ?? 3,
+      allowedTypes: assignment?.allowedTypes ?? assignment?.allowed_types ?? ['.zip', '.pdf', '.rar'],
+      description: assignment?.description ?? 'Upload your completed assignment files for instructor review.',
+    };
+  }
+
   async submitAssignment(
     studentId: string,
     courseId: string,

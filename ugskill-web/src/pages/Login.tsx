@@ -17,7 +17,7 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.roles?.includes('admin') || user.roles?.includes('creator')) {
-        navigate('/admin/analytics', { replace: true });
+        navigate('/app/admin/analytics', { replace: true });
       } else if (user.roles?.includes('hr')) {
         navigate('/hr/dashboard', { replace: true });
       } else {

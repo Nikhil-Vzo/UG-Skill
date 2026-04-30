@@ -23,7 +23,7 @@ export const Profile: React.FC = () => {
   const queryClient = useQueryClient();
   const { user: _authUser } = useAuthStore();
   const [tab, setTab] = useState<'profile' | 'security'>('profile');
-  const [formData, setFormData] = useState({ fullName: '', rollNumber: '', cgpa: '' });
+  const [formData, setFormData] = useState({ fullName: '', branch: '', cgpa: '' });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordError, setPasswordError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -33,14 +33,14 @@ export const Profile: React.FC = () => {
     queryFn: async () => {
       const res = await api.get('/users/me');
       const p = res.data.data ?? res.data;
-      setFormData({ fullName: p.fullName ?? '', rollNumber: p.rollNumber ?? '', cgpa: p.cgpa?.toString() ?? '' });
+      setFormData({ fullName: p.fullName ?? '', branch: p.branch ?? '', cgpa: p.cgpa?.toString() ?? '' });
       return p;
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { fullName: string; rollNumber?: string; cgpa?: number }) =>
-      api.patch('/users/me', data),
+    mutationFn: (data: { fullName: string; branch?: string; cgpa?: number }) =>
+      api.put('/users/me', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile-me'] });
       setSaveSuccess(true);
@@ -64,7 +64,7 @@ export const Profile: React.FC = () => {
 
   const handleSaveProfile = () => {
     const payload: any = { fullName: formData.fullName };
-    if (formData.rollNumber) payload.rollNumber = formData.rollNumber;
+    if (formData.branch) payload.branch = formData.branch;
     if (formData.cgpa) payload.cgpa = parseFloat(formData.cgpa);
     updateMutation.mutate(payload);
   };
@@ -166,10 +166,10 @@ export const Profile: React.FC = () => {
             placeholder="Your full name"
           />
           <TextInput
-            label="Roll Number"
-            value={formData.rollNumber}
-            onChange={e => setFormData(f => ({ ...f, rollNumber: e.target.value }))}
-            placeholder="e.g. CS21B001"
+            label="Branch"
+            value={formData.branch}
+            onChange={e => setFormData(f => ({ ...f, branch: e.target.value }))}
+            placeholder="e.g. Computer Science"
           />
           <TextInput
             label="CGPA"

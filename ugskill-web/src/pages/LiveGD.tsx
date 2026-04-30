@@ -97,8 +97,8 @@ export const LiveGD: React.FC = () => {
 
   const leaveMutation = useMutation({
     mutationFn: () => api.post(`/placements/gd-sessions/${sessionId}/leave`),
-    onSuccess: () => navigate('/placements/prep'),
-    onError: () => navigate('/placements/prep'), // navigate out regardless
+    onSuccess: () => navigate('/app/placements/prep'),
+    onError: () => navigate('/app/placements/prep'), // navigate out regardless
   });
 
   // Session timer
@@ -189,7 +189,7 @@ export const LiveGD: React.FC = () => {
       <div style={{ height: 'calc(100vh - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', color: 'var(--text-low)' }}>
         <AlertCircle size={40} style={{ opacity: 0.4 }} />
         <p>No GD session specified. Go to Interview Prep to join an active session.</p>
-        <Button variant="primary" onClick={() => navigate('/placements/prep')}>Back to Prep</Button>
+        <Button variant="primary" onClick={() => navigate('/app/placements/prep')}>Back to Prep</Button>
       </div>
     );
   }
@@ -210,7 +210,7 @@ export const LiveGD: React.FC = () => {
       <div style={{ height: 'calc(100vh - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
         <AlertCircle size={40} style={{ color: 'var(--error)', opacity: 0.6 }} />
         <p style={{ color: 'var(--text-low)' }}>Failed to load GD session. The session may have ended.</p>
-        <Button variant="primary" onClick={() => navigate('/placements/prep')}>Back to Prep</Button>
+        <Button variant="primary" onClick={() => navigate('/app/placements/prep')}>Back to Prep</Button>
       </div>
     );
   }

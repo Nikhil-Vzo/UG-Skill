@@ -8,7 +8,7 @@ export class QuizController {
       const creatorId = req.user!.userId;
       const quizDef = await quizService.createDefinition(creatorId, req.body);
       
-      res.status(201).json(successResponse('Quiz definition created', quizDef));
+      res.status(201).json(successResponse(quizDef, { message: 'Quiz definition created' }));
     } catch (error) {
       next(error);
     }
@@ -28,7 +28,7 @@ export class QuizController {
         responses
       );
 
-      res.status(200).json(successResponse('Quiz attempt submitted successfully', result));
+      res.status(200).json(successResponse(result, { message: 'Quiz attempt submitted successfully' }));
     } catch (error) {
       next(error);
     }

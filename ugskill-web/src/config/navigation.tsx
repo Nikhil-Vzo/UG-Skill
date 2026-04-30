@@ -30,7 +30,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: <BarChart3 size={18} strokeWidth={2.5} />, label: 'Leaderboards', to: '/app/leaderboards' },
   { icon: <ClipboardList size={18} strokeWidth={2.5} />, label: 'Exams & Quizzes', to: '/app/exams' },
   { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'Community', to: '/app/community' },
-  { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live Sessions', to: '/app/live-gd' },
+  { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live Sessions', to: '/app/placements/prep' },
   { icon: <Target size={18} strokeWidth={2.5} />, label: 'Hall of Fame', to: '/app/showcase' },
 ];
 
@@ -44,5 +44,5 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 ];
 
 export const FOOTER_NAV_ITEMS: NavItem[] = [
-  { icon: <Settings size={18} strokeWidth={2.5} />, label: 'Settings', to: '/settings' },
+  { icon: <Settings size={18} strokeWidth={2.5} />, label: 'Settings', to: '/app/profile' },
 ];

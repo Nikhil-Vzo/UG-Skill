@@ -10,7 +10,7 @@ export class ReviewController {
 
       const review = await reviewService.addReview(studentId, courseId, req.body);
 
-      res.status(201).json(successResponse('Review added successfully', review));
+      res.status(201).json(successResponse(review, { message: 'Review added successfully' }));
     } catch (error) {
       next(error);
     }
@@ -24,7 +24,7 @@ export class ReviewController {
 
       const reviews = await reviewService.getReviews(courseId, limit, offset);
 
-      res.status(200).json(successResponse('Reviews retrieved', reviews));
+      res.status(200).json(successResponse(reviews, { message: 'Reviews retrieved' }));
     } catch (error) {
       next(error);
     }

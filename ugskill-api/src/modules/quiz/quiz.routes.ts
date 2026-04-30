@@ -14,6 +14,13 @@ router.post(
   quizController.submitAttempt.bind(quizController)
 );
 
+router.post(
+  '/:quizId/attempt',
+  requireAuth,
+  validate(submitQuizAttemptSchema),
+  quizController.submitAttempt.bind(quizController)
+);
+
 // Creator routes
 router.post(
   '/',
