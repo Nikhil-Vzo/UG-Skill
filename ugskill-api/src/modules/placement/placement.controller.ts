@@ -577,3 +577,84 @@ export const listProctoringEvents = async (req: Request, res: Response, next: Ne
     next(error);
   }
 };
+
+// ==========================================
+// READINESS /me  (frontend alias)
+// ==========================================
+
+/** GET /api/v1/placements/readiness/me — returns student readiness as radar-chart skills array */
+export const getMyReadiness = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const studentId = req.user!.userId;
+    const result = await placementService.listReadinessScores({ studentId, limit: 1 });
+
+    const score = result.data?.[0] || null;
+
+    // Transform to radar-chart format the frontend expects
+    const skills = score?.components
+      ? Object.entries(score.components as Record<string, number>).map(([skill, value]) => ({
+          skill,
+          score: value,
+        }))
+      : [
+          { skill: 'DSA', score: 0 },
+          { skill: 'Mock Interview', score: 0 },
+          { skill: 'Group Discussion', score: 0 },
+          { skill: 'Aptitude', score: 0 },
+        ];
+
+    res.json(
+      successResponse({
+        studentId,
+        overallScore: score ? Number(score.overallScore) : 0,
+        skills,
+        lastUpdated: score?.computedAt || null,
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** GET /api/v1/placements/readiness/me/insights — AI-generated coaching insights */
+export const getMyReadinessInsights = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const studentId = req.user!.userId;
+    const result = await placementService.listReadinessScores({ studentId, limit: 1 });
+    const score = result.data?.[0] || null;
+    const components = (score?.components as Record<string, number>) || {};
+
+    // Determine weakest area
+    const sorted = Object.entries(components).sort(([, a], [, b]) => a - b);
+    const weakest = sorted[0]?.[0] || 'Mock Interview';
+    const strongest = sorted[sorted.length - 1]?.[0] || 'DSA';
+    const overall = score ? Number(score.overallScore) : 0;
+
+    const insights = [
+      {
+        type: 'strength',
+        area: strongest,
+        message: `You're performing well in ${strongest}. Keep it up!`,
+      },
+      {
+        type: 'improvement',
+        area: weakest,
+        message: `Focus on improving your ${weakest} skills — this is your biggest opportunity.`,
+      },
+      {
+        type: 'recommendation',
+        area: 'Next Steps',
+        message:
+          overall < 50
+            ? 'Schedule a mock interview session to get feedback on your weak areas.'
+            : overall < 75
+            ? 'You are on track. Push harder on problem-solving and communication.'
+            : 'Excellent readiness! Apply to top drives and keep practicing consistently.',
+      },
+    ];
+
+    res.json(successResponse({ studentId, overallScore: overall, insights }));
+  } catch (error) {
+    next(error);
+  }
+};

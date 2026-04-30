@@ -4,6 +4,7 @@ import { examQuestionRepository } from './exam-question.repository';
 import { examAttemptRepository } from './exam-attempt.repository';
 import { examResponseRepository } from './exam-response.repository';
 import { ExamProctoringEventModel } from '../../db/mongo/models/exam';
+import { proctoringService } from '../proctoring/proctoring.service';
 import { AppError, NotFoundError, ValidationError } from '../../lib/errors';
 import { db } from '../../config/postgres';
 
@@ -195,25 +196,16 @@ export class ExamService {
   // --- PROCTORING EVENTS ---
 
   async ingestProctoringEvent(studentId: string, data: any) {
-    // Map to exam module
-    const payload = {
-      ...data,
-      module: 'exam',
-      pg_student_id: studentId,
-      timestamp: data.timestamp ? new Date(data.timestamp) : new Date()
-    };
-
-    const event = new ExamProctoringEventModel(payload);
-    await event.save();
-
-    // If an attempt is associated via pg_session_id
-    if (data.pg_session_id) {
-      if (['high', 'critical'].includes(data.severity)) {
-        await examAttemptRepository.incrementViolation(data.pg_session_id);
-      }
-    }
-
-    return event;
+    return proctoringService.ingestEvent({
+      attemptId: data.pg_session_id || data.attemptId,
+      examId: data.pg_exam_id || data.examId,
+      studentId,
+      type: data.event_type || data.type,
+      severity: (data.severity || 'LOW').toUpperCase() as any,
+      aiConfidence: data.confidence || data.aiConfidence,
+      metadata: data.metadata,
+      evidenceUrl: data.evidence_snapshot_url || data.evidenceUrl
+    });
   }
 
   async listProctoringEvents(filters: any) {

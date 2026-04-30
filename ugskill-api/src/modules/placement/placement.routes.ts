@@ -473,6 +473,20 @@ router.get(
   placementController.listReadinessScores
 );
 
+// Frontend-friendly alias: GET /placements/readiness/me
+router.get(
+  '/readiness/me',
+  requireAuth,
+  placementController.getMyReadiness
+);
+
+// AI-generated insights for current student
+router.get(
+  '/readiness/me/insights',
+  requireAuth,
+  placementController.getMyReadinessInsights
+);
+
 // ==========================================
 // 5.12 - PROCTORING EVENTS
 // ==========================================
