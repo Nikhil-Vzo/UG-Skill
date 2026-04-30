@@ -8,6 +8,7 @@ import {
   batchParamsSchema,
   addMembersSchema,
   removeMemberSchema,
+  grantCourseAccessSchema,
 } from './batch.schemas';
 
 const router = Router();
@@ -27,5 +28,8 @@ router.delete('/:id', requireRole(['admin']), validate(batchParamsSchema), batch
 // Member management (admin only)
 router.post('/:id/members', requireRole(['admin']), validate(addMembersSchema), batchController.addMembers);
 router.delete('/:id/members/:userId', requireRole(['admin']), validate(removeMemberSchema), batchController.removeMember);
+
+// Course access (admin only)
+router.post('/:id/course-access', requireRole(['admin']), validate(grantCourseAccessSchema), batchController.grantCourseAccess);
 
 export default router;

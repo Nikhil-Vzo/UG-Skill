@@ -1,6 +1,7 @@
 import { eq, and, isNull, sql } from 'drizzle-orm';
 import { db } from '../../config/postgres';
 import { batches, batchMembers, users } from '../../db/pg/schema/core';
+import { batchCourseAccess } from '../../db/pg/schema/lms';
 import { getOffset } from '../../lib/pagination';
 
 // ─── Batch CRUD ──────────────────────────────────────────
@@ -128,4 +129,15 @@ export const findBatchMembers = async (batchId: string) => {
     .orderBy(batchMembers.joinedAt);
 
   return result;
+};
+
+export const grantCourseAccess = async (batchId: string, courseId: string, grantedBy: string) => {
+  const result = await db.insert(batchCourseAccess).values({
+    batchId,
+    contentType: 'course',
+    contentId: courseId,
+    grantedBy,
+  }).returning();
+
+  return result[0];
 };

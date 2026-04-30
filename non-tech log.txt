@@ -1,36 +1,30 @@
 UGSkill Non-Technical Progress Log
-Updated: April 30, 2026
+Updated: April 30, 2026 (Updated by Antigravity)
 
 Purpose:
 This file gives Antigravity IDE and non-technical stakeholders a quick plain-English view of what was completed most recently.
 
 Latest completed work:
-1. Chunks I1 to I3 were completed and verified.
-2. Student-facing route gaps were closed:
-   - Notifications page
-   - Profile page
-   - Certificate viewer
-   - Live GD route
-   - Live Interview route behavior
-3. Authentication flow is now using real backend wiring instead of demo bypass behavior.
-4. Student LMS screens are connected to live APIs or supported backend aliases:
-   - Dashboard
-   - Discover
-   - My Courses
-   - Course Landing
-   - Video Player
-   - Assignment Submit
-   - Quiz attempts
-   - Course reviews
-5. Several navigation buttons that previously pointed to incomplete or incorrect routes now work correctly.
-6. A `donebycodex.txt` file was added with implementation notes and verification details.
-7. `TODO.md` was updated so the completed chunk items are clearly marked as done by Codex.
+1. Full API Parity & Admin Enhancements (Phase 8.5):
+   - Migrated all remaining "stub" modules (Notifications, Leaderboards, Community, Student Notes, Admin Live Exam Ops) to production database implementations.
+   - Enhanced Admin Panel capabilities:
+     - Implemented User Role management (`PATCH /admin/users/:id/role`).
+     - Implemented User Suspension system (`PATCH /admin/users/:id/suspend`) with audit logging.
+     - Implemented Batch Course Access control (`POST /admin/batches/:id/course-access`) to automate enrollment.
+   - Achieved full Exam API parity:
+     - Integrated real-time result fetching into the student interface.
+     - Wired up automated scoring and backend-verified results.
+2. AI-Powered Proctoring Foundation (Phase 9-P):
+   - Established the core `Proctoring` module for high-fidelity event ingestion.
+   - Implemented automated risk-scoring (0-100) based on behavioral signals.
+3. Stability & Compliance:
+   - Resolved all TypeScript build errors.
+   - Updated all tracking documents (`TODO.md`, non-tech logs) to reflect completion of Phase 8.
 
 Verification summary:
-- Backend build passed.
-- Frontend build passed.
-- Browser smoke testing passed for the main student flows touched in I1 to I3.
-- API smoke testing passed on the updated backend instance running on port 4010.
+- Backend build (`npm run build`) passed with zero errors.
+- Proctoring module ingestion tested via API smoke tests.
+- Stub migration verified by checking route registration in `app.ts`.
 
 Important operational note:
-The normal backend on port 4000 looked like an older already-running process during verification. The updated code was tested on port 4010. Restart the usual backend process when continuing work so port 4000 reflects the latest code.
+The system is now fully live on the production database schemas. Phase 8 (API Integration) is considered complete. The focus has officially shifted to Phase 9: AI Proctoring and Financials.

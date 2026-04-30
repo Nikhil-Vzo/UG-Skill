@@ -49,6 +49,26 @@ export const getUser = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
+export const updateUserRole = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const ip = Array.isArray(req.ip) ? req.ip[0] : req.ip;
+    const user = await userService.updateUserRole(req.params.id as string, req.body.roles, req.user!.userId, ip);
+    res.status(200).json(successResponse(user));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const suspendUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const ip = Array.isArray(req.ip) ? req.ip[0] : req.ip;
+    const user = await userService.suspendUser(req.params.id as string, req.body.reason, req.user!.userId, ip);
+    res.status(200).json(successResponse(user));
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const ip = Array.isArray(req.ip) ? req.ip[0] : req.ip;

@@ -72,3 +72,17 @@ export const removeMember = async (req: Request, res: Response, next: NextFuncti
     next(error);
   }
 };
+
+export const grantCourseAccess = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await batchService.grantCourseAccess(
+      req.params.id as string,
+      req.body.courseId,
+      req.user!.userId,
+      getIp(req)
+    );
+    res.status(201).json(successResponse(result));
+  } catch (error) {
+    next(error);
+  }
+};

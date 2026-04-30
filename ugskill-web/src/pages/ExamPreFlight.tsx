@@ -4,6 +4,9 @@ import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
 import { Camera, Mic, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import api from '../lib/api';
+import { Skeleton } from '../components/loaders/Skeleton';
 
 export const ExamPreFlight: React.FC = () => {
   const { examId } = useParams();
@@ -12,6 +15,15 @@ export const ExamPreFlight: React.FC = () => {
   const [cameraActive, setCameraActive] = useState(false);
   const [micActive, setMicActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const { data: examData, isLoading } = useQuery({
+    queryKey: ['exam', examId],
+    queryFn: async () => {
+      const res = await api.get(`/exams/${examId}`);
+      return res.data.data ?? res.data;
+    },
+    enabled: !!examId,
+  });
 
   const requestPermissions = async () => {
     try {
@@ -36,7 +48,13 @@ export const ExamPreFlight: React.FC = () => {
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <header style={{ textAlign: 'center' }}>
-        <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '2rem' }}>Pre-Flight Check</h1>
+        {isLoading ? (
+          <Skeleton variant="text" width="50%" height="2.5rem" style={{ margin: '0 auto 0.5rem' }} />
+        ) : (
+          <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '2rem' }}>
+            {examData?.title ? `${examData.title} - Pre-Flight Check` : 'Pre-Flight Check'}
+          </h1>
+        )}
         <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Ensure your hardware is working before entering the proctored environment.</p>
       </header>
 

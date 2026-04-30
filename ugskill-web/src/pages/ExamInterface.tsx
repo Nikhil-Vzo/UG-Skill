@@ -85,7 +85,7 @@ export const ExamInterface: React.FC = () => {
   const { data: attemptData, isLoading: startingExam } = useQuery({
     queryKey: ['exam-attempt', examId],
     queryFn: async () => {
-      const res = await api.post(`/exams/${examId}/start`);
+      const res = await api.post(`/exams/${examId}/attempts/start`);
       return res.data.data ?? res.data;
       // Shape: { attemptId, questions[], durationSeconds, examTitle }
     },
@@ -102,10 +102,18 @@ export const ExamInterface: React.FC = () => {
   // ── Save answer mutation (auto-save + on change) ──
   const saveMut = useMutation({
     mutationFn: ({ questionId, selectedOption }: { questionId: string; selectedOption: number }) =>
-      api.patch(`/exams/${examId}/attempts/${attemptId}/answer`, { questionId, selectedOption }),
+      api.patch(`/exams/${examId}/attempts/${attemptId}/answers`, { questionId, selectedOption }),
     // Silently fail — answers also kept in local state
     onError: () => {},
   });
+
+  const [current, setCurrent] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [flagged, setFlagged] = useState<Set<string>>(new Set());
+  const [submitted, setSubmitted] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [proctoringEvents, setProctoringEvents] = useState<ProctoringEvent[]>([]);
+  const [, setTabSwitchWarning] = useState(false);
 
   // ── Submit mutation ──
   const submitMut = useMutation({
@@ -116,14 +124,15 @@ export const ExamInterface: React.FC = () => {
     },
   });
 
-  // timeLeft is now managed by useExamTimer (see below)
-  const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [flagged, setFlagged] = useState<Set<string>>(new Set());
-  const [submitted, setSubmitted] = useState(false);
-  const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [proctoringEvents, setProctoringEvents] = useState<ProctoringEvent[]>([]);
-  const [, setTabSwitchWarning] = useState(false);
+  // ── Fetch Result (after submission) ──
+  const { data: resultData, isLoading: loadingResult } = useQuery({
+    queryKey: ['exam-result', attemptId],
+    queryFn: async () => {
+      const res = await api.get(`/exams/results/${attemptId}`);
+      return res.data.data ?? res.data;
+    },
+    enabled: submitted && !!attemptId,
+  });
 
   const handleSubmit = useCallback(() => {
     if (attemptId) {
@@ -238,8 +247,21 @@ export const ExamInterface: React.FC = () => {
               <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Answered / {questions.length}</div>
             </div>
             <div style={{ borderLeft: '1px solid var(--surface-highest)', paddingLeft: '2rem' }}>
-              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: pct >= 60 ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-display)' }}>{pct}%</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Completion</div>
+              {loadingResult ? (
+                <div style={{ padding: '0.5rem' }}>Loading verified score...</div>
+              ) : resultData ? (
+                <>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: (resultData.score / resultData.maxScore) >= 0.6 ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-display)' }}>
+                    {resultData.score}/{resultData.maxScore}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Final Score</div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: pct >= 60 ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-display)' }}>{pct}%</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Completion</div>
+                </>
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.875rem', color: 'var(--text-low)' }}>
