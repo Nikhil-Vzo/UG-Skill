@@ -3,6 +3,8 @@ import { courseService } from './course.service';
 import { createCourseSchema, updateCourseSchema, createSectionSchema, createLectureSchema, batchAccessSchema } from './course.schemas';
 import { successResponse } from '../../lib/response';
 import { z } from 'zod';
+import { verifyAccessToken } from '../../lib/jwt';
+import { enrollmentRepo } from '../enrollment/enrollment.repository';
 
 export const createCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -22,7 +24,28 @@ export const createCourse = async (req: Request, res: Response, next: NextFuncti
 export const getCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const course = await courseService.getCourse(req.params.id as string);
-    res.status(200).json(successResponse(course));
+
+    // Optionally attach isEnrolled for authenticated users.
+    // GET /:id is a public route, so we silently peek at the token — no hard auth required.
+    let isEnrolled = false;
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const decoded = verifyAccessToken(token);
+        const enrollment = await enrollmentRepo.getEnrollment(
+          decoded.userId,
+          'course',
+          req.params.id as string
+        );
+        isEnrolled = !!(enrollment && enrollment.status === 'active');
+      }
+    } catch {
+      // Token absent or invalid — treat as unauthenticated, isEnrolled stays false
+    }
+
+    const courseData = course.toObject ? course.toObject() : { ...course };
+    res.status(200).json(successResponse({ ...courseData, isEnrolled }));
   } catch (error) {
     next(error);
   }
