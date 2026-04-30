@@ -51,7 +51,15 @@ export const Discover: React.FC = () => {
       }),
     onSuccess: (_, courseId) => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      navigate(`/app/courses/${courseId}`);
+      // Go directly to the player after successful enrollment
+      navigate(`/app/courses/${courseId}/player`);
+    },
+    onError: (error: any, courseId) => {
+      // Already enrolled → just open the player
+      const msg: string = error?.response?.data?.error?.message || '';
+      if (msg.toLowerCase().includes('already enrolled') || error?.response?.status === 400) {
+        navigate(`/app/courses/${courseId}/player`);
+      }
     },
   });
 

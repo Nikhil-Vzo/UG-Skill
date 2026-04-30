@@ -86,7 +86,31 @@ export const VideoPlayer: React.FC = () => {
     queryKey: ['course', courseId],
     queryFn: async () => {
       const res = await api.get(`/lms/courses/${courseId}`);
-      return res.data.data ?? res.data;
+      const raw = res.data.data ?? res.data;
+
+      // Normalize MongoDB snake_case sections → curriculum with camelCase lecture fields
+      const sections: any[] = raw.sections ?? raw.curriculum ?? [];
+      const curriculum: Section[] = sections.map((s: any) => ({
+        _id: s._id?.toString() || s.id || String(Math.random()),
+        title: s.title ?? 'Untitled Section',
+        lectures: (s.lectures ?? []).map((l: any) => ({
+          _id: l._id?.toString() || l.id || String(Math.random()),
+          title: l.title ?? 'Untitled Lecture',
+          duration: l.duration,
+          completed: l.completed ?? false,
+          isFree: l.is_free ?? l.isFree ?? false,
+          type: l.type ?? 'video',
+          // Support both snake_case (from MongoDB) and camelCase
+          videoUrl: l.video_url ?? l.videoUrl,
+          video_url: l.video_url ?? l.videoUrl,
+          document_url: l.document_url ?? l.documentUrl,
+          external_url: l.external_url ?? l.externalUrl,
+          content: l.content,
+          description: l.description,
+        })),
+      }));
+
+      return { ...raw, curriculum };
     },
     enabled: !!courseId,
     staleTime: 120_000,
@@ -98,18 +122,10 @@ export const VideoPlayer: React.FC = () => {
   const activeLecture = allLectures[currentIndex] ?? null;
   const completedCount = allLectures.filter(l => l.completed).length;
 
-  /* ── Fetch lecture detail (video URL, description) ── */
-  const { data: lecture, isLoading: lectureLoading } = useQuery<Lecture>({
-    queryKey: ['lecture', courseId, activeLectureId],
-    queryFn: async () => {
-      const res = await api.get(`/lms/courses/${courseId}/lectures/${activeLectureId}`);
-      return res.data.data ?? res.data;
-    },
-    enabled: !!courseId && !!activeLectureId,
-    staleTime: 60_000,
-    // Merge with sidebar entry while loading
-    placeholderData: activeLecture ?? undefined,
-  });
+  // Lecture detail is already embedded in the course sections — no separate API call needed.
+  // The GET /lectures/:id endpoint doesn't exist; all data comes from MongoDB sections.
+  const lecture: Lecture | null = activeLecture;
+  const lectureLoading = courseLoading;
 
   /* ── Mark complete ── */
   const completeMut = useMutation({
@@ -176,7 +192,7 @@ export const VideoPlayer: React.FC = () => {
 
   /* ── Navigation helpers ── */
   const goToLecture = useCallback((id: string) => {
-    navigate(`/courses/${courseId}/player/${id}`);
+    navigate(`/app/courses/${courseId}/player/${id}`);
   }, [courseId, navigate]);
 
   const goPrev = () => {
@@ -201,7 +217,7 @@ export const VideoPlayer: React.FC = () => {
       {/* ── Top Bar ── */}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', height: '52px', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', flexShrink: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
-          <button onClick={() => navigate(`/courses/${courseId}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-low)', display: 'flex', flexShrink: 0 }}>
+          <button onClick={() => navigate(`/app/courses/${courseId}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-low)', display: 'flex', flexShrink: 0 }}>
             <ChevronLeft size={20} />
           </button>
           {courseLoading ? (

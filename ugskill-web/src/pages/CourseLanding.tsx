@@ -136,10 +136,17 @@ export const CourseLanding: React.FC = () => {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
-      // If we're already on the landing page, we just want to show the player or success state
-      // but the current implementation navigates to /player. 
-      // Let's keep it as is if that's the intended flow.
       navigate(`/app/courses/${courseId}/player`);
+    },
+    onError: (error: any) => {
+      // If the student is already enrolled, just send them to the player
+      const msg: string = error?.response?.data?.error?.message || '';
+      if (
+        msg.toLowerCase().includes('already enrolled') ||
+        error?.response?.status === 400
+      ) {
+        navigate(`/app/courses/${courseId}/player`);
+      }
     },
   });
 
@@ -159,6 +166,20 @@ export const CourseLanding: React.FC = () => {
   const instructorName = typeof course.instructor === 'string' ? course.instructor : course.instructor?.fullName ?? 'UGSkill Faculty';
   const instructorTitle = typeof course.instructor === 'string' ? '' : course.instructor?.title ?? '';
   const isEnrolled = course.isEnrolled ?? false;
+
+  // Normalize MongoDB snake_case fields to what the UI expects
+  const thumbnailUrl = (course as any).thumbnail_url || course.thumbnailUrl;
+  const curriculum: Section[] = (course as any).sections?.map((s: any) => ({
+    _id: s._id?.toString() || String(Math.random()),
+    title: s.title,
+    duration: s.duration,
+    lectures: (s.lectures || []).map((l: any) => ({
+      _id: l._id?.toString() || String(Math.random()),
+      title: l.title,
+      duration: l.duration,
+      isFree: l.is_free ?? l.isFree ?? false,
+    })),
+  })) ?? course.curriculum ?? [];
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
@@ -229,13 +250,13 @@ export const CourseLanding: React.FC = () => {
           )}
 
           {/* Curriculum */}
-          {(course.curriculum ?? []).length > 0 && (
+          {curriculum.length > 0 && (
             <div>
               <h2 style={{ color: 'var(--text-high)', marginBottom: '1rem', fontSize: '1.125rem', fontFamily: 'var(--font-display)' }}>
                 Curriculum Architecture
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {course.curriculum!.map(s => (
+                {curriculum.map(s => (
                   <CurriculumSection key={s._id} section={s} enrolled={isEnrolled} courseId={courseId!} />
                 ))}
               </div>
@@ -249,7 +270,7 @@ export const CourseLanding: React.FC = () => {
             {/* Preview Thumbnail */}
             <div style={{
               height: '180px',
-              background: course.thumbnailUrl ? `url(${course.thumbnailUrl}) center/cover` : 'var(--surface-highest)',
+              background: thumbnailUrl ? `url(${thumbnailUrl}) center/cover` : 'var(--surface-highest)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               position: 'relative', overflow: 'hidden',
               border: '1px solid var(--surface-highest)'
