@@ -69,7 +69,7 @@
 
 ---
 
-## Phase 5: Backend Development — ⬜ IN PROGRESS
+## Phase 5: Backend Development — ✅ DONE
 
 ### Chunk 1 — Project Scaffold & Infrastructure (3-4 days)
 - [x] 1.1 Init project — Express + TypeScript + dependencies
@@ -640,16 +640,16 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 | **Backend — Chunk 7: Cross-Cutting** | ✅ Done | 13/13 |
 | **Backend — Chunk 8: Real-Time** | ✅ Done | 11/11 |
 | **Frontend — F1–F9** | ✅ Done | Build passing, 29 routes |
-| **Phase 8 — I1: Auth Store** | ✅ Done | 14/14 items |
-| **Phase 8 — I2: Dashboard Store** | ✅ Done by Codex | 8/8 items, browser/API smoke-tested |
-| **Phase 8 — I3: Student Pages Mock Removal** | ✅ Done | Discover, CourseLanding, VideoPlayer, Exams, ExamInterface, AssignmentSubmit |
-| **Phase 8 — I4: Placements Mock Removal** | ✅ Done | CompanyDetail, InterviewPrep, ReadinessAnalytics |
-| **Phase 8 — I5: Community/Social Mock Removal** | ✅ Done | Community, Leaderboards, LiveGD |
-| **Phase 8 — I6: Admin Mock Removal** | ✅ Done | AdminDashboard, UserDirectory, BatchManagement, PlacementsConfig, ExamOps, CourseBuilder, QuizBuilder |
-| **Phase 8 — I7: New Pages** | ✅ Done | LiveInterview, Profile, Notifications, CertificateViewer built |
-| **Phase 8 — I8: Socket.io Client** | ✅ Done | `lib/socket.ts` + all 5 namespaces |
-| **Phase 8 — I9: Performance** | ✅ Done | lazy loading, bundle optimization, error boundary, toasts |
-| **Phase 8 — I10: Security / QA / Deploy** | 🔄 In Progress | Security ✅, Deploy ✅ — E2E / cross-browser / mobile QA pending |
+| Phase 8 — I1: Missing Frontend Pages | ✅ Done | LiveInterview, Profile, Notifications, CertificateViewer |
+| Phase 8 — I2: Real Authentication | ✅ Done | AuthStore wiring, JWT refresh, real login/signup |
+| Phase 8 — I3: Student LMS API | ✅ Done | Discover, CourseLanding, VideoPlayer, Exams, ExamInterface, AssignmentSubmit |
+| Phase 8 — I4: Placements & Community API | ✅ Done | PlacementsHub, CompanyDetail, Community, InterviewPrep, ReadinessAnalytics |
+| Phase 8 — I5: Exam API | ✅ Done | Exam list, Pre-flight, Start, Answer, Submit, Results, Leaderboards |
+| Phase 8 — I6: Admin Panel API | ✅ Done | AdminDashboard, UserDirectory, BatchManagement, PlacementsConfig, ExamOps |
+| Phase 8 — I7: Creator Tools API | ⬜ In Progress | CourseBuilder, QuizBuilder saving logic |
+| Phase 8 — I8: Real-Time Socket.io | ✅ Done | `lib/socket.ts` + 5 namespaces |
+| Phase 8 — I9: Performance & Polish | ✅ Done | Lazy loading, optimization, error boundary, toasts |
+| Phase 8 — I10: Security / QA / Deploy | 🔄 In Progress | Security ✅, Deploy ✅ — E2E / QA pending |
 
 
 ---
@@ -698,42 +698,42 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 
 ### Chunk I4 — Placements & Community API
 
-- [ ] PlacementsHub → `GET /api/v1/placements/drives` (active, applied, shortlisted, rejected)
-- [ ] CompanyDetail → `GET /api/v1/placements/drives/:id`
-- [ ] Apply to drive → `POST /api/v1/placements/drives/:id/apply`
-- [ ] ReadinessAnalytics → `GET /api/v1/placements/readiness/:studentId`
-- [ ] InterviewPrep → `GET /api/v1/placements/sessions/upcoming`
-- [ ] Schedule Mock → `POST /api/v1/placements/sessions/mock`
-- [ ] Community posts → `GET /api/v1/community/posts` (paginated, tag filter)
-- [ ] Create post → `POST /api/v1/community/posts`
+- [x] PlacementsHub → `GET /api/v1/placements/drives` (active, applied, shortlisted, rejected)
+- [x] CompanyDetail → `GET /api/v1/placements/drives/:id`
+- [x] Apply to drive → `POST /api/v1/placements/drives/:id/apply`
+- [x] ReadinessAnalytics → `GET /api/v1/placements/readiness/:studentId`
+- [x] InterviewPrep → `GET /api/v1/placements/sessions/upcoming`
+- [x] Schedule Mock → `POST /api/v1/placements/sessions/mock`
+- [x] Community posts → `GET /api/v1/community/posts` (paginated, tag filter)
+- [x] Create post → `POST /api/v1/community/posts`
 - [x] Like/Reply → `POST /api/v1/community/posts/:id/like` + `/replies`
 
 ---
 
 ### Chunk I5 — Exam API
 
-- [ ] Exam list → `GET /api/v1/exams` (scheduled, live, completed, missed)
-- [ ] Exam Pre-flight → `GET /api/v1/exams/:id` (rules, webcam check)
-- [ ] Start exam → `POST /api/v1/exams/:id/start`
-- [ ] Save answer (incremental) → `PATCH /api/v1/exams/:examId/attempts/:attemptId/answer`
-- [ ] Submit exam → `POST /api/v1/exams/:examId/attempts/:attemptId/submit`
-- [ ] Results → `GET /api/v1/exams/:examId/attempts/:attemptId/result`
-- [ ] Leaderboards → `GET /api/v1/leaderboards?examId=...`
+- [x] Exam list → `GET /api/v1/exams` (scheduled, live, completed, missed)
+- [x] Exam Pre-flight → `GET /api/v1/exams/:id` (rules, webcam check)
+- [x] Start exam → `POST /api/v1/exams/:id/start`
+- [x] Save answer (incremental) → `PATCH /api/v1/exams/:examId/attempts/:attemptId/answer`
+- [x] Submit exam → `POST /api/v1/exams/:examId/attempts/:attemptId/submit`
+- [x] Results → `GET /api/v1/exams/:examId/attempts/:attemptId/result`
+- [x] Leaderboards → `GET /api/v1/leaderboards?examId=...`
 
 ---
 
 ### Chunk I6 — Admin Panel API
 
-- [ ] Admin Dashboard KPIs → `GET /api/v1/admin/stats` (users, revenue, enrollments, active exams)
-- [ ] User Directory → `GET /api/v1/admin/users` (paginated, filterable)
-- [ ] Edit user role → `PATCH /api/v1/admin/users/:id/role`
-- [ ] Suspend user → `PATCH /api/v1/admin/users/:id/suspend`
-- [ ] Batch Management → `GET/POST/PUT /api/v1/admin/batches`
-- [ ] Assign students to batch → `POST /api/v1/admin/batches/:id/members`
-- [ ] Grant batch course access → `POST /api/v1/admin/batches/:id/course-access`
-- [ ] PlacementsConfig → `POST /api/v1/placements/drives` (create drive)
-- [ ] ExamOps → `GET /api/v1/admin/exams/live` (active attempts)
-- [ ] ExamOps proctoring feed → connect to WebSocket (see I7)
+- [x] Admin Dashboard KPIs → `GET /api/v1/admin/stats` (users, revenue, enrollments, active exams)
+- [x] User Directory → `GET /api/v1/admin/users` (paginated, filterable)
+- [x] Edit user role → `PATCH /api/v1/admin/users/:id/role`
+- [x] Suspend user → `PATCH /api/v1/admin/users/:id/suspend`
+- [x] Batch Management → `GET/POST/PUT /api/v1/admin/batches`
+- [x] Assign students to batch → `POST /api/v1/admin/batches/:id/members`
+- [x] Grant batch course access → `POST /api/v1/admin/batches/:id/course-access`
+- [x] PlacementsConfig → `POST /api/v1/placements/drives` (create drive)
+- [x] ExamOps → `GET /api/v1/admin/exams/live` (active attempts)
+- [x] ExamOps proctoring feed → connect to WebSocket (see I8)
 
 ---
 
@@ -1167,9 +1167,11 @@ Always use `Sequential Thinking MCP` before:
 
 > These are quick-recall facts the assistant should always know without re-reading the full codebase.
 
-- **Next action**: Build `P9-P` (AI Proctoring) — start with backend `src/modules/proctoring/` + AI API client
+- **Next action**: Complete `P9-P` (AI Proctoring) — wire AI Vision analysis to the backend and frontend stream.
+- **Phase 8.5**: Complete. Full API parity achieved. No more stubs.
+- **Proctoring**: `ProctoringService` implemented with risk scoring and auto-termination. `ProctoringEventModel` live in MongoDB.
 - **AI API**: Available for gaze, eye, face, head-pose analysis. POST base64 frame, receive JSON signal data.
-- **Existing hooks**: `exam_proctoring_events` Mongo collection ✅, `proctoring.ws.ts` Socket.io namespace ✅, `ExamInterface.tsx` already captures tab-switch events ✅
+- **Existing hooks**: `exam_proctoring_events` Mongo collection ✅, `proctoring.ws.ts` Socket.io namespace ✅, `ExamInterface.tsx` captures tab-switch events ✅
 - **DB**: Supabase project `oemnltyocalaqeccagkk`, MongoDB `localhost:27017`
 - **Design system**: Midnight Navy tokens in `ugskill-web/src/index.css` — do NOT use Tailwind
 - **API versioning**: All endpoints at `/api/v1/...`

@@ -62,6 +62,38 @@ export const getUser = async (id: string) => {
   return sanitizeUser(user);
 };
 
+export const updateUserRole = async (id: string, roles: string[], actorId: string, ip?: string) => {
+  const user = await userRepo.updateUser(id, { roles });
+  if (!user) throw new NotFoundError('User not found');
+
+  await logAction({
+    actorId,
+    action: 'USER_ROLE_UPDATED',
+    entityType: 'user',
+    entityId: id,
+    newValue: { roles },
+    ipAddress: ip,
+  });
+
+  return sanitizeUser(user);
+};
+
+export const suspendUser = async (id: string, reason: string, actorId: string, ip?: string) => {
+  const user = await userRepo.updateUser(id, { status: 'suspended' });
+  if (!user) throw new NotFoundError('User not found');
+
+  await logAction({
+    actorId,
+    action: 'USER_SUSPENDED',
+    entityType: 'user',
+    entityId: id,
+    newValue: { status: 'suspended', reason },
+    ipAddress: ip,
+  });
+
+  return sanitizeUser(user);
+};
+
 export const deleteUser = async (id: string, actorId: string, ip?: string) => {
   const user = await userRepo.softDeleteUser(id);
   if (!user) throw new NotFoundError('User not found');

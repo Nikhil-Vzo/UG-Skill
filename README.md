@@ -3,7 +3,7 @@
 # 🎓 UGSkill
 
 > **Current Build Focus: 🔴 P9-P — AI-Powered Proctoring Engine**
-> Phase 8 (full API integration) is complete. The AI API for gaze/eye/face analysis is in hand. Build proctoring next.
+> Phase 8.5 (Stub Migration & API Parity) is complete. Proctoring foundation (Backend, Risk Engine, DB Schema) is live. Wiring AI Vision next.
 
 
 |  30+ PG Tables |  18 Mongo Collections |  60+ Feature Panels |  5 User Roles |  7 MCP Servers |
@@ -670,6 +670,8 @@ ugskill-web/
 | useDebounce Hook | `lib/useDebounce.ts` | Shared debounce for search inputs across Community, Discover, UserDirectory | Apr 20, 2026 |
 | Phase 8 Complete | All API integration done | Full I1–I10 done; real auth, real data, sockets wired, deployed | Apr 29, 2026 |
 | Phase 9 Priority Set | P9-P (AI Proctoring) is #1 next build | AI API in hand for gaze/eye/face. Existing: `exam_proctoring_events` + `proctoring.ws.ts` | Apr 29, 2026 |
+| Phase 8.5 Complete | API Parity & Stub Migration | Removed `stubRouter`. All modules (Notifications, Leaderboards, Community, etc.) are now production-ready. | Apr 30, 2026 |
+| Proctoring Foundation | Risk scoring & Event ingestion | Implemented `ProctoringService` with risk-based auto-termination and MongoDB telemetry. | Apr 30, 2026 |
 
 ---
 

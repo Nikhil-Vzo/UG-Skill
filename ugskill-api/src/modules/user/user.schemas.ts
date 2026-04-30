@@ -18,6 +18,25 @@ export const getUserParamsSchema = z.object({
   }),
 });
 
+export const updateUserRoleSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid user ID'),
+  }),
+  body: z.object({
+    roles: z.array(z.enum(['student', 'admin', 'super_admin', 'creator', 'hr', 'placement_coordinator', 'expert'])),
+  }),
+});
+
+export const suspendUserSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid user ID'),
+  }),
+  body: z.object({
+    reason: z.string().min(5).max(500),
+  }),
+});
+
+
 export const listUsersQuerySchema = z.object({
   query: z.object({
     page: z.string().optional(),

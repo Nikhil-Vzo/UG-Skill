@@ -97,3 +97,21 @@ export const removeMember = async (batchId: string, userId: string, actorId: str
 
   return { message: 'Member removed successfully' };
 };
+
+export const grantCourseAccess = async (batchId: string, courseId: string, actorId: string, ip?: string) => {
+  const batch = await batchRepo.findBatchById(batchId);
+  if (!batch) throw new NotFoundError('Batch not found');
+
+  const access = await batchRepo.grantCourseAccess(batchId, courseId, actorId);
+
+  await logAction({
+    actorId,
+    action: 'BATCH_COURSE_ACCESS_GRANTED',
+    entityType: 'batch',
+    entityId: batchId,
+    newValue: { courseId },
+    ipAddress: ip,
+  });
+
+  return access;
+};

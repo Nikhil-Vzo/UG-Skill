@@ -47,6 +47,15 @@ export const removeMemberSchema = z.object({
   }),
 });
 
+export const grantCourseAccessSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid batch ID'),
+  }),
+  body: z.object({
+    courseId: z.string().uuid('Invalid course ID'),
+  }),
+});
+
 export type CreateBatchInput = z.infer<typeof createBatchSchema>['body'];
 export type UpdateBatchInput = z.infer<typeof updateBatchSchema>['body'];
 export type AddMembersInput = z.infer<typeof addMembersSchema>['body'];
