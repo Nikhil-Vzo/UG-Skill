@@ -1,5 +1,6 @@
 import { db } from '../../config/postgres';
 import { certificates } from '../../db/pg/schema/lms';
+import { users } from '../../db/pg/schema/core';
 import { eq, and } from 'drizzle-orm';
 
 export class CertificateRepository {
@@ -49,6 +50,38 @@ export class CertificateRepository {
       .limit(1);
     
     return cert || null;
+  }
+
+  async getCertificateById(id: string, studentId: string) {
+    const [cert] = await db
+      .select({
+        id: certificates.id,
+        courseTitle: certificates.referenceTitle,
+        studentName: users.fullName,
+        issuedAt: certificates.issuedAt,
+        credentialId: certificates.verificationUuid,
+        courseId: certificates.referenceId,
+        verifyUrl: certificates.verificationUuid,
+        pdfUrl: certificates.pdfUrl,
+      })
+      .from(certificates)
+      .innerJoin(users, eq(certificates.studentId, users.id))
+      .where(
+        and(
+          eq(certificates.id, id),
+          eq(certificates.studentId, studentId)
+        )
+      )
+      .limit(1);
+
+    if (!cert) return null;
+
+    return {
+      ...cert,
+      issuedAt: cert.issuedAt?.toISOString?.() ?? cert.issuedAt,
+      credentialId: cert.credentialId ?? id,
+      verifyUrl: cert.verifyUrl ? `/certificates/verify/${cert.verifyUrl}` : undefined,
+    };
   }
 }
 

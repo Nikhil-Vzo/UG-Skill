@@ -67,7 +67,10 @@ export const Notifications: React.FC = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   });
 
-  const notifications: Notification[] = data?.pages.flatMap((p: any) => p.notifications ?? p.data ?? p) ?? [];
+  const notifications: Notification[] = data?.pages.flatMap((p: any) => {
+    const payload = p.notifications ?? p.data ?? p;
+    return Array.isArray(payload) ? payload : [];
+  }) ?? [];
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (

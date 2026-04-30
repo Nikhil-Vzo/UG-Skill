@@ -7,6 +7,7 @@ export const updateMeSchema = z.object({
     avatarUrl: z.string().url().optional(),
     institution: z.string().optional(),
     branch: z.string().optional(),
+    cgpa: z.coerce.number().min(0).max(10).optional(),
     graduationYear: z.coerce.number().int().min(2000).max(2040).optional(),
   }),
 });

@@ -22,7 +22,9 @@ export class ProgressService {
 
     if (!alreadyCompleted) {
       // 3. Update Progress Summary only if not already completed
-      const totalLectures = course.lecture_count || 0;
+      const totalLectures = course.lecture_count || (course.sections ?? []).reduce((sum: number, section: any) => {
+        return sum + (Array.isArray(section.lectures) ? section.lectures.length : 0);
+      }, 0);
       progress = await progressRepository.upsertProgressSummary(
         studentId,
         courseId,

@@ -7,7 +7,20 @@ import { gradeAssignmentSchema, submitAssignmentSchema } from './assignment.sche
 const router = Router();
 
 // Student routes
+router.get(
+  '/:courseId/:assignmentId',
+  requireAuth,
+  assignmentController.getDetails.bind(assignmentController)
+);
+
 router.post(
+  '/:courseId/:assignmentId/submit',
+  requireAuth,
+  validate(submitAssignmentSchema),
+  assignmentController.submit.bind(assignmentController)
+);
+
+router.put(
   '/:courseId/:assignmentId/submit',
   requireAuth,
   validate(submitAssignmentSchema),

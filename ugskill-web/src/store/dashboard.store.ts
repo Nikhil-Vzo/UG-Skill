@@ -49,8 +49,36 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     
     try {
       // Fetch enrollments — the only confirmed endpoint
-      const enrollmentsRes = await api.get('/enrollments/my-enrollments?limit=5');
-      const courses = enrollmentsRes.data.data || enrollmentsRes.data || [];
+      const enrollmentsRes = await api.get('/lms/enrollments/mine?limit=5');
+      const enrollments = enrollmentsRes.data.data ?? enrollmentsRes.data ?? [];
+      const courseEnrollments = (Array.isArray(enrollments) ? enrollments : [])
+        .filter((enrollment: any) => enrollment.enrollableType === 'course');
+
+      const courses = await Promise.all(courseEnrollments.map(async (enrollment: any) => {
+        const courseId = enrollment.enrollableId;
+        const [courseRes, progressRes] = await Promise.allSettled([
+          api.get(`/lms/courses/${courseId}`),
+          api.get(`/progress/summary/${courseId}`),
+        ]);
+
+        const course = courseRes.status === 'fulfilled'
+          ? courseRes.value.data.data ?? courseRes.value.data
+          : {};
+        const progressPayload = progressRes.status === 'fulfilled'
+          ? progressRes.value.data.data ?? progressRes.value.data.meta ?? {}
+          : {};
+
+        return {
+          id: course._id ?? course.id ?? courseId,
+          title: course.title ?? 'Untitled Course',
+          progress: progressPayload.progressPercent ?? course.progress ?? 0,
+          instructor: typeof course.instructor === 'string'
+            ? course.instructor
+            : course.instructor?.fullName ?? 'UGSkill Faculty',
+          thumbnail: course.thumbnail_url ?? course.thumbnailUrl,
+          lastAccessed: progressPayload.lastAccessedAt ?? enrollment.updatedAt ?? enrollment.enrolledAt ?? new Date().toISOString(),
+        };
+      }));
 
       set({
         courses,
@@ -72,4 +100,3 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     }
   }
 }));
-

@@ -17,6 +17,12 @@ interface Session {
   sessionId?: string;
 }
 
+interface GDSession {
+  id: string;
+  topic: string;
+  status: string;
+}
+
 export const InterviewPrep: React.FC = () => {
   const navigate = useNavigate();
   const [showMockModal, setShowMockModal] = useState(false);
@@ -30,15 +36,34 @@ export const InterviewPrep: React.FC = () => {
     retry: 1,
   });
 
-  const scheduleMonkMutation = useMutation({
+  const { data: gdSessions = [], isLoading: loadingGdSessions } = useQuery<GDSession[]>({
+    queryKey: ['gd-sessions-open'],
+    queryFn: async () => {
+      const res = await api.get('/placements/gd-sessions?status=scheduled&limit=5');
+      const payload = res.data.data ?? res.data;
+      return payload.data ?? payload.sessions ?? payload ?? [];
+    },
+    retry: 1,
+  });
+
+  const scheduleMockMutation = useMutation({
     mutationFn: () => api.post('/placements/sessions/mock'),
     onSuccess: (res) => {
       setShowMockModal(false);
       // If the API returns a session ID, navigate to the live interview room
-      const sessionId = res.data?.data?.id ?? res.data?.id;
-      if (sessionId) navigate(`/live-interview/${sessionId}`);
+      const sessionId = res.data?.data?.session?.id ?? res.data?.data?.id ?? res.data?.id;
+      if (sessionId) navigate(`/app/live-interview/${sessionId}`);
     },
   });
+
+  const handleJoinGd = () => {
+    const nextSession = gdSessions[0];
+    if (nextSession?.id) {
+      navigate(`/app/live-gd/${nextSession.id}`);
+      return;
+    }
+    navigate('/app/live-gd');
+  };
 
   const formatTime = (iso: string) => {
     try {
@@ -71,11 +96,11 @@ export const InterviewPrep: React.FC = () => {
             leftIcon={<Calendar size={18} />}
             fullWidth
             onClick={() => setShowMockModal(true)}
-            disabled={scheduleMonkMutation.isPending}
+            disabled={scheduleMockMutation.isPending}
           >
-            {scheduleMonkMutation.isPending ? 'Scheduling...' : 'Schedule Mock'}
+            {scheduleMockMutation.isPending ? 'Scheduling...' : 'Schedule Mock'}
           </Button>
-          {scheduleMonkMutation.isError && (
+          {scheduleMockMutation.isError && (
             <p style={{ color: 'var(--error)', fontSize: '0.8125rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               <AlertCircle size={14} /> Failed to schedule. Please try again.
             </p>
@@ -88,9 +113,10 @@ export const InterviewPrep: React.FC = () => {
             variant="secondary"
             leftIcon={<Video size={18} />}
             fullWidth
-            onClick={() => navigate('/live-gd')}
+            onClick={handleJoinGd}
+            disabled={loadingGdSessions}
           >
-            Join Live GD
+            {loadingGdSessions ? 'Checking Sessions...' : 'Join Live GD'}
           </Button>
         </Card>
       </div>
@@ -103,8 +129,8 @@ export const InterviewPrep: React.FC = () => {
             <p style={{ color: 'var(--text-low)', fontSize: '0.875rem' }}>A mock interview will be created and matched with an available interviewer. You'll receive a notification once matched.</p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <Button variant="ghost" onClick={() => setShowMockModal(false)}>Cancel</Button>
-              <Button variant="primary" onClick={() => scheduleMonkMutation.mutate()} disabled={scheduleMonkMutation.isPending}>
-                {scheduleMonkMutation.isPending ? 'Scheduling...' : 'Confirm'}
+              <Button variant="primary" onClick={() => scheduleMockMutation.mutate()} disabled={scheduleMockMutation.isPending}>
+                {scheduleMockMutation.isPending ? 'Scheduling...' : 'Confirm'}
               </Button>
             </div>
           </div>
@@ -146,7 +172,7 @@ export const InterviewPrep: React.FC = () => {
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => navigate(`/live-interview/${session.sessionId}`)}
+                      onClick={() => navigate(`/app/live-interview/${session.sessionId}`)}
                     >
                       Join
                     </Button>

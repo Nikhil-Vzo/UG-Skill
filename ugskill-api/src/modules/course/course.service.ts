@@ -42,6 +42,31 @@ export class CourseService {
     return course;
   }
 
+  async getLecture(courseId: string, lectureId: string) {
+    const course = await this.getCourse(courseId);
+    const sections = course.sections ?? [];
+
+    for (const section of sections) {
+      const lectures = Array.isArray(section.lectures) ? section.lectures : [];
+      const lecture = lectures.find((item: any) => {
+        const id = item._id?.toString?.() ?? item.id?.toString?.() ?? item._id ?? item.id;
+        return String(id) === lectureId;
+      });
+
+      if (lecture) {
+        return {
+          courseId,
+          courseTitle: course.title,
+          sectionId: section._id?.toString?.() ?? section.id,
+          sectionTitle: section.title,
+          lecture,
+        };
+      }
+    }
+
+    throw new AppError('Lecture not found', 404);
+  }
+
   async updateCourse(id: string, data: any) {
     const course = await courseRepo.updateCourse(id, data);
     if (!course) {

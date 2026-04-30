@@ -3,6 +3,19 @@ import { assignmentService } from './assignment.service';
 import { successResponse } from '../../lib/response';
 
 export class AssignmentController {
+  async getDetails(req: Request, res: Response, next: NextFunction) {
+    try {
+      const courseId = req.params.courseId as string;
+      const assignmentId = req.params.assignmentId as string;
+
+      const assignment = await assignmentService.getAssignmentDetails(courseId, assignmentId);
+
+      res.status(200).json(successResponse(assignment));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async submit(req: Request, res: Response, next: NextFunction) {
     try {
       const studentId = req.user!.userId;
@@ -16,7 +29,7 @@ export class AssignmentController {
         req.body
       );
 
-      res.status(201).json(successResponse('Assignment submitted successfully', submission));
+      res.status(201).json(successResponse(submission, { message: 'Assignment submitted successfully' }));
     } catch (error) {
       next(error);
     }
@@ -33,7 +46,7 @@ export class AssignmentController {
         req.body
       );
 
-      res.status(200).json(successResponse('Assignment graded successfully', graded));
+      res.status(200).json(successResponse(graded, { message: 'Assignment graded successfully' }));
     } catch (error) {
       next(error);
     }

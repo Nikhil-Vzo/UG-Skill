@@ -58,7 +58,7 @@ export const CertificateViewer: React.FC = () => {
         <AlertCircle size={40} style={{ color: 'var(--error)', opacity: 0.6 }} />
         <h2 style={{ color: 'var(--text-high)', margin: 0 }}>Certificate Not Found</h2>
         <p style={{ color: 'var(--text-low)', margin: 0 }}>This certificate doesn't exist or you don't have access to view it.</p>
-        <Button variant="outline" onClick={() => navigate('/')}>Back to Dashboard</Button>
+        <Button variant="outline" onClick={() => navigate('/app')}>Back to Dashboard</Button>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export const CertificateViewer: React.FC = () => {
             Verify Online
           </Button>
         )}
-        <Button variant="ghost" onClick={() => navigate('/')}>
+        <Button variant="ghost" onClick={() => navigate('/app')}>
           Back to Dashboard
         </Button>
       </div>

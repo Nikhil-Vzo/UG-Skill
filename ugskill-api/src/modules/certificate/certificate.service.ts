@@ -33,6 +33,14 @@ export class CertificateService {
     }
     return cert;
   }
+
+  async getById(id: string, studentId: string) {
+    const cert = await certificateRepository.getCertificateById(id, studentId);
+    if (!cert) {
+      throw new AppError('Certificate not found', 404);
+    }
+    return cert;
+  }
 }
 
 export const certificateService = new CertificateService();

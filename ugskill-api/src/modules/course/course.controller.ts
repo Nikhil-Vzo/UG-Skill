@@ -51,6 +51,19 @@ export const getCourse = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+export const getLecture = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const lecture = await courseService.getLecture(
+      req.params.courseId as string,
+      req.params.lectureId as string
+    );
+
+    res.status(200).json(successResponse(lecture));
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = updateCourseSchema.parse(req.body);

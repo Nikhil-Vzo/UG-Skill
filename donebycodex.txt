@@ -1,0 +1,76 @@
+Done by Codex - April 30, 2026
+
+Scope completed:
+- Chunk I1: Missing frontend pages and route wiring.
+- Chunk I2: Real authentication and dashboard store cleanup.
+- Chunk I3: Student LMS API wiring and backend route compatibility.
+
+What I changed:
+1. Mounted the missing app routes:
+   - /app/notifications
+   - /app/profile
+   - /app/certificates/:id
+   - /app/live-gd
+   - /app/live-interview/:sessionId was already present and was corrected for navigation/back behavior.
+
+2. Fixed frontend navigation/button wiring:
+   - Login now redirects admins/creators to /app/admin/analytics.
+   - Settings links now open /app/profile.
+   - Live Sessions now opens /app/placements/prep.
+   - Dashboard and My Courses Resume/Continue buttons open /app/courses/:id/player.
+   - Placement drive cards open /app/placements/:id.
+   - Certificate viewer back navigation returns to /app.
+   - Live Interview and Live GD exit/back navigation returns to placement prep.
+   - Notifications dropdown can open the full notifications page.
+
+3. Completed missing frontend feature surfaces:
+   - Added Course Reviews form/list to CourseLanding.
+   - Made Notifications robust when the backend returns empty/stub payloads.
+   - Made VideoPlayer Q&A/notes payload handling robust for empty/stub responses.
+   - Reworked AssignmentSubmit to fetch assignment details by courseId + assignmentId, request a presigned upload URL, upload the file, then submit the resulting file path to the LMS assignment endpoint.
+   - Profile update now matches backend schema using PUT /users/me and supports branch/cgpa fields.
+
+4. Fixed backend API route compatibility for the frontend:
+   - Added /api/v1/lms/enrollments/mine.
+   - Added /api/v1/lms/streaks/me.
+   - Added /api/v1/lms/courses/:courseId/lectures/:lectureId.
+   - Added lecture complete alias at /api/v1/lms/courses/:courseId/lectures/:lectureId/complete.
+   - Added assignment details and submit aliases at /api/v1/lms/assignments/:courseId/:assignmentId and /submit.
+   - Added quiz attempt alias /api/v1/lms/quizzes/:quizId/attempt.
+   - Added certificate lookup /api/v1/lms/certificates/:id.
+   - Added course review aliases under LMS courses and fixed review response contracts.
+   - Added auth password change at PATCH /api/v1/auth/change-password.
+   - Added placement mock schedule route POST /api/v1/placements/sessions/mock.
+   - Added placement session end and GD leave routes.
+   - Fixed progress, quiz, review, assignment, and certificate response contracts so actual data is returned in data.
+
+5. Cleaned dashboard store wiring:
+   - Removed the old hardcoded mock-user requirement from the active TODO.
+   - Dashboard store now uses live enrollments, course details, and progress summary data.
+   - PlacementsHub was verified to already use live React Query data; no inline DRIVES mock remains.
+
+How I verified it:
+- Backend TypeScript build passed: npm run build in ugskill-api.
+- Frontend production build passed: npm run build in ugskill-web.
+- API smoke-tested against updated backend on http://localhost:4010/api/v1:
+  - GET /health -> 200
+  - GET /lms/courses -> 200
+  - Protected route existence checks returned 401 instead of 404 when unauthenticated.
+  - Authenticated checks passed for /users/me, /lms/enrollments/mine, /lms/streaks/me, and /lms/courses.
+  - Fake certificate lookup returned 404, confirming the route exists.
+  - Wrong-password change request returned 400, confirming validation works without mutating the password.
+- Browser-tested the frontend at http://127.0.0.1:5173 with VITE_API_URL=http://localhost:4010/api/v1:
+  - Student login works.
+  - Dashboard loads without new console errors.
+  - Dashboard Resume opens the course player.
+  - My Courses loads and Resume Course opens the player.
+  - Discover loads live courses and opens CourseLanding.
+  - CourseLanding shows the Reviews section.
+  - Notifications page opens from the notification dropdown.
+  - Profile page opens from Settings.
+  - Live Sessions opens Interview Prep.
+  - Join Live GD opens /app/live-gd without console errors.
+  - Schedule Mock opens and closes its confirm modal without console errors.
+
+Important note:
+- The user's existing backend on port 4000 appeared to be an older running process and did not include the new route changes. I started a separate updated backend on port 4010 for verification. Restart the normal backend process on port 4000 to pick up these source changes.

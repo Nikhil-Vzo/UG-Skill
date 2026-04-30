@@ -234,10 +234,23 @@ router.get(
   placementController.listPlacementSessions
 );
 
+router.post(
+  '/sessions/mock',
+  requireAuth,
+  requireRole(['student', 'admin']),
+  placementController.scheduleMockSession
+);
+
 router.get(
   '/sessions/:id',
   requireAuth,
   placementController.getPlacementSession
+);
+
+router.post(
+  '/sessions/:id/end',
+  requireAuth,
+  placementController.endPlacementSession
 );
 
 router.patch(
@@ -303,6 +316,12 @@ router.get(
   '/gd-sessions/:id',
   requireAuth,
   placementController.getGDSession
+);
+
+router.post(
+  '/gd-sessions/:id/leave',
+  requireAuth,
+  placementController.leaveGDSession
 );
 
 router.get(

@@ -44,6 +44,13 @@ interface CourseDetail {
   thumbnailUrl?: string;
 }
 
+interface CourseReview {
+  id: string;
+  rating: number;
+  reviewText?: string | null;
+  createdAt?: string;
+}
+
 /* ──────────────── Accordion Section ──────────────── */
 const CurriculumSection: React.FC<{ section: Section; enrolled: boolean; courseId: string }> = ({ section, enrolled, courseId }) => {
   const [open, setOpen] = useState(false);
@@ -74,7 +81,7 @@ const CurriculumSection: React.FC<{ section: Section; enrolled: boolean; courseI
               style={{ padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--surface-highest)', cursor: (lec.isFree || enrolled) ? 'pointer' : 'default' }}
               onClick={() => {
                 if (lec.isFree || enrolled) {
-                  navigate(`/courses/${courseId}/player/${lec._id}`);
+                  navigate(`/app/courses/${courseId}/player/${lec._id}`);
                 }
               }}
             >
@@ -118,6 +125,8 @@ export const CourseLanding: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
 
   const { data: course, isLoading, isError } = useQuery<CourseDetail>({
     queryKey: ['course', courseId],
@@ -147,6 +156,30 @@ export const CourseLanding: React.FC = () => {
       ) {
         navigate(`/app/courses/${courseId}/player`);
       }
+    },
+  });
+
+  const { data: reviews = [], isLoading: loadingReviews } = useQuery<CourseReview[]>({
+    queryKey: ['course-reviews', courseId],
+    queryFn: async () => {
+      const res = await api.get(`/reviews/${courseId}?limit=5`);
+      const payload = res.data.data ?? res.data;
+      return Array.isArray(payload) ? payload : payload.reviews ?? [];
+    },
+    enabled: !!courseId,
+    staleTime: 60_000,
+  });
+
+  const reviewMut = useMutation({
+    mutationFn: () => api.post(`/reviews/${courseId}`, {
+      rating: reviewRating,
+      reviewText: reviewText.trim() || undefined,
+    }),
+    onSuccess: () => {
+      setReviewText('');
+      setReviewRating(5);
+      queryClient.invalidateQueries({ queryKey: ['course-reviews', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['course', courseId] });
     },
   });
 
@@ -262,6 +295,67 @@ export const CourseLanding: React.FC = () => {
               </div>
             </div>
           )}
+
+          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h2 style={{ color: 'var(--text-high)', margin: 0, fontSize: '1.125rem', fontFamily: 'var(--font-display)' }}>
+              Course Reviews
+            </h2>
+
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              {[1, 2, 3, 4, 5].map(value => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setReviewRating(value)}
+                  aria-label={`Rate ${value} star${value > 1 ? 's' : ''}`}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: value <= reviewRating ? 'var(--primary-glow)' : 'var(--text-lowest)' }}
+                >
+                  <Star size={20} fill={value <= reviewRating ? 'var(--primary-glow)' : 'none'} />
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={reviewText}
+              onChange={e => setReviewText(e.target.value)}
+              placeholder="Share a short review for this course..."
+              maxLength={2000}
+              style={{ minHeight: 96, background: 'var(--surface-well)', border: '1px solid var(--surface-highest)', color: 'var(--text-high)', padding: '0.75rem', resize: 'vertical', fontSize: '0.875rem', lineHeight: 1.5 }}
+            />
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => reviewMut.mutate()}
+                disabled={reviewMut.isPending}
+                isLoading={reviewMut.isPending}
+              >
+                Submit Review
+              </Button>
+              {reviewMut.isError && <span style={{ color: 'var(--error)', fontSize: '0.8125rem' }}>Could not save review.</span>}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {loadingReviews ? (
+                <Skeleton variant="rectangular" height={72} />
+              ) : reviews.length === 0 ? (
+                <p style={{ color: 'var(--text-low)', margin: 0, fontSize: '0.875rem' }}>No reviews yet.</p>
+              ) : (
+                reviews.map(review => (
+                  <div key={review.id} className="surface-well" style={{ padding: '0.875rem' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.35rem' }}>
+                      {[1, 2, 3, 4, 5].map(value => (
+                        <Star key={value} size={14} fill={value <= review.rating ? 'var(--primary-glow)' : 'none'} color={value <= review.rating ? 'var(--primary-glow)' : 'var(--text-lowest)'} />
+                      ))}
+                    </div>
+                    <p style={{ color: 'var(--text-medium)', margin: 0, fontSize: '0.875rem', lineHeight: 1.5 }}>
+                      {review.reviewText || 'No written feedback.'}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ─── Right Column — Sticky Enroll Card ─── */}
@@ -278,7 +372,7 @@ export const CourseLanding: React.FC = () => {
               <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 50%, rgba(99,102,241,0.2) 0%, transparent 70%)' }} />
               <div
                 style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 30px rgba(99,102,241,0.4)', position: 'relative' }}
-                onClick={() => navigate(`/courses/${courseId}/player`)}
+                onClick={() => navigate(`/app/courses/${courseId}/player`)}
               >
                 <Play size={24} color="white" fill="white" />
               </div>
@@ -295,7 +389,7 @@ export const CourseLanding: React.FC = () => {
                 variant="primary"
                 fullWidth
                 size="lg"
-                onClick={() => navigate(`/courses/${courseId}/player`)}
+                onClick={() => navigate(`/app/courses/${courseId}/player`)}
                 leftIcon={<Play size={18} />}
               >
                 Continue Learning

@@ -327,7 +327,7 @@ export const PlacementsHub: React.FC = () => {
                   <DriveCard
                     key={d.id}
                     drive={d}
-                    onClick={() => navigate(`/placements/${d.id}`)}
+                    onClick={() => navigate(`/app/placements/${d.id}`)}
                     onApply={() => handleApply(d.id)}
                     isApplying={applyingId === d.id}
                   />

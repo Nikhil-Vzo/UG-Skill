@@ -88,25 +88,29 @@ export const VideoPlayer: React.FC = () => {
       const res = await api.get(`/lms/courses/${courseId}`);
       const raw = res.data.data ?? res.data;
 
+      /* ── Support Supabase Storage Paths ── */
+      const resolveStorageUrl = (path?: string) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        return `https://oemnltyocalaqeccagkk.supabase.co/storage/v1/object/public/ugskill-storage/${path}`;
+      };
+
       // Normalize MongoDB snake_case sections → curriculum with camelCase lecture fields
       const sections: any[] = raw.sections ?? raw.curriculum ?? [];
       const curriculum: Section[] = sections.map((s: any) => ({
         _id: s._id?.toString() || s.id || String(Math.random()),
         title: s.title ?? 'Untitled Section',
         lectures: (s.lectures ?? []).map((l: any) => ({
+          ...l,
           _id: l._id?.toString() || l.id || String(Math.random()),
           title: l.title ?? 'Untitled Lecture',
-          duration: l.duration,
           completed: l.completed ?? false,
-          isFree: l.is_free ?? l.isFree ?? false,
+          isFree: l.is_free ?? l.is_free_preview ?? l.isFree ?? false,
           type: l.type ?? 'video',
-          // Support both snake_case (from MongoDB) and camelCase
-          videoUrl: l.video_url ?? l.videoUrl,
-          video_url: l.video_url ?? l.videoUrl,
-          document_url: l.document_url ?? l.documentUrl,
+          videoUrl: resolveStorageUrl(l.video_url ?? l.videoUrl),
+          video_url: resolveStorageUrl(l.video_url ?? l.videoUrl),
+          document_url: resolveStorageUrl(l.document_url ?? l.documentUrl),
           external_url: l.external_url ?? l.externalUrl,
-          content: l.content,
-          description: l.description,
         })),
       }));
 
@@ -140,7 +144,8 @@ export const VideoPlayer: React.FC = () => {
     queryKey: ['qa', courseId, activeLectureId],
     queryFn: async () => {
       const res = await api.get(`/community/posts?lectureId=${activeLectureId}`);
-      return res.data.data?.posts ?? res.data.data ?? res.data ?? [];
+      const payload = res.data.data?.posts ?? res.data.data ?? res.data ?? [];
+      return Array.isArray(payload) ? payload : [];
     },
     enabled: activeTab === 'qa' && !!activeLectureId,
     staleTime: 30_000,
@@ -159,7 +164,8 @@ export const VideoPlayer: React.FC = () => {
     queryKey: ['notes', courseId, activeLectureId],
     queryFn: async () => {
       const res = await api.get(`/lms/notes?courseId=${courseId}&lectureId=${activeLectureId}`);
-      const note = res.data.data?.[0] ?? res.data?.[0] ?? null;
+      const payload = res.data.data ?? res.data;
+      const note = Array.isArray(payload) ? payload[0] ?? null : payload?.body ? payload : null;
       return note;
     },
     enabled: activeTab === 'notes' && !!activeLectureId,

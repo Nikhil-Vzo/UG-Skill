@@ -265,6 +265,30 @@ export const resetPassword = async (token: string, newPassword: string) => {
 
 // ─── Helpers ─────────────────────────────────────────────
 
+export const changePassword = async (userId: string, currentPassword: string, newPassword: string) => {
+  const user = await authRepo.findUserById(userId);
+  if (!user || !user.passwordHash) {
+    throw new AuthError('Unable to change password for this account', 400);
+  }
+
+  const valid = await comparePassword(currentPassword, user.passwordHash);
+  if (!valid) {
+    throw new AuthError('Current password is incorrect', 400);
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  await authRepo.updateUserPassword(user.id, passwordHash);
+
+  await logAction({
+    actorId: user.id,
+    action: 'PASSWORD_CHANGED',
+    entityType: 'user',
+    entityId: user.id,
+  });
+
+  logger.info('Password changed successfully', { userId: user.id });
+};
+
 const sanitizeUser = (user: any) => {
   const { passwordHash, deletedAt, ...safe } = user;
   return safe;

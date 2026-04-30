@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Bell, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // For a real application, you'd use a context or global state manager (like Zustand/Redux) 
 // to trigger notifications. This is a simplified demo version.
 
 export const GlobalNotifications: React.FC = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([
     { id: '1', type: 'info', message: 'Welcome to UGSkill! Complete your profile to get started.' },
     { id: '2', type: 'success', message: 'You have successfully enrolled in "System Design".' }
@@ -76,12 +78,22 @@ export const GlobalNotifications: React.FC = () => {
         }}>
           <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>Notifications</h3>
-            {notifications.length > 0 && (
+            {notifications.length > 0 ? (
               <button 
                 onClick={() => setNotifications([])}
                 style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.85rem', cursor: 'pointer' }}
               >
                 Clear all
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate('/app/notifications');
+                }}
+                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', fontSize: '0.85rem', cursor: 'pointer' }}
+              >
+                View all
               </button>
             )}
           </div>
@@ -107,6 +119,17 @@ export const GlobalNotifications: React.FC = () => {
               ))
             )}
           </div>
+          {notifications.length > 0 && (
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/app/notifications');
+              }}
+              style={{ width: '100%', padding: '0.75rem', background: 'none', border: 'none', borderTop: '1px solid var(--border-color)', color: 'var(--primary-color)', cursor: 'pointer', fontWeight: 600 }}
+            >
+              View all notifications
+            </button>
+          )}
         </div>
       )}
     </div>

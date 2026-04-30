@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { env } from './config/env';
 import { logger } from './lib/logger';
 import { errorHandler } from './middleware/errorHandler';
+import { requireAuth } from './middleware/auth';
 import { requestIdMiddleware } from './middleware/requestId';
 import healthRoutes from './routes/health';
 import authRoutes from './modules/auth/auth.routes';
@@ -14,6 +15,7 @@ import courseRoutes from './modules/course/course.routes';
 import roadmapRoutes from './modules/roadmap/roadmap.routes';
 import enrollmentRoutes from './modules/enrollment/enrollment.routes';
 import { progressRoutes } from './modules/progress/progress.routes';
+import { progressController } from './modules/progress/progress.controller';
 import { quizRoutes } from './modules/quiz/quiz.routes';
 import { assignmentRoutes } from './modules/assignment/assignment.routes';
 import { reviewRoutes } from './modules/review/review.routes';
@@ -89,6 +91,7 @@ app.use('/api/v1/jobs', placementRoutes);
 app.use('/api/v1/activity', activityRouter);
 app.use('/api/v1/ai', aiLimiter, aiRouter);
 app.use('/api/v1/upload', uploadRoutes);
+app.get('/api/v1/lms/streaks/me', requireAuth, progressController.getStreak.bind(progressController));
 
 // Invite Module
 app.use('/api/v1', authLimiter, inviteRoutes);
@@ -99,7 +102,13 @@ app.use('/api/v1', authLimiter, inviteRoutes);
 const stubRouter = express.Router();
 stubRouter.use((req, res) => {
   // If it's a list/paginated request, return an empty array, else empty object
-  const isList = req.query.limit || req.path.includes('courses') || req.path.includes('all');
+  const isList = req.method === 'GET' && (
+    Boolean(req.query.limit) ||
+    req.path.includes('courses') ||
+    req.path.includes('posts') ||
+    req.path.includes('notifications') ||
+    req.path.includes('all')
+  );
   res.json({ success: true, data: isList ? [] : {} });
 });
 

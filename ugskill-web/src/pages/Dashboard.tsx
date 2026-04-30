@@ -35,7 +35,10 @@ export const Dashboard: React.FC = () => {
     queryKey: ['streak'],
     queryFn: async () => {
       const res = await api.get('/lms/streaks/me');
-      return res.data.data ?? [];
+      const payload = res.data.data ?? res.data;
+      if (Array.isArray(payload)) return payload;
+      const activeCount = Math.min(Math.max(Number(payload?.currentStreak ?? 0), 0), 7);
+      return Array.from({ length: 7 }, (_, index) => index >= 7 - activeCount);
     },
     // Silently fail — streaks are non-critical
     retry: false,
@@ -110,7 +113,7 @@ export const Dashboard: React.FC = () => {
                  </div>
                  <span style={{ fontSize: '0.75rem', color: 'var(--text-low)', marginTop: '0.25rem', display: 'block' }}>{courses[0].progress ?? 0}% Synchronized</span>
                  <button
-                   onClick={() => navigate(`/courses/${courses[0].id}/player`)}
+                   onClick={() => navigate(`/app/courses/${courses[0].id}/player`)}
                    style={{ marginTop: '0.75rem', background: 'none', border: '1px solid var(--success)', color: 'var(--success)', padding: '0.375rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
                  >
                    Resume →
@@ -169,7 +172,7 @@ export const Dashboard: React.FC = () => {
               <CourseCard
                 key={course.id}
                 course={course}
-                onContinue={(id) => navigate(`/courses/${id}/player`)}
+                onContinue={(id) => navigate(`/app/courses/${id}/player`)}
               />
             ))
           )}
