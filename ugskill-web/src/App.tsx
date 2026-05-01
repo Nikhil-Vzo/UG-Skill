@@ -100,7 +100,6 @@ function App() {
               <Route path="certificates/:id" element={<CertificateViewer />} />
               <Route path="live-gd" element={<LiveGD />} />
               <Route path="live-gd/:sessionId" element={<LiveGD />} />
-              <Route path="live-interview/:sessionId" element={<LiveInterview />} />
               <Route path="leaderboards" element={<Leaderboards />} />
 
               {/* Admin Routes */}
