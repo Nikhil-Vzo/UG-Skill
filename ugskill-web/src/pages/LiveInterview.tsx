@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Skeleton } from '../components/loaders/Skeleton';
@@ -29,6 +29,9 @@ export const LiveInterview: React.FC = () => {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [liveNotes, setLiveNotes] = useState<string | null>(null);
 
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   const { data: session, isLoading, error } = useQuery<InterviewSession>({
     queryKey: ['interview-session', sessionId],
     queryFn: async () => {
@@ -53,6 +56,47 @@ export const LiveInterview: React.FC = () => {
     const interval = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
     return () => clearInterval(interval);
   }, [sessionEnded]);
+
+  // WebRTC local stream
+  useEffect(() => {
+    if (sessionEnded) return;
+    
+    let activeStream: MediaStream | null = null;
+    
+    const initStream = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        activeStream = stream;
+        streamRef.current = stream;
+        
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        
+        // Apply initial toggle states
+        stream.getVideoTracks().forEach(t => t.enabled = videoOn);
+        stream.getAudioTracks().forEach(t => t.enabled = micOn);
+      } catch (err) {
+        console.error('Failed to get media stream:', err);
+      }
+    };
+    
+    initStream();
+    
+    return () => {
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [sessionEnded]); // Init once, unless session ends
+
+  // Update track states when toggled
+  useEffect(() => {
+    if (streamRef.current) {
+      streamRef.current.getVideoTracks().forEach(t => t.enabled = videoOn);
+      streamRef.current.getAudioTracks().forEach(t => t.enabled = micOn);
+    }
+  }, [videoOn, micOn]);
 
   // Live Socket connection
   useEffect(() => {
@@ -177,11 +221,14 @@ export const LiveInterview: React.FC = () => {
 
           {/* Candidate tile (you) */}
           <div style={{ background: '#0d1117', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', border: '2px solid var(--primary-glow)' }}>
-            {videoOn ? (
-              <div style={{ width: 80, height: 80, background: 'var(--primary-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: 'var(--primary-glow)', fontWeight: 'bold' }}>
-                {candidateName.charAt(0) || 'C'}
-              </div>
-            ) : (
+            <video 
+              ref={localVideoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: videoOn ? 'block' : 'none' }} 
+            />
+            {!videoOn && (
               <div style={{ color: '#555', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                 <VideoOff size={32} />
                 <span style={{ fontSize: '0.8125rem' }}>Camera Off</span>

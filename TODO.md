@@ -739,10 +739,10 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 
 ### Chunk I7 — Creator Tools API
 
-- [ ] CourseBuilder save draft → `POST /api/v1/courses` (step 1: metadata)
-- [ ] CourseBuilder curriculum → `PUT /api/v1/courses/:id/sections` (sections + lectures)
-- [ ] QuizBuilder save → `POST /api/v1/quizzes` (definitions to MongoDB)
-- [ ] Media upload → request S3 pre-signed URL → upload directly to S3 (step 3 of CourseBuilder)
+- [x] CourseBuilder save draft → `POST /api/v1/courses` (step 1: metadata)
+- [x] CourseBuilder curriculum → `PUT /api/v1/courses/:id/sections` (sections + lectures)
+- [x] QuizBuilder save → `POST /api/v1/quizzes` (definitions to MongoDB)
+- [x] Media upload → request S3 pre-signed URL → upload directly to S3 (step 3 of CourseBuilder)
 
 ---
 
@@ -762,55 +762,17 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 ### Chunk I9 — Live Interview Room (New Page)
 *This page doesn't exist yet — needs to be built from scratch.*
 
-- [ ] Create `/live-interview/:sessionId` page (`src/pages/LiveInterview.tsx`)
-- [ ] Register route in `App.tsx` as fullscreen (no layout)
-- [ ] Video tile grid (interviewer + candidate, via WebRTC / `getUserMedia()`)
-- [ ] Interviewer notes panel (synced via Socket.io interview namespace)
-- [ ] Timer / session duration indicator
-- [ ] "End Session" button → calls `POST /api/v1/placements/sessions/:id/end`
-- [ ] Wire InterviewPrep "Join" button → navigate to this route
-- [ ] Recording status indicator
+- [x] Create `/live-interview/:sessionId` page (`src/pages/LiveInterview.tsx`)
+- [x] Register route in `App.tsx` as fullscreen (no layout)
+- [x] Video tile grid (interviewer + candidate, via WebRTC / `getUserMedia()`)
+- [x] Interviewer notes panel (synced via Socket.io interview namespace)
+- [x] Timer / session duration indicator
+- [x] "End Session" button → calls `POST /api/v1/placements/sessions/:id/end`
+- [x] Wire InterviewPrep "Join" button → navigate to this route
+- [x] Recording status indicator
 
 ---
 
-### Chunk I10 — Performance, QA & Deployment
-
-**Performance**
-- [ ] Add `React.lazy()` code-splitting for large pages (ExamInterface, VideoPlayer, AdminDashboard, CourseBuilder) — reduces 859 KB bundle
-- [ ] Add `<Suspense>` fallback skeletons on lazy-loaded routes
-- [ ] Replace hardcoded mock loading states with React Query `isLoading` states
-- [ ] Add React Query `staleTime` and `gcTime` tuning per data type
-
-**Error Handling**
-- [ ] Global error boundary component for route-level crashes
-- [ ] Toast notifications for API errors (failed submit, network errors)
-- [ ] Retry logic on transient API failures (React Query `retry` config)
-
-**QA & Testing**
-- [ ] E2E test: Register → Login → Enroll in course → Watch lecture → Submit assignment
-- [ ] E2E test: Start exam → Answer questions → Submit → View results
-- [ ] E2E test: Admin creates drive → Student applies → Admin shortlists
-- [ ] Unit tests for auth store, api interceptor, exam timer logic
-- [ ] Cross-browser test (Chrome, Firefox, Safari, Edge)
-- [ ] Mobile responsive pass — check all pages on 375px and 768px
-
-**Security**
-- [ ] Remove DEV BYPASS button before deploying to production
-- [ ] Ensure all API calls include JWT in Authorization header
-- [ ] Sanitize rich text inputs in Community (prevent XSS)
-- [ ] Validate file types client-side before S3 upload (AssignmentSubmit, CourseBuilder)
-
-**Deployment**
-- [ ] Build production bundle → `npm run build` (already passing ✅)
-- [ ] Deploy frontend to Vercel or Netlify (static CDN)
-- [ ] Configure environment variables (`VITE_API_URL`, `VITE_SOCKET_URL`)
-- [ ] Deploy backend Docker container to VPS / Railway / Render
-- [ ] Point frontend `VITE_API_URL` to live backend URL
-- [ ] Configure CORS on backend to allow frontend domain
-- [ ] Set up `ugskill.com` domain + SSL
-- [ ] Set up UptimeRobot / Betterstack for health check monitoring
-
----
 
 ## Summary
 
@@ -840,7 +802,7 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 | **Phase 8 — I7: Creator API** | ✅ Done | CourseBuilder + QuizBuilder real API |
 | **Phase 8 — I8: Socket.io Client** | ✅ Done | All 5 namespaces hooked up |
 | **Phase 8 — I9: Live Interview Room** | ✅ Done | Built + Socket.io wired |
-| **Phase 8 — I10: QA & Deploy** | 🔄 In Progress | E2E, cross-browser, mobile responsive still pending |
+| **Phase 10: QA & Deploy** | 🔄 Pending | Moved to after Phase 9-P (Proctoring) |
 
 ---
 
@@ -1037,6 +999,44 @@ Always use `Sequential Thinking MCP` before:
   - `frame_capture_interval_seconds` (int, default 5)
 
 ---
+### Phase 10 — QA, Testing & Deployment (Post P9-P)
+
+**Performance**
+- [ ] Add `React.lazy()` code-splitting for large pages (ExamInterface, VideoPlayer, AdminDashboard, CourseBuilder) — reduces 859 KB bundle
+- [ ] Add `<Suspense>` fallback skeletons on lazy-loaded routes
+- [ ] Replace hardcoded mock loading states with React Query `isLoading` states
+- [ ] Add React Query `staleTime` and `gcTime` tuning per data type
+
+**Error Handling**
+- [ ] Global error boundary component for route-level crashes
+- [ ] Toast notifications for API errors (failed submit, network errors)
+- [ ] Retry logic on transient API failures (React Query `retry` config)
+
+**QA & Testing**
+- [ ] E2E test (Selenium / Cypress): Register → Login → Enroll in course → Watch lecture → Submit assignment
+- [ ] E2E test (Selenium / Playwright): Start exam → Answer questions → Submit → View results
+- [ ] E2E test (Selenium): Admin creates drive → Student applies → Admin shortlists
+- [ ] Unit tests (Jest / Vitest) for auth store, api interceptor, exam timer logic
+- [ ] Cross-browser test (Chrome, Firefox, Safari, Edge)
+- [ ] Mobile responsive pass — check all pages on 375px and 768px
+
+**Security**
+- [ ] Remove DEV BYPASS button before deploying to production
+- [ ] Ensure all API calls include JWT in Authorization header
+- [ ] Sanitize rich text inputs in Community (prevent XSS)
+- [ ] Validate file types client-side before S3 upload (AssignmentSubmit, CourseBuilder)
+
+**Deployment**
+- [ ] Build production bundle → `npm run build` (already passing ✅)
+- [ ] Deploy frontend to Vercel or Netlify (static CDN)
+- [ ] Configure environment variables (`VITE_API_URL`, `VITE_SOCKET_URL`)
+- [ ] Deploy backend Docker container to VPS / Railway / Render
+- [ ] Point frontend `VITE_API_URL` to live backend URL
+- [ ] Configure CORS on backend to allow frontend domain
+- [ ] Set up `ugskill.com` domain + SSL
+- [ ] Set up UptimeRobot / Betterstack for health check monitoring
+
+---
 
 ### P9-A — Payments & Monetisation
 
@@ -1152,7 +1152,7 @@ Always use `Sequential Thinking MCP` before:
 | Stage | Milestone | Can you launch? |
 |-------|-----------|-----------------|
 | ✅ Frontend (F1–F9) | Full UI, mock data, build passes | Demo only |
-| ✅ Phase 8 (I1–I10) | Real API, real auth, sockets, deployed | **Yes — launched MVP** |
+| ✅ Phase 8 (I1–I9) | Real API, real auth, sockets | MVP feature complete |
 | 🔴 **P9-P — Proctoring AI** | **AI gaze tracking + face detection + risk scoring** | **#1 PRIORITY — build now** |
 | 🔮 P9-A/B | Payments + email | Monetise + notify users |
 | 🔮 P9-C/D | Push + coding judge | Competitive exam platform |
