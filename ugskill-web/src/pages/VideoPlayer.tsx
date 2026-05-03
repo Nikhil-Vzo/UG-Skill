@@ -2,15 +2,17 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ChevronLeft, ChevronRight, Play, CheckCircle,
-  MessageSquare, FileText, Lightbulb, Volume2, Maximize, Settings,
-  Loader2, Send, BookOpen, ExternalLink, Download, AlignLeft, Link as LinkIcon
+  ChevronLeft, ChevronRight, Play, CheckCircle, Bookmark, BookmarkCheck,
+  MessageSquare, FileText, Lightbulb, Volume2, Maximize, Minimize, Settings,
+  Loader2, Send, BookOpen, ExternalLink, Download, AlignLeft, Link as LinkIcon,
+  Keyboard, Clock, MoreVertical, X, RotateCcw, FastForward, Rewind
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/loaders/Skeleton';
 import api from '../lib/api';
 import { useDebounce } from '../hooks/useDebounce';
+import './VideoPlayer.css';
 
 /* ─── Embed URL helpers ─── */
 function getYouTubeEmbed(url: string): string | null {
@@ -74,12 +76,19 @@ export const VideoPlayer: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'qa' | 'notes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'qa' | 'notes' | 'bookmarks'>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [qaInput, setQaInput] = useState('');
   const [noteBody, setNoteBody] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [bookmarks, setBookmarks] = useState<{timestamp: number; note: string}[]>([]);
   const debouncedNote = useDebounce(noteBody, 1500);
   const noteSavedRef = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   /* ── Fetch course + curriculum ── */
   const { data: course, isLoading: courseLoading } = useQuery<CourseDetail>({
@@ -213,7 +222,73 @@ export const VideoPlayer: React.FC = () => {
     { id: 'overview', label: 'Overview', icon: <Lightbulb size={15} /> },
     { id: 'qa', label: 'Q&A', icon: <MessageSquare size={15} /> },
     { id: 'notes', label: 'My Notes', icon: <FileText size={15} /> },
+    { id: 'bookmarks', label: 'Bookmarks', icon: <Bookmark size={15} /> },
   ];
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!videoRef.current) return;
+      const video = videoRef.current;
+      
+      switch (e.key.toLowerCase()) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          video.paused ? video.play() : video.pause();
+          break;
+        case 'arrowright':
+        case 'l':
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
+          break;
+        case 'arrowleft':
+        case 'j':
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          break;
+        case 'f':
+          toggleFullscreen();
+          break;
+        case 'm':
+          video.muted = !video.muted;
+          break;
+        case 'b':
+          addBookmark();
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  const addBookmark = () => {
+    if (!videoRef.current) return;
+    const timestamp = Math.floor(videoRef.current.currentTime);
+    setBookmarks(prev => [...prev, { timestamp, note: '' }]);
+  };
+
+  const seekToBookmark = (timestamp: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = timestamp;
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const courseTitle = course?.title ?? 'Loading...';
   const activeTitle = lecture?.title ?? activeLecture?.title ?? '';
@@ -258,13 +333,62 @@ export const VideoPlayer: React.FC = () => {
               /* ── VIDEO ── */
               if (type === 'video') {
                 return videoSrc ? (
-                  <video
-                    key={videoSrc}
-                    src={videoSrc}
-                    controls
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    onEnded={() => { if (!activeLecture?.completed) completeMut.mutate(); }}
-                  />
+                  <div className="video-wrapper" ref={containerRef}>
+                    <video
+                      ref={videoRef}
+                      key={videoSrc}
+                      src={videoSrc}
+                      controls
+                      playbackRate={playbackSpeed}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      onEnded={() => { if (!activeLecture?.completed) completeMut.mutate(); }}
+                      onTimeUpdate={(e) => setVideoProgress(e.currentTarget.currentTime)}
+                    />
+                    {/* Playback Speed Control */}
+                    <div className="video-controls">
+                      <select 
+                        value={playbackSpeed} 
+                        onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                        className="playback-speed"
+                      >
+                        {[0.5, 0.75, 1, 1.25, 1.5, 2].map(speed => (
+                          <option key={speed} value={speed}>{speed}x</option>
+                        ))}
+                      </select>
+                      <button onClick={addBookmark} className="bookmark-btn" title="Add Bookmark (B)">
+                        <Bookmark size={16} />
+                      </button>
+                      <button onClick={() => setShowShortcuts(!showShortcuts)} className="shortcuts-btn" title="Keyboard Shortcuts">
+                        <Keyboard size={16} />
+                      </button>
+                    </div>
+                    {/* Keyboard Shortcuts Modal */}
+                    {showShortcuts && (
+                      <div className="shortcuts-modal" onClick={() => setShowShortcuts(false)}>
+                        <div className="shortcuts-content" onClick={e => e.stopPropagation()}>
+                          <div className="shortcuts-header">
+                            <h3>Keyboard Shortcuts</h3>
+                            <button onClick={() => setShowShortcuts(false)}><X size={16} /></button>
+                          </div>
+                          <div className="shortcuts-list">
+                            {[
+                              { key: 'Space / K', action: 'Play/Pause' },
+                              { key: '← / J', action: 'Rewind 10s' },
+                              { key: '→ / L', action: 'Forward 10s' },
+                              { key: 'F', action: 'Fullscreen' },
+                              { key: 'M', action: 'Mute/Unmute' },
+                              { key: 'B', action: 'Add Bookmark' },
+                            ].map(shortcut => (
+                              <div key={shortcut.key} className="shortcut-item">
+                                <kbd>{shortcut.key}</kbd>
+                                <span>{shortcut.action}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                     {lectureLoading
@@ -471,11 +595,63 @@ export const VideoPlayer: React.FC = () => {
                   {saveNoteMut.isSuccess && !saveNoteMut.isPending && <span style={{ color: 'var(--success)', marginLeft: '0.5rem' }}>Saved ✓</span>}
                 </p>
                 <textarea
-                  placeholder="Write your personal notes here..."
+                  placeholder="Write your personal notes here... (timestamp: 00:00)"
                   value={noteBody}
                   onChange={e => { setNoteBody(e.target.value); noteSavedRef.current = false; }}
                   style={{ width: '100%', minHeight: 160, background: 'var(--surface-well)', border: '1px solid var(--surface-highest)', color: 'var(--text-high)', padding: '0.75rem', fontSize: '0.9375rem', resize: 'vertical', lineHeight: 1.6, boxSizing: 'border-box' }}
                 />
+                {videoProgress > 0 && (
+                  <button 
+                    className="insert-timestamp-btn"
+                    onClick={() => setNoteBody(prev => prev + `[${formatTime(videoProgress)}] `)}
+                  >
+                    <Clock size={14} /> Insert Current Timestamp
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Bookmarks Tab */}
+            {activeTab === 'bookmarks' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {bookmarks.length === 0 ? (
+                  <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', textAlign: 'center', padding: '2rem' }}>
+                    No bookmarks yet. Press <kbd>B</kbd> while watching to add one!
+                  </p>
+                ) : (
+                  <>
+                    <p style={{ color: 'var(--text-low)', fontSize: '0.8125rem' }}>
+                      Click a bookmark to jump to that timestamp.
+                    </p>
+                    <div className="bookmarks-list">
+                      {bookmarks.map((bookmark, idx) => (
+                        <div key={idx} className="bookmark-item" onClick={() => seekToBookmark(bookmark.timestamp)}>
+                          <div className="bookmark-time">
+                            <Clock size={14} />
+                            {formatTime(bookmark.timestamp)}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Add note..."
+                            value={bookmark.note}
+                            onChange={(e) => {
+                              const newBookmarks = [...bookmarks];
+                              newBookmarks[idx].note = e.target.value;
+                              setBookmarks(newBookmarks);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <button 
+                            className="bookmark-jump"
+                            onClick={(e) => { e.stopPropagation(); seekToBookmark(bookmark.timestamp); }}
+                          >
+                            <RotateCcw size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* ─── Design Tokens ──────────────────────────────────────────────────────────── */
+/* ─── Design Tokens ──────────────────────────────────────────── */
 :root {
-  /* ── Palette: Midnight Precision ── */
-  --bg-app:               #08090f;
-  --bg-overlay:           rgba(8, 9, 15, 0.85);
+  /* ── Palette: Professional Slate ── */
+  --bg-app:               #0f1115;
+  --bg-overlay:           rgba(15, 17, 21, 0.92);
 
-  /* Surface elevation stack */
-  --surface-0:            #08090f;  /* app background */
-  --surface-1:            #0d0f1a;  /* card base */
-  --surface-2:            #121526;  /* elevated card */
-  --surface-3:            #181b2e;  /* tooltips, popovers */
-  --surface-4:            #1f2338;  /* highest emphasis */
+  /* Surface elevation stack - refined grays */
+  --surface-0:            #0f1115;  /* app background */
+  --surface-1:            #181a20;  /* card base */
+  --surface-2:            #1f2229;  /* elevated card */
+  --surface-3:            #262a32;  /* tooltips, popovers */
+  --surface-4:            #2e333c;  /* highest emphasis */
 
   /* Legacy aliases — keep for compatibility */
   --bg-color:             var(--bg-app);
@@ -21,47 +21,49 @@
   --surface-container-high:   var(--surface-3);
   --surface-bright:           var(--surface-4);
 
-  /* ── Primary: Violet-Indigo ── */
-  --primary:              #a5b4fc;   /* indigo-300 */
-  --primary-dim:          #6366f1;   /* indigo-500 */
-  --primary-deep:         #4338ca;   /* indigo-700 */
-  --primary-hover:        #818cf8;   /* indigo-400 */
-  --primary-fg:           #020207;   /* text on primary */
-  --primary-subtle:       rgba(99, 102, 241, 0.08);
-  --primary-glow:         rgba(99, 102, 241, 0.25);
+  /* ── Primary: Refined Blue (Professional) ── */
+  --primary:              #60a5fa;   /* blue-400 */
+  --primary-dim:          #3b82f6;   /* blue-500 */
+  --primary-deep:         #1d4ed8;   /* blue-700 */
+  --primary-hover:        #4b9efa;   /* blue-450 */
+  --primary-fg:           #0a0c10;   /* text on primary */
+  --primary-subtle:       rgba(59, 130, 246, 0.12);
+  --primary-glow:         rgba(59, 130, 246, 0.35);
 
   /* ── Semantic Text ── */
-  --text-primary:         #eef0ff;   /* near white, warm blue tint */
-  --text-secondary:       #9da3c0;   /* muted, still readable */
-  --text-tertiary:        #5c6280;   /* disabled / placeholders */
-  --text-inverse:         #08090f;
+  --text-primary:         #f1f5f9;   /* slate-100 - near white */
+  --text-secondary:       #94a3b8;   /* slate-400 - muted */
+  --text-tertiary:        #64748b;   /* slate-500 - disabled */
+  --text-inverse:         #0f1115;
 
   /* Legacy text aliases */
   --on-surface:           var(--text-primary);
   --on-surface-variant:   var(--text-secondary);
   --text-high:            var(--text-primary);
+  --text-medium:          #cbd5e1;      /* slate-300 */
   --text-low:             var(--text-secondary);
+  --text-lowest:          var(--text-tertiary);
 
   /* ── Borders ── */
-  --border-subtle:        rgba(255, 255, 255, 0.04);
-  --border-default:       rgba(255, 255, 255, 0.08);
-  --border-emphasis:      rgba(163, 166, 255, 0.25);
-  --border-focus:         #6366f1;
+  --border-subtle:        rgba(148, 163, 184, 0.06);
+  --border-default:       rgba(148, 163, 184, 0.12);
+  --border-emphasis:      rgba(96, 165, 250, 0.3);
+  --border-focus:         #3b82f6;
 
   /* Legacy border aliases */
-  --outline:              rgba(255, 255, 255, 0.12);
+  --outline:              rgba(148, 163, 184, 0.15);
   --outline-variant:      var(--border-default);
   --border-neon:          var(--border-emphasis);
 
-  /* ── Status Palette ── */
-  --color-success:        #34d399;
-  --color-success-subtle: rgba(52, 211, 153, 0.1);
-  --color-warning:        #fbbf24;
-  --color-warning-subtle: rgba(251, 191, 36, 0.1);
-  --color-error:          #f87171;
-  --color-error-subtle:   rgba(248, 113, 113, 0.1);
-  --color-info:           #60a5fa;
-  --color-info-subtle:    rgba(96, 165, 250, 0.1);
+  /* ── Status Palette - Professional tones ── */
+  --color-success:        #22c55e;   /* green-500 */
+  --color-success-subtle: rgba(34, 197, 94, 0.12);
+  --color-warning:        #f59e0b;   /* amber-500 */
+  --color-warning-subtle: rgba(245, 158, 11, 0.12);
+  --color-error:          #ef4444;   /* red-500 */
+  --color-error-subtle:   rgba(239, 68, 68, 0.12);
+  --color-info:           #38bdf8;   /* sky-400 */
+  --color-info-subtle:    rgba(56, 189, 248, 0.12);
 
   /* Legacy status aliases */
   --success:              var(--color-success);
@@ -69,10 +71,10 @@
   --warning:              var(--color-warning);
 
   /* ── Accent colors per section ── */
-  --accent-placement:     #fbbf24;  /* amber */
-  --accent-exam:          #f87171;  /* rose */
-  --accent-community:     #34d399;  /* teal */
-  --accent-gd:            #60a5fa;  /* blue */
+  --accent-placement:     #f59e0b;  /* amber-500 */
+  --accent-exam:          #ef4444;  /* red-500 */
+  --accent-community:     #22c55e;  /* green-500 */
+  --accent-gd:            #38bdf8;  /* sky-400 */
 
   /* ── Typography ── */
   --font-display:         'Space Grotesk', sans-serif;
@@ -96,11 +98,11 @@
   --radius-lg:   12px;
   --radius-full: 9999px;
 
-  /* ── Shadow ── */
-  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
-  --shadow-lg:  0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 24px rgba(99, 102, 241, 0.2);
+  /* ── Shadow - Professional depth ── */
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-md:  0 4px 6px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.2);
+  --shadow-lg:  0 10px 25px rgba(0, 0, 0, 0.3), 0 20px 40px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.25), 0 0 40px rgba(59, 130, 246, 0.1);
 
   /* ── Z-index ── */
   --z-base:    1;

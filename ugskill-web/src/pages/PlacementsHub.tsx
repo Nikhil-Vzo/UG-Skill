@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Briefcase, MapPin, Clock, Video, Calendar,
-  CheckCircle, XCircle, AlertCircle, Search, Loader2, MessageSquare, ExternalLink
+  Briefcase, MapPin, Clock, Video, Calendar, TrendingUp, Filter,
+  CheckCircle, XCircle, AlertCircle, Search, Loader2, MessageSquare, ExternalLink,
+  Building2, DollarSign, GraduationCap, ChevronDown, LayoutGrid, List, Sparkles,
+  Target, Award, Users, ArrowRight, Star, Zap, ListOrdered
 } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { Badge } from '../components/ui/Badge';
+import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/loaders/Skeleton';
 import { useDebounce } from '../hooks/useDebounce';
 import api from '../lib/api';
+import './PlacementsHub.css';
 
 /* ─────────── Types ─────────── */
 type DriveStatus = 'open' | 'active' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'closed' | 'selected';
@@ -140,14 +144,19 @@ const DriveSkeleton: React.FC = () => (
 
 /* ─────────── Main Page ─────────── */
 export const PlacementsHub: React.FC = () => {
-  const [view, setView] = useState<'grid' | 'kanban'>('grid');
+  const [view, setView] = useState<'grid' | 'kanban' | 'timeline'>('grid');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | DriveStatus>('all');
+  const [sortBy, setSortBy] = useState<'deadline' | 'package' | 'company'>('deadline');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>('all');
+  const [minCGPA, setMinCGPA] = useState<number>(0);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const debouncedSearch = useDebounce(search, 400);
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const { user } = useAuthStore();
+
 
   const { data: mySessions = [] } = useQuery({
     queryKey: ['my-interview-sessions', user?.id],
@@ -167,6 +176,13 @@ export const PlacementsHub: React.FC = () => {
     staleTime: 60_000,
   });
 
+  // Extract unique roles from drives
+  const availableRoles = useMemo(() => {
+    const roles = new Set<string>();
+    drives.forEach(d => d.targetRoles?.forEach(r => roles.add(r)));
+    return ['all', ...Array.from(roles)];
+  }, [drives]);
+
   const applyMut = useMutation({
     mutationFn: (driveId: string) => api.post('/placements/registrations', { driveId }),
     onSuccess: () => {
@@ -176,13 +192,39 @@ export const PlacementsHub: React.FC = () => {
     onError: () => setApplyingId(null),
   });
 
-  const filtered = drives.filter(d => {
-    const { name: companyName } = resolveCompany(d);
-    const q = debouncedSearch.toLowerCase();
-    const matchesSearch = companyName.toLowerCase().includes(q) || d.name.toLowerCase().includes(q);
-    const matchesFilter = filter === 'all' || d.status === filter;
-    return matchesSearch && matchesFilter;
-  });
+  const filtered = useMemo(() => {
+    let result = drives.filter(d => {
+      const { name: companyName } = resolveCompany(d);
+      const q = debouncedSearch.toLowerCase();
+      const matchesSearch = companyName.toLowerCase().includes(q) || d.name.toLowerCase().includes(q);
+      const matchesFilter = filter === 'all' || d.status === filter;
+      const matchesRole = selectedRole === 'all' || d.targetRoles?.includes(selectedRole);
+      const matchesCGPA = !d.cgpaCutoff || d.cgpaCutoff <= (user?.cgpa || 10);
+      return matchesSearch && matchesFilter && matchesRole && matchesCGPA;
+    });
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'deadline':
+        result = result.sort((a, b) => {
+          const aDate = a.registrationDeadline ? new Date(a.registrationDeadline).getTime() : Infinity;
+          const bDate = b.registrationDeadline ? new Date(b.registrationDeadline).getTime() : Infinity;
+          return aDate - bDate;
+        });
+        break;
+      case 'package':
+        result = result.sort((a, b) => {
+          const aPkg = parseFloat(a.package?.replace(/[^0-9.]/g, '') || '0');
+          const bPkg = parseFloat(b.package?.replace(/[^0-9.]/g, '') || '0');
+          return bPkg - aPkg;
+        });
+        break;
+      case 'company':
+        result = result.sort((a, b) => resolveCompany(a).name.localeCompare(resolveCompany(b).name));
+        break;
+    }
+    return result;
+  }, [drives, debouncedSearch, filter, selectedRole, user?.cgpa, sortBy]);
 
   const myApps = drives.filter(d => ['applied', 'shortlisted', 'rejected'].includes(d.status));
 
@@ -201,35 +243,49 @@ export const PlacementsHub: React.FC = () => {
   return (
     <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', color: 'var(--text-high)', margin: 0 }}>Placement Hub</h1>
-          <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', marginTop: '0.25rem', margin: '0.25rem 0 0' }}>Track active drives, manage applications, prepare for interviews.</p>
+      <div className="placements-header">
+        <div className="placements-title-section">
+          <div className="placements-badge">
+            <Sparkles size={14} /> Career Launchpad
+          </div>
+          <h1 className="placements-title">Placement Hub</h1>
+          <p className="placements-subtitle">Discover opportunities, track applications, and launch your career</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            onClick={() => setView(v => v === 'grid' ? 'kanban' : 'grid')}
-            style={{ padding: '0.5rem 0.875rem', background: 'var(--surface-well)', border: '1px solid var(--surface-highest)', color: 'var(--text-low)', cursor: 'pointer', fontSize: '0.8125rem' }}
-          >
-            {view === 'grid' ? '⬛ Kanban View' : '⊞ Grid View'}
-          </button>
+        <div className="placements-view-toggle">
+          {(['grid', 'kanban', 'timeline'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`view-btn ${view === v ? 'active' : ''}`}
+            >
+              {v === 'grid' ? <LayoutGrid size={16} /> : v === 'kanban' ? <List size={16} /> : <ListOrdered size={16} />}
+              <span>{v.charAt(0).toUpperCase() + v.slice(1)}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+      {/* Enhanced Stats Cards */}
+      <div className="placements-stats">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass-panel" style={{ padding: '1rem 1.25rem' }}>
+            <div key={i} className="stat-card skeleton">
               <Skeleton variant="text" width="40%" height="32px" />
               <Skeleton variant="text" width="70%" />
             </div>
           ))
         ) : (
-          statsConfig.map(s => (
-            <div key={s.label} className="glass-panel" style={{ padding: '1rem 1.25rem', borderTop: `2px solid ${s.color}` }}>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: s.color, fontFamily: 'var(--font-display)' }}>{s.val}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</div>
+          [
+            { label: 'Active Drives', val: drives.filter(d => d.status === 'active').length, icon: <Zap size={18} />, color: 'var(--success)', trend: '+2 this week' },
+            { label: 'Applied', val: myApps.filter(d => d.status === 'applied').length, icon: <Briefcase size={18} />, color: 'var(--primary)', trend: '3 pending' },
+            { label: 'Shortlisted', val: myApps.filter(d => d.status === 'shortlisted').length, icon: <Star size={18} />, color: 'var(--warning)', trend: '1 interview scheduled' },
+            { label: 'Success Rate', val: `${Math.round((myApps.filter(d => d.status === 'selected').length / Math.max(myApps.length, 1)) * 100)}%`, icon: <Target size={18} />, color: 'var(--info)', trend: 'Keep going!' },
+          ].map(s => (
+            <div key={s.label} className="stat-card" style={{ '--accent-color': s.color } as React.CSSProperties}>
+              <div className="stat-icon" style={{ color: s.color }}>{s.icon}</div>
+              <div className="stat-value" style={{ color: s.color }}>{s.val}</div>
+              <div className="stat-label">{s.label}</div>
+              <div className="stat-trend">{s.trend}</div>
             </div>
           ))
         )}
@@ -270,20 +326,79 @@ export const PlacementsHub: React.FC = () => {
         </div>
       )}
 
-      {/* Search + Filter */}
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+      {/* Advanced Filters */}
+      <div className="placements-filters">
         <div className="search-well" style={{ flex: 1, minWidth: 240 }}>
           <Search className="search-icon" size={16} />
           <input type="text" placeholder="Search companies, roles..." className="search-input" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        {isLoading && <Loader2 size={18} style={{ alignSelf: 'center', animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />}
-        {(['all', 'open', 'applied', 'shortlisted', 'rejected'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            style={{ padding: '0.5rem 0.875rem', background: filter === f ? 'var(--primary-low)' : 'var(--surface-well)', border: filter === f ? '1px solid var(--primary-glow)' : '1px solid var(--surface-highest)', color: filter === f ? 'var(--primary-glow)' : 'var(--text-low)', cursor: 'pointer', fontSize: '0.8125rem', textTransform: 'capitalize' }}>
-            {f}
-          </button>
-        ))}
+        
+        <button 
+          className={`filter-toggle ${showFilters ? 'active' : ''}`}
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter size={16} /> Filters
+        </button>
+        
+        <select 
+          className="sort-select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as any)}
+        >
+          <option value="deadline">Sort by Deadline</option>
+          <option value="package">Sort by Package</option>
+          <option value="company">Sort by Company</option>
+        </select>
+        
+        {isLoading && <Loader2 size={18} className="loading-spinner" />}
       </div>
+      
+      {/* Expandable Filter Panel */}
+      {showFilters && (
+        <div className="filter-panel">
+          <div className="filter-group">
+            <label>Status</label>
+            <div className="filter-pills">
+              {(['all', 'open', 'applied', 'shortlisted', 'rejected', 'selected'] as const).map(f => (
+                <button 
+                  key={f} 
+                  onClick={() => setFilter(f)}
+                  className={`filter-pill ${filter === f ? 'active' : ''}`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="filter-group">
+            <label>Role</label>
+            <select 
+              className="role-select"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+            >
+              {availableRoles.map(role => (
+                <option key={role} value={role}>
+                  {role === 'all' ? 'All Roles' : role}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="filter-group">
+            <label>Your CGPA: {user?.cgpa || 'N/A'}</label>
+            <div className="cgpa-indicator">
+              <span>Eligible drives only</span>
+              <input 
+                type="checkbox" 
+                checked={minCGPA === 0}
+                onChange={(e) => setMinCGPA(e.target.checked ? 0 : 10)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error */}
       {isError && (

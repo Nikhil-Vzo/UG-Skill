@@ -1,91 +1,172 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardStore } from '../store/dashboard.store';
 import { Skeleton } from '../components/loaders/Skeleton';
 import { CourseCard } from '../components/features/course/CourseCard';
-import { Search, Filter } from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { Search, Filter, BookOpen, PlayCircle, LayoutGrid, List } from 'lucide-react';
 import { IconButton } from '../components/ui/IconButton';
+import { useDebounce } from '../hooks/useDebounce';
+import './Courses.css';
 
 export const Courses: React.FC = () => {
   const navigate = useNavigate();
   const { courses, isLoading, fetchDashboardData } = useDashboardStore();
+  const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'in-progress' | 'completed'>('all');
+  const debouncedSearch = useDebounce(search, 400);
 
   useEffect(() => {
-    // If not loaded yet, fetch it
     if (courses.length === 0) {
       fetchDashboardData();
     }
   }, [courses.length, fetchDashboardData]);
 
+  // Filter and sort courses
+  const filteredCourses = useMemo(() => {
+    let result = [...courses];
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      result = result.filter(c => c.title.toLowerCase().includes(q) || c.instructor?.toLowerCase().includes(q));
+    }
+    if (filterStatus === 'in-progress') result = result.filter(c => (c.progress || 0) > 0 && (c.progress || 0) < 100);
+    if (filterStatus === 'completed') result = result.filter(c => (c.progress || 0) === 100);
+    result.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+    return result;
+  }, [courses, debouncedSearch, filterStatus]);
+
+  // Find course to continue
+  const continueCourse = useMemo(() => {
+    if (!courses.length) return null;
+    const inProgress = courses.filter(c => (c.progress || 0) > 0 && (c.progress || 0) < 100);
+    return inProgress.sort((a, b) => (b.progress || 0) - (a.progress || 0))[0] || courses[0];
+  }, [courses]);
+
+  // Stats
+  const stats = useMemo(() => ({
+    total: courses.length,
+    inProgress: courses.filter(c => (c.progress || 0) > 0 && (c.progress || 0) < 100).length,
+    completed: courses.filter(c => (c.progress || 0) === 100).length,
+  }), [courses]);
+
   return (
-    <div className="flex flex-col gap-8">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--primary)' }}>
-            My Courses
-          </h1>
-          <p style={{ color: 'var(--on-surface-variant)' }}>
-            Resume learning where you left off or explore new materials.
+    <div className="courses-page">
+      <header className="courses-header">
+        <div className="courses-title-section">
+          <div className="courses-badge">
+            <BookOpen size={14} /> Learning Center
+          </div>
+          <h1 className="courses-title">My Courses</h1>
+          <p className="courses-subtitle">
+            {stats.total > 0 
+              ? `${stats.inProgress} in progress · ${stats.completed} completed`
+              : 'Start your learning journey by exploring our catalog'
+            }
           </p>
         </div>
         
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <div className="search-well" style={{ width: '220px' }}>
+        <div className="courses-toolbar">
+          <div className="search-well courses-search">
             <Search className="search-icon" size={16} />
             <input 
               type="text" 
-              placeholder="Filter courses..." 
+              placeholder="Search courses..." 
               className="search-input"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <IconButton 
-            icon={<Filter size={18} />} 
-            aria-label="Filter" 
-            variant="secondary"
-          />
+          <div className="courses-view-toggle">
+            <button 
+              className={viewMode === 'grid' ? 'active' : ''}
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button 
+              className={viewMode === 'list' ? 'active' : ''}
+              onClick={() => setViewMode('list')}
+            >
+              <List size={16} />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Recommended or Continue Block */}
-      {courses.length > 0 && !isLoading && (
-        <section className="glass-panel" style={{ padding: '2rem', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', color: 'var(--on-surface)', marginBottom: '1rem' }}>Pick Up Where You Left Off</h2>
-          {/* Display highest priority or most recent course */}
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ flex: 1, minWidth: '300px' }}>
-              <h3 style={{ color: 'var(--primary)', fontSize: '1.25rem', marginBottom: '0.5rem' }}>{courses[0].title}</h3>
-              <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-                You were making great progress with {courses[0].instructor}. You are 15 minutes away from finishing Module 2!
-              </p>
-              <button className="base-btn btn-primary btn-md" onClick={() => navigate(`/app/courses/${courses[0].id}/player`)}>Resume Course</button>
+      {/* Continue Learning Block */}
+      {continueCourse && !isLoading && (
+        <section className="continue-learning-card">
+          <div className="continue-content">
+            <div className="continue-badge">Continue Learning</div>
+            <h3 className="continue-title">{continueCourse.title}</h3>
+            <p className="continue-instructor">by {continueCourse.instructor}</p>
+            <div className="continue-progress">
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${continueCourse.progress || 0}%` }} />
+              </div>
+              <span>{continueCourse.progress || 0}% complete</span>
             </div>
-            <div style={{ flex: 1, minWidth: '250px' }}>
-              {/* Could be a thumbnail in a real app, currently just an aesthetic block */}
-              <div style={{ height: '140px', background: 'var(--surface-container-high)', borderRadius: '8px', border: '1px dashed var(--outline-variant)' }} />
-            </div>
+            <Button 
+              variant="primary" 
+              size="sm" 
+              leftIcon={<PlayCircle size={16} />}
+              onClick={() => navigate(`/app/courses/${continueCourse.id}/player`)}
+            >
+              Resume Course
+            </Button>
+          </div>
+          <div className="continue-thumbnail">
+            {continueCourse.thumbnail ? (
+              <img src={continueCourse.thumbnail} alt={continueCourse.title} />
+            ) : (
+              <div className="placeholder-thumbnail" />
+            )}
           </div>
         </section>
       )}
 
-      {/* Full Library Grid */}
-      <section>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
-          {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="surface-card" style={{ padding: '1.5rem' }}>
-                <Skeleton variant="text" width="80%" height="24px" className="mb-4" />
-                <Skeleton variant="rounded" height="8px" className="mb-2" />
-                <Skeleton variant="text" width="40%" />
-              </div>
-            ))
-          ) : courses.length === 0 ? (
-            <p style={{ color: 'var(--on-surface-variant)' }}>You have not enrolled in any courses yet.</p>
-          ) : (
-            courses.map(course => (
-              <CourseCard key={course.id} course={course} onContinue={(id) => navigate(`/app/courses/${id}/player`)} />
-            ))
-          )}
-        </div>
+      {/* Filter Tabs */}
+      <div className="filter-tabs">
+        {(['all', 'in-progress', 'completed'] as const).map(status => (
+          <button
+            key={status}
+            className={filterStatus === status ? 'active' : ''}
+            onClick={() => setFilterStatus(status)}
+          >
+            {status === 'all' ? 'All Courses' : status === 'in-progress' ? 'In Progress' : 'Completed'}
+            <span className="filter-count">
+              {status === 'all' ? stats.total : status === 'in-progress' ? stats.inProgress : stats.completed}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Course Grid/List */}
+      <section className={`courses-container ${viewMode}`}>
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="course-skeleton-card">
+              <Skeleton variant="rectangular" height={viewMode === 'list' ? 80 : 140} />
+              <Skeleton variant="text" width="80%" height="24px" className="mt-3" />
+              <Skeleton variant="rounded" height="8px" className="mt-2" />
+              <Skeleton variant="text" width="40%" className="mt-2" />
+            </div>
+          ))
+        ) : filteredCourses.length === 0 ? (
+          <div className="courses-empty">
+            <BookOpen size={48} />
+            <h3>No courses found</h3>
+            <p>{search ? 'Try adjusting your search terms' : 'Start learning by exploring our catalog'}</p>
+            <Button variant="primary" onClick={() => navigate('/app/discover')}>
+              Discover Courses
+            </Button>
+          </div>
+        ) : (
+          filteredCourses.map(course => (
+            <CourseCard key={course.id} course={course} onContinue={(id) => navigate(`/app/courses/${id}/player`)} />
+          ))
+        )}
       </section>
     </div>
   );

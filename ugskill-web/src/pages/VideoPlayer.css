@@ -1,0 +1,325 @@
+/* Video Player Enhancements */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-controls {
+  position: absolute;
+  bottom: 60px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.video-wrapper:hover .video-controls {
+  opacity: 1;
+}
+
+.playback-speed {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.playback-speed:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.playback-speed option {
+  background: #1a1a2e;
+  color: white;
+}
+
+.bookmark-btn,
+.shortcuts-btn {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.bookmark-btn:hover,
+.shortcuts-btn:hover {
+  background: rgba(99, 102, 241, 0.9);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+/* Shortcuts Modal */
+.shortcuts-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.shortcuts-content {
+  background: var(--surface-container);
+  border: 1px solid var(--surface-highest);
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-width: 320px;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.shortcuts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--surface-highest);
+}
+
+.shortcuts-header h3 {
+  margin: 0;
+  color: var(--text-high);
+  font-size: 1rem;
+}
+
+.shortcuts-header button {
+  background: none;
+  border: none;
+  color: var(--text-low);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+}
+
+.shortcuts-header button:hover {
+  background: var(--surface-well);
+  color: var(--text-high);
+}
+
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.shortcut-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.shortcut-item kbd {
+  background: var(--surface-well);
+  border: 1px solid var(--surface-highest);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--primary-glow);
+  min-width: 80px;
+  text-align: center;
+}
+
+.shortcut-item span {
+  color: var(--text-medium);
+  font-size: 0.875rem;
+}
+
+/* Bookmarks */
+.bookmarks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.bookmark-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--surface-well);
+  border: 1px solid var(--surface-highest);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bookmark-item:hover {
+  background: var(--surface-container-high);
+  border-color: var(--primary-glow);
+}
+
+.bookmark-time {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary-glow);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: monospace;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.bookmark-item input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-medium);
+  font-size: 0.875rem;
+  outline: none;
+  padding: 0.25rem 0;
+}
+
+.bookmark-item input::placeholder {
+  color: var(--text-lowest);
+}
+
+.bookmark-item input:focus {
+  border-bottom: 1px solid var(--primary-glow);
+}
+
+.bookmark-jump {
+  background: none;
+  border: none;
+  color: var(--text-low);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.bookmark-item:hover .bookmark-jump {
+  opacity: 1;
+}
+
+.bookmark-jump:hover {
+  background: var(--primary-low);
+  color: var(--primary-glow);
+}
+
+/* Insert Timestamp Button */
+.insert-timestamp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--surface-well);
+  border: 1px solid var(--surface-highest);
+  color: var(--text-low);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.insert-timestamp-btn:hover {
+  background: var(--primary-low);
+  border-color: var(--primary-glow);
+  color: var(--primary-glow);
+}
+
+/* Curriculum Sidebar Improvements */
+.lecture-item {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.lecture-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary-glow);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.lecture-item:hover::before {
+  opacity: 0.5;
+}
+
+.lecture-item.active::before {
+  opacity: 1;
+}
+
+/* Progress Indicator in Sidebar */
+.section-progress {
+  height: 2px;
+  background: var(--surface-highest);
+  border-radius: 1px;
+  margin-top: 0.25rem;
+  overflow: hidden;
+}
+
+.section-progress-fill {
+  height: 100%;
+  background: var(--success);
+  transition: width 0.3s ease;
+}
+
+/* Tab Animations */
+@keyframes tabSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-content {
+  animation: tabSlideIn 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .video-controls {
+    opacity: 1;
+    bottom: 16px;
+    right: 8px;
+  }
+  
+  .shortcuts-content {
+    margin: 1rem;
+    min-width: auto;
+  }
+  
+  .bookmark-item {
+    flex-wrap: wrap;
+  }
+  
+  .bookmark-jump {
+    opacity: 1;
+  }
+}
