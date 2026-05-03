@@ -259,6 +259,11 @@ a:hover { color: var(--primary-hover); }
   50%       { box-shadow: 0 0 16px 4px var(--primary-glow); }
 }
 
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.35; transform: scale(0.6); }
+}
+
 @keyframes dash {
   0%   { stroke-dashoffset: 100; }
   50%  { stroke-dashoffset: 0; }

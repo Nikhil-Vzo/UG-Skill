@@ -88,19 +88,19 @@ Platform Devs  → Dev-P1, Dev-P2, Dev-P3  (own backend fixes, frontend, QA, Dev
 
 ### P9-P Frontend (AI-Driven UI)
 
-- [ ] **AI.6 — Frame Capture Loop** (`pages/ExamInterface.tsx`)
+- [x] **AI.6 — Frame Capture Loop** (`pages/ExamInterface.tsx`)
   - Every 5s: capture frame from `<video>` element via hidden `<canvas>` → `toDataURL('image/jpeg', 0.6)` → base64
   - POST base64 to `POST /api/v1/proctoring/analyze-frame` in the background (non-blocking, fire-and-forget)
   - Show live **"🟢 AI Monitoring Active"** pulsing badge in exam header
   - Configurable interval from exam `proctoringConfig.frameCaptureIntervalSeconds`
 
-- [ ] **AI.7 — Gaze Warning Overlay** (`pages/ExamInterface.tsx`)
+- [x] **AI.7 — Gaze Warning Overlay** (`pages/ExamInterface.tsx`)
   - Listen for `proctoring:warning` socket event from `/tracking` namespace
   - Show non-dismissable red banner: `"⚠️ Gaze violation detected. Repeated violations may terminate your exam."`
   - Show counter: `"2 of 5 warnings used"`
   - Listen for `proctoring:terminated` → redirect to results page with termination notice
 
-- [ ] **AI.8 — Pre-flight AI Camera Check** (`pages/ExamPreFlight.tsx`)
+- [x] **AI.8 — Pre-flight AI Camera Check** (`pages/ExamPreFlight.tsx`)
   - During the camera check step: capture a test frame and call `POST /api/v1/proctoring/analyze-frame`
   - Show live feedback: `"✅ Face detected"` / `"⚠️ Poor lighting"` / `"❌ Look directly at camera"`
   - Block exam start button if no face detected for > 5s

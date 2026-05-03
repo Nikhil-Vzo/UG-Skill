@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -114,6 +114,14 @@ export const ExamInterface: React.FC = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [proctoringEvents, setProctoringEvents] = useState<ProctoringEvent[]>([]);
   const [, setTabSwitchWarning] = useState(false);
+  const [aiWarnings, setAiWarnings] = useState<{ count: number; max: number }>({ count: 0, max: 5 });
+  const [terminated, setTerminated] = useState(false);
+
+  // ── Frame capture refs ──
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const frameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const aiMonitoringRef = useRef<boolean>(true);
 
   // ── Submit mutation ──
   const submitMut = useMutation({
@@ -146,6 +154,13 @@ export const ExamInterface: React.FC = () => {
   // Use extracted exam timer
   const { timeLeft } = useExamTimer(!submitted && !startingExam && attemptData ? attemptId : null, handleSubmit);
 
+  // ── Terminated redirect ──
+  useEffect(() => {
+    if (terminated) {
+      navigate('/app/exams', { state: { terminated: true, examTitle } });
+    }
+  }, [terminated, navigate, examTitle]);
+
   // Sync proctoring sockets
   useEffect(() => {
     if (submitted || startingExam || !attemptData || !attemptId) return;
@@ -157,10 +172,22 @@ export const ExamInterface: React.FC = () => {
       setProctoringEvents(evs => [...evs, { type: alert.eventType, ts: new Date().getTime() }]);
     };
 
+    const onWarning = (data: { count: number; max: number }) => {
+      setAiWarnings(data);
+    };
+
+    const onTerminated = () => {
+      setTerminated(true);
+    };
+
     trackingSocket.on('flag:alert', onFlagAlert);
+    trackingSocket.on('proctoring:warning', onWarning);
+    trackingSocket.on('proctoring:terminated', onTerminated);
 
     return () => {
       trackingSocket.off('flag:alert', onFlagAlert);
+      trackingSocket.off('proctoring:warning', onWarning);
+      trackingSocket.off('proctoring:terminated', onTerminated);
       disconnectSocket('/tracking');
     };
   }, [submitted, startingExam, attemptData, attemptId]);
@@ -192,6 +219,76 @@ export const ExamInterface: React.FC = () => {
     return () => document.removeEventListener('contextmenu', onContextMenu);
   }, [submitted, attemptId]);
 
+  // ── Frame Capture Loop (5s interval) ──
+  useEffect(() => {
+    if (submitted || !attemptId) return;
+
+    const startFrameCapture = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (!videoRef.current) {
+          const v = document.createElement('video');
+          v.setAttribute('playsinline', '');
+          v.muted = true;
+          v.style.position = 'fixed';
+          v.style.top = '-9999px';
+          v.style.left = '-9999px';
+          v.style.width = '1px';
+          v.style.height = '1px';
+          v.style.opacity = '0';
+          v.style.pointerEvents = 'none';
+          document.body.appendChild(v);
+          v.srcObject = stream;
+          await v.play();
+          videoRef.current = v;
+        }
+      } catch {
+        aiMonitoringRef.current = false;
+        return;
+      }
+
+      if (!canvasRef.current) {
+        const c = document.createElement('canvas');
+        c.width = 320;
+        c.height = 240;
+        canvasRef.current = c;
+      }
+
+      const captureAndSend = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!video || !canvas || video.readyState < 2) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frame = canvas.toDataURL('image/jpeg', 0.6);
+
+        api.post('/proctoring/analyze-frame', {
+          attemptId,
+          frame,
+          capturedAt: new Date().toISOString(),
+        }).catch(() => { /* fire-and-forget */ });
+      };
+
+      frameIntervalRef.current = setInterval(captureAndSend, 5000);
+    };
+
+    startFrameCapture();
+
+    return () => {
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+        frameIntervalRef.current = null;
+      }
+      if (videoRef.current) {
+        const stream = videoRef.current.srcObject as MediaStream | null;
+        stream?.getTracks().forEach((t) => t.stop());
+        videoRef.current.remove();
+        videoRef.current = null;
+      }
+    };
+  }, [submitted, attemptId]);
 
 
   const formatTime = (secs: number) => {
@@ -282,6 +379,25 @@ export const ExamInterface: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
       <ProctoringBanner events={proctoringEvents} />
 
+      {/* AI Gaze Warning Banner */}
+      {aiWarnings.count > 0 && (
+        <div style={{
+          position: 'fixed', top: '3.5rem', left: 0, right: 0,
+          background: 'rgba(239,68,68,0.92)', backdropFilter: 'blur(8px)',
+          color: '#fff', padding: '0.625rem 2rem', zIndex: 998,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          fontSize: '0.875rem', fontWeight: 600,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertTriangle size={16} />
+            <span>Gaze violation detected. Repeated violations may terminate your exam.</span>
+          </div>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.8125rem', opacity: 0.9 }}>
+            {aiWarnings.count} of {aiWarnings.max} warnings used
+          </span>
+        </div>
+      )}
+
       {/* Top Bar */}
       <div style={{ height: '3.5rem', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -294,9 +410,11 @@ export const ExamInterface: React.FC = () => {
             {formatTime(timeLeft)}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-low)', fontSize: '0.8125rem' }}>
-            <Camera size={14} style={{ color: 'var(--success)' }} />
-            <Monitor size={14} style={{ color: 'var(--success)' }} />
-            <span style={{ color: 'var(--success)', fontSize: '0.75rem' }}>Proctoring Active</span>
+            <span style={{
+              display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+              background: 'var(--success)', animation: 'pulse-dot 2s ease-in-out infinite',
+            }} />
+            <span style={{ color: 'var(--success)', fontSize: '0.75rem' }}>AI Monitoring Active</span>
           </div>
           <Button variant="outline" size="sm" onClick={() => setShowSubmitModal(true)}>Submit Exam</Button>
         </div>
