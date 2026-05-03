@@ -286,3 +286,249 @@ Platform Devs  → Dev-P1, Dev-P2, Dev-P3  (own backend fixes, frontend, QA, Dev
 | P9-H | PWA / React Native mobile app | TBD |
 | P9-I | Multi-tenancy / SaaS model | TBD |
 | P9-J | Audit Logs admin page | TBD |
+
+---
+
+## 🗂️ AI Team — Exact File Map
+
+> Every file the AI team will touch, with the current state and what needs to change. Open these files in order.
+
+---
+
+### 🤖 Dev-AI-1 Files (Backend AI Engineer)
+
+---
+
+#### 1. `ugskill-api/src/lib/aiProctoring.ts` — **CREATE (does not exist)**
+
+```
+Purpose : HTTP client that calls the external AI Vision API
+Status  : File does not exist yet — create from scratch
+```
+
+What to build:
+- Export `async function analyzeFrame(frameBase64: string, attemptId: string)`
+- POST to AI API endpoint (read from env: `AI_API_URL`, `AI_API_KEY`)
+- Return type: `{ gaze: string, facePresent: boolean, eyesOpen: boolean, headPose: string, confidence: number }`
+- Add axios retry (3x, 2s backoff) + 10s timeout
+- Fail-open: if AI API is unreachable, return `null` (log error, do NOT throw)
+
+---
+
+#### 2. `ugskill-api/src/modules/proctoring/proctoring.service.ts` — **MODIFY** (exists, 116 lines)
+
+```
+Purpose : Core proctoring logic — risk scoring, DB writes, auto-terminate
+Status  : analyzeFrame() at line 100 uses Math.random() — FAKE, must be replaced
+```
+
+Changes needed:
+- **Line 100–112**: Replace `analyzeFrame()` body — import and call real `aiProctoring.ts` client
+- Add `proctoringConfig` parameter reading from the `exams` table (after Dev-P1 adds DB columns)
+- Apply configurable `autoTerminateScore` threshold instead of hardcoded `>= 100`
+- After auto-terminate: emit `proctoring:terminated` socket event (wire to tracking namespace)
+
+---
+
+#### 3. `ugskill-api/src/modules/proctoring/proctoring.routes.ts` — **MODIFY** (exists, 16 lines)
+
+```
+Purpose : REST routes for proctoring
+Status  : Has 4 routes. Missing: override + summary endpoints
+```
+
+Add these 2 routes:
+```
+POST /attempts/:attemptId/override   → proctoringController.overrideViolation
+GET  /attempts/:attemptId/summary    → proctoringController.getAttemptSummary
+```
+
+---
+
+#### 4. `ugskill-api/src/modules/proctoring/proctoring.controller.ts` — **MODIFY** (exists, 51 lines)
+
+```
+Purpose : Express handlers for proctoring endpoints
+Status  : Has 4 handlers. Missing: overrideViolation + getAttemptSummary
+```
+
+Add 2 new handlers:
+- `overrideViolation` — sets `overriddenBy` (req.user.userId) + `overrideReason` on the event doc
+- `getAttemptSummary` — aggregates total violations, current riskScore, event timeline from Mongo
+
+---
+
+#### 5. `ugskill-api/src/jobs/aiFrameAnalysis.job.ts` — **CREATE (does not exist)**
+
+```
+Purpose : BullMQ worker that processes queued webcam frames via AI API
+Status  : File does not exist — create from scratch
+```
+
+Pattern to follow: look at `ugskill-api/src/jobs/cdcSync.job.ts` for the worker structure.
+
+What to build:
+- Job payload type: `{ attemptId, examId, studentId, frameBase64, capturedAt }`
+- Worker processes job → calls `aiProctoring.analyzeFrame()` → maps AI result to severity
+- Calls `proctoringService.ingestEvent()` with the mapped event
+- If ingestEvent returns HIGH/CRITICAL → emit socket event via tracking namespace
+
+---
+
+#### 6. `ugskill-api/src/config/queue.ts` — **MODIFY** (exists, 38 lines)
+
+```
+Purpose : BullMQ queue definitions
+Status  : Has cdcSyncQueue, notificationQueue, scoringQueue. Missing: aiFrameQueue
+```
+
+Add at line 27 (after `scoringQueue`):
+```ts
+export const aiFrameQueue = new Queue('ai-frame-analysis', defaultOptions);
+```
+
+Also add `aiFrameQueue.close()` inside `closeQueues()` at line 35.
+
+---
+
+#### 7. `ugskill-api/src/jobs/worker.ts` — **MODIFY** (exists, registers workers)
+
+```
+Purpose : Starts all BullMQ workers when server boots
+Status  : Has cdcWorker + notificationWorker. Missing: aiFrameWorker
+```
+
+Import and register `aiFrameWorker` from `./aiFrameAnalysis.job.ts`.
+
+---
+
+#### 8. `ugskill-api/src/modules/admin/admin.controller.ts` — **MODIFY** (add proctoring report handler)
+
+```
+Purpose : Admin-facing API handlers
+Status  : Missing GET /admin/exams/:examId/proctoring-report handler
+```
+
+Add `getProctoringReport` handler:
+- Fetch all `exam_proctoring_events` from Mongo for given `examId`
+- Group by `studentId`
+- For each student: `{ studentId, violationCount, riskScore, flaggedEvents[], aiConfidenceAvg }`
+- Return sorted by riskScore descending
+
+Also register route in `admin.routes.ts`:
+```
+GET /exams/:examId/proctoring-report → requireRole(['admin']) → adminController.getProctoringReport
+```
+
+---
+
+### 🤖 Dev-AI-2 Files (Frontend AI / Proctoring HUD)
+
+---
+
+#### 9. `ugskill-web/src/pages/ExamInterface.tsx` — **MODIFY** (exists, 408 lines)
+
+```
+Purpose : Live exam UI — questions, timer, submission
+Status  : Has basic tab-switch proctoring. Missing: frame capture, AI warning overlay, terminated redirect
+```
+
+Three separate additions, work top to bottom:
+
+**Addition A — Frame Capture Loop** (add after line 193, inside the component):
+```
+- useRef for <video> element (add ref to existing webcam video if present, or create hidden one)
+- useRef for <canvas> element (hidden, off-screen)
+- useEffect that starts a setInterval every 5s (when exam is active, !submitted)
+- Inside interval: canvas.getContext('2d').drawImage(video, ...) → canvas.toDataURL('image/jpeg', 0.6)
+- Fire-and-forget: api.post('/proctoring/analyze-frame', { attemptId, frame: base64 })
+- Cleanup: clearInterval on unmount or submit
+```
+
+**Addition B — "AI Monitoring Active" badge** (add inside the Top Bar JSX, around line 296–300):
+```
+Replace the current static "Proctoring Active" text with a pulsing green dot + "AI Monitoring Active"
+```
+
+**Addition C — Gaze Warning + Terminated overlay** (add after the ProctoringBanner component):
+```
+- New state: const [aiWarnings, setAiWarnings] = useState<{count: number, max: number}>({count:0, max:5})
+- New state: const [terminated, setTerminated] = useState(false)
+- In the tracking socket useEffect (line 150–166), add:
+    trackingSocket.on('proctoring:warning', (data) => setAiWarnings(...))
+    trackingSocket.on('proctoring:terminated', () => { setTerminated(true); navigate('/exams') })
+- Render a non-dismissable red banner when aiWarnings.count > 0
+```
+
+---
+
+#### 10. `ugskill-web/src/pages/ExamPreFlight.tsx` — **MODIFY** (exists, 6825 bytes)
+
+```
+Purpose : Pre-exam camera/mic check page shown before exam starts
+Status  : Has a static webcam preview. Missing: AI face-detection check
+```
+
+Changes needed:
+- After webcam stream starts, capture one test frame every 3s
+- POST to `POST /api/v1/proctoring/analyze-frame` with a dummy `attemptId: 'preflight'`
+- Display live feedback pill below the video:
+  - `facePresent: true` → green "✅ Face detected"
+  - `facePresent: false` → red "❌ No face — look at camera"
+  - `confidence < 0.5` → yellow "⚠️ Poor lighting detected"
+- Disable the "Start Exam" button while `facePresent === false` for > 5s
+
+---
+
+#### 11. `ugskill-web/src/pages/admin/ExamOps.tsx` — **MODIFY** (exists, 11229 bytes)
+
+```
+Purpose : Admin live exam monitoring page
+Status  : Shows a basic incident list. Missing: risk-score grid, per-student drawer, override/terminate
+```
+
+Changes needed (major redesign of the student grid section):
+- Replace the incident list cards with a **CSS grid of student tiles**
+- Each tile shows: student name, risk score number, colour-coded border
+  - green border: 0–30 | yellow: 31–60 | orange: 61–80 | red: 81–100
+- Add `onClick` on each tile → opens a slide-in right drawer with:
+  - Violation timeline (type + timestamp)
+  - AI confidence score per event
+  - "Override" button → `POST /proctoring/attempts/:attemptId/override`
+  - "Terminate" button → `POST /exams/attempts/:attemptId/terminate` with confirm
+- Add KPI strip at top: `Critical Alerts | High-Risk Students | Avg Risk Score`
+- Listen for `flag:alert` from tracking socket (already connected) → update tile colour live
+
+---
+
+#### 12. `ugskill-web/src/pages/admin/ProctoringReport.tsx` — **CREATE (does not exist)**
+
+```
+Purpose : Post-exam per-student proctoring report for admins
+Status  : File does not exist — create from scratch
+Route   : /app/admin/proctoring-report/:examId
+```
+
+What to build:
+- `useParams()` to get `examId`
+- `useQuery` → `GET /api/v1/admin/exams/:examId/proctoring-report`
+- Render a DataTable with columns: Student Name | Violations | Risk Score | AI Confidence Avg | Actions
+- Filter bar: risk level dropdown (All / High / Critical), violation type
+- "Download PDF" button → `window.print()` (add `@media print` styles)
+- Register the route in `App.tsx` — add inside the admin section:
+  ```tsx
+  <Route path="admin/proctoring-report/:examId" element={<ProctoringReport />} />
+  ```
+- Add link from `ExamOps.tsx` — "View Full Report" button per exam row
+
+---
+
+#### 13. `ugskill-web/src/App.tsx` — **MODIFY** (add route for ProctoringReport)
+
+```
+Purpose : Root router config
+Status  : Has all existing routes. Missing: /admin/proctoring-report/:examId
+```
+
+- Import `ProctoringReport` (lazy load it like the other admin pages)
+- Add the route inside the admin `<Route>` group
