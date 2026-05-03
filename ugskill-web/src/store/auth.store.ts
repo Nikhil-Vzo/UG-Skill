@@ -13,6 +13,7 @@ export interface User {
   branch?: string;
   graduationYear?: number;
   status?: string;
+  cgpa?: number;
 }
 
 interface AuthState {

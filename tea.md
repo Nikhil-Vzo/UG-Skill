@@ -1,88 +1,288 @@
-# Project Team Assignments: Phase 9-P (Proctoring) & Phase 10
+# UGSkill — Sprint Task Board (Full Audit)
 
-```mermaid
-graph TD
-    ProjectRoot[Project Goal: AI Proctoring & Final QA]
-    
-    subgraph "Backend & AI Specialist"
-        D1[Dev 1: Core Intelligence]
-        D1 --> AI[AI Proctoring Core]
-        D1 --> Risk[Risk Scoring Algorithm]
-        D1 --> Job[BullMQ Frame Analysis]
-    end
-    
-    subgraph "Frontend & UI/UX Lead"
-        D2[Dev 2: Client Interface]
-        D2 --> Capture[Webcam Capture Logic]
-        D2 --> HUD[Proctoring Overlay/HUD]
-        D2 --> Lazy[Route Lazy Loading]
-    end
-    
-    subgraph "Real-Time Engineer"
-        D3[Dev 3: Live Tracking]
-        D3 --> Sockets[Tracking Namespace Upgrade]
-        D3 --> Admin[Live Proctored Dashboard]
-        D3 --> Events[Event Broadcast System]
-    end
-    
-    subgraph "QA & DevOps"
-        D4[Dev 4: Selenium & Stability]
-        D4 --> Sel[Selenium E2E Automation]
-        D4 --> Sec[Security/Audit Logs]
-        D4 --> Prod[Production Orchestration]
-    end
+> **Last audited:** May 3, 2026  
+> **Team:** 2 AI-focused developers · 3 Platform/General developers  
+> **Current phase:** Phase 9-P (AI Proctoring) + Phase 10 (QA & Deploy)
 
-    ProjectRoot --> D1
-    ProjectRoot --> D2
-    ProjectRoot --> D3
-    ProjectRoot --> D4
+---
+
+## 📋 What Was Found (Audit Summary)
+
+After scanning every file in `ugskill-api/` and `ugskill-web/` against `TODO.md`, here is the real unfinished work:
+
+| Area | Status | Key Gap |
+|---|---|---|
+| AI Proctoring — AI API client | ❌ NOT BUILT | `analyzeFrame()` in `proctoring.service.ts` is a random-number simulator, not a real API call |
+| AI Proctoring — BullMQ frame job | ❌ NOT BUILT | `aiFrameAnalysis.job.ts` does not exist; no `aiFrameQueue` defined in `queue.ts` |
+| AI Proctoring — WebSocket upgrades | ❌ NOT BUILT | `tracking.namespace.ts` has basic event relay; no `proctoring:ai-alert`, `proctoring:terminated` emits |
+| AI Proctoring — Violation scoring config | ❌ NOT BUILT | `proctoringConfig` columns not added to `exams` PG table |
+| AI Proctoring — Admin report endpoint | ❌ NOT BUILT | `GET /admin/exams/:examId/proctoring-report` missing |
+| AI Proctoring — Mongo schema extended | ❌ NOT BUILT | `exam_proctoring_events` still using old schema (no `aiConfidence`, `overriddenBy`, etc.) |
+| Frontend — Frame capture loop | ❌ NOT BUILT | `ExamInterface.tsx` has NO canvas/base64 capture code; 0 results searching for `getContext` |
+| Frontend — Proctoring HUD overlay | ❌ NOT BUILT | No gaze-warning overlay or "AI Monitoring Active" badge in `ExamInterface.tsx` |
+| Frontend — Pre-flight AI face check | ❌ NOT BUILT | `ExamPreFlight.tsx` does not call AI API during camera check |
+| Frontend — Admin command center upgrades | ❌ NOT BUILT | `ExamOps.tsx` has no risk-score grid or per-student drawer |
+| Frontend — Proctoring Report page | ❌ NOT BUILT | `pages/admin/ProctoringReport.tsx` does not exist |
+| Backend — Critical API blocker (mock sessions) | ⚠️ MISMATCH | `InterviewPrep.tsx` calls `POST /placements/sessions/mock` — backend DOES have this route ✅ (resolved) |
+| Backend — Critical API blocker (readiness) | ✅ RESOLVED | `/readiness/me` and `/readiness/me/insights` routes exist in placement.routes.ts |
+| Backend — Certificate route | ✅ RESOLVED | `GET /certificates/:id` route exists in certificate.routes.ts |
+| Phase 10 — E2E tests | ❌ NOT BUILT | All 3 Selenium/Playwright E2E scenarios are unwritten |
+| Phase 10 — Cross-browser testing | ❌ NOT DONE | Chrome/Firefox/Safari/Edge pass not executed |
+| Phase 10 — Mobile responsive audit | ❌ NOT DONE | No 375px / 768px audit run on all 29 routes |
+| Phase 10 — Performance (Phase 10 list) | ✅ DONE | `React.lazy()` already implemented in `App.tsx` for 5 heavy pages |
+| Orphaned feature — Peer Groups UI | ❌ NOT BUILT | Backend API exists, no frontend page |
+| Orphaned feature — Admin Invite button | ❌ NOT BUILT | Backend exists (`invite` module), no UI in UserDirectory |
+| Phase 9-A — Payments (Razorpay) | 🔮 Future | Not started |
+| Phase 9-B — Transactional Email | 🔮 Future | Not started |
+| Phase 9-D — Coding Judge (Judge0) | 🔮 Future | Not started |
+| Phase 9-E — AI Chatbot / LLM | 🔮 Future | Not started |
+
+---
+
+## 👥 Team Split
+
+```
+AI Developers  → Dev-AI-1, Dev-AI-2      (own everything AI / ML / socket intelligence)
+Platform Devs  → Dev-P1, Dev-P2, Dev-P3  (own backend fixes, frontend, QA, DevOps)
 ```
 
-This document re-aligns the team for the **Phase 9-P (AI Proctoring)** sprint and the subsequent **Phase 10 (Testing & Deployment)**.
+---
+
+## 🤖 Dev-AI-1 — Backend AI Engineer
+**Focus: AI Proctoring Brain, Risk Engine, BullMQ Frame Pipeline**
+
+### P9-P Backend (AI Core)
+
+- [ ] **AI.1 — Real AI API Client** (`src/lib/aiProctoring.ts`)
+  - Replace the random-number simulator in `proctoring.service.ts → analyzeFrame()`
+  - `POST /ai/analyze-frame` → sends base64 frame, receives `{ gaze, facePresent, eyesOpen, headPose, confidence }`
+  - Add retry logic (3 retries, 2s backoff) + 10s timeout
+  - Must handle API unavailability gracefully (fail-open: log, don't block student)
+
+- [ ] **AI.2 — BullMQ Frame Analysis Job** (`src/jobs/aiFrameAnalysis.job.ts`)
+  - Add `aiFrameQueue` to `src/config/queue.ts` (alongside existing `cdcSyncQueue`)
+  - Queue payload: `{ attemptId, examId, studentId, frameBase64, capturedAt }`
+  - Worker calls `aiProctoring.ts` → result parsed → `proctoringService.ingestEvent()` called
+  - Register worker in `src/jobs/worker.ts`
+
+- [ ] **AI.3 — Violation Scoring Engine upgrade** (`proctoring.service.ts`)
+  - Read `proctoringConfig` from the `exams` table (see Dev-P1 schema task DB.1)
+  - Apply configurable thresholds: `gazeThreshold`, `faceTimeoutSeconds`, `autoTerminateScore`
+  - Emit `proctoring:terminated` socket event on auto-terminate (integrate with tracking namespace)
+  - Severity tiers must follow:  
+    `LOW (5pts)` → `MEDIUM (15pts)` → `HIGH (40pts)` → `CRITICAL (80pts)`
+
+- [ ] **AI.4 — Admin Proctoring Report Endpoint**
+  - `GET /api/v1/admin/exams/:examId/proctoring-report`
+  - Returns per-student: violation count, risk score, flagged event timestamps, AI confidence breakdown
+  - Aggregates from `exam_proctoring_events` (Mongo) joined with student info (PG)
+
+- [ ] **AI.5 — Override + Summary REST endpoints** (`proctoring.routes.ts`)
+  - `POST /api/v1/proctoring/attempts/:attemptId/override` — admin clears false positive (set `overriddenBy`, `overrideReason`)
+  - `GET /api/v1/proctoring/attempts/:attemptId/summary` — risk score + violation count + event timeline
 
 ---
 
-## 👨‍💻 Developer 1: Backend & AI Specialist
-**Focus**: *Intelligence, Violation Scoring, and Async Processing*
+## 🤖 Dev-AI-2 — Frontend AI / Proctoring HUD Engineer
+**Focus: Webcam Frame Capture, Proctoring HUD, Pre-flight AI Check, Admin Command Center**
 
-- [ ] **AI Proctoring Core**: Integrate the external AI behavior analysis API (Gaze detection, Object recognition).
-- [ ] **Risk Scoring Engine**: Develop the logic to aggregate violation events into a weighted "Risk Score" (0-100).
-- [ ] **BullMQ Job Processing**: Implement the background worker to process high-frequency frame buffers from the `/tracking` stream.
-- [ ] **Advanced Audit**: Finalize role-based access for proctoring reports in the Admin panel.
+### P9-P Frontend (AI-Driven UI)
+
+- [ ] **AI.6 — Frame Capture Loop** (`pages/ExamInterface.tsx`)
+  - Every 5s: capture frame from `<video>` element via hidden `<canvas>` → `toDataURL('image/jpeg', 0.6)` → base64
+  - POST base64 to `POST /api/v1/proctoring/analyze-frame` in the background (non-blocking, fire-and-forget)
+  - Show live **"🟢 AI Monitoring Active"** pulsing badge in exam header
+  - Configurable interval from exam `proctoringConfig.frameCaptureIntervalSeconds`
+
+- [ ] **AI.7 — Gaze Warning Overlay** (`pages/ExamInterface.tsx`)
+  - Listen for `proctoring:warning` socket event from `/tracking` namespace
+  - Show non-dismissable red banner: `"⚠️ Gaze violation detected. Repeated violations may terminate your exam."`
+  - Show counter: `"2 of 5 warnings used"`
+  - Listen for `proctoring:terminated` → redirect to results page with termination notice
+
+- [ ] **AI.8 — Pre-flight AI Camera Check** (`pages/ExamPreFlight.tsx`)
+  - During the camera check step: capture a test frame and call `POST /api/v1/proctoring/analyze-frame`
+  - Show live feedback: `"✅ Face detected"` / `"⚠️ Poor lighting"` / `"❌ Look directly at camera"`
+  - Block exam start button if no face detected for > 5s
+
+- [ ] **AI.9 — Admin Proctoring Command Center upgrades** (`pages/admin/ExamOps.tsx`)
+  - Replace current basic incident list with a live **risk-score grid** of active students
+  - Colour-code tiles: green (0–30) / yellow (31–60) / orange (61–80) / red (81–100)
+  - Click student tile → slide-in drawer showing: violation timeline, AI confidence scores, flagged frame thumbnails
+  - Add **"Override"** button per violation → calls `POST /proctoring/attempts/:id/override`
+  - Add **"Terminate"** button per student → calls `POST /exams/attempts/:id/terminate` with confirm modal
+  - KPI strip: `Critical Alerts | High-Risk Students | Avg Risk Score`
+
+- [ ] **AI.10 — Proctoring Report page** (`pages/admin/ProctoringReport.tsx`)
+  - New admin page at `/app/admin/proctoring-report/:examId`
+  - Fetches `GET /admin/exams/:examId/proctoring-report`
+  - Per-student table: violation count, risk score, flagged timestamps, AI confidence breakdown
+  - Filter by: risk level, violation type, time range
+  - Download as PDF (use existing PDF utility or `window.print()`)
+  - Register route in `App.tsx`
 
 ---
 
-## 🎨 Developer 2: Frontend & UI/UX Lead
-**Focus**: *Proctoring HUD, Media Capture, and Performance*
+## 🔧 Dev-P1 — Backend Platform Engineer
+**Focus: DB Schema, API Contract Fixes, WebSocket Upgrade, Orphaned Features**
 
-- [ ] **Exam Media Capture**: Implement the frame-capture loop in the `ExamInterface` (Canvas -> Base64 snippets).
-- [ ] **Proctoring HUD**: Design and build the student-facing "Secure Mode" overlay with status indicators and violation warnings.
-- [ ] **Performance Optimization**: Implement `React.lazy()` and `<Suspense>` across major routes to shrink the 859KB bundle.
-- [ ] **UI Refinement**: Ensure the Interview Room and Exam Interface maintain a premium "Midnight Navy" glassmorphism aesthetic.
+### Schema / DB
+
+- [ ] **DB.1 — Add `proctoringConfig` to `exams` PG table**
+  - Migration file: `src/db/migrations/add-proctoring-config.ts`
+  - Columns to add:
+    ```
+    gaze_threshold              integer  DEFAULT 5
+    face_timeout_seconds        integer  DEFAULT 10
+    allow_multiple_faces        boolean  DEFAULT false
+    auto_terminate_score        integer  DEFAULT 80
+    frame_capture_interval_sec  integer  DEFAULT 5
+    ```
+  - Update Drizzle schema: `src/db/pg/schema/exam.ts`
+  - Add to `exam.repository.ts` select
+
+- [ ] **DB.2 — Extend `exam_proctoring_events` Mongo schema** (`proctoring.model.ts`)
+  - Add fields: `aiConfidence`, `gazeDirection`, `riskScoreAtEvent`, `overriddenBy`, `overrideReason`
+  - Match the schema defined in TODO.md P9-P.13
+
+### WebSocket Upgrade
+
+- [ ] **WS.1 — Upgrade `tracking.namespace.ts` for AI events**
+  - Add new emit: `proctoring:ai-alert` → sent to admin room when AI returns HIGH/CRITICAL
+  - Add new emit: `proctoring:warning` → sent to student when violation threshold crossed
+  - Add new emit: `proctoring:terminated` → sent to student when exam auto-terminated
+  - Wire to `proctoringService.ingestEvent()` result (call from frame analysis worker)
+
+### Orphaned Features
+
+- [ ] **OF.1 — Admin Invite UI** (`pages/admin/UserDirectory.tsx`)
+  - Add **"Invite User"** button in the user directory toolbar
+  - Opens modal: input email + role (faculty/HR) → `POST /api/v1/invites`
+  - Show success toast with invite link
+
+- [ ] **OF.2 — Peer Groups page** (`pages/PeerGroups.tsx`)
+  - New student page at `/app/peer-groups`
+  - List peer groups: `GET /api/v1/placements/peer-groups`
+  - Create group: `POST /api/v1/placements/peer-groups`
+  - Join group session: links to `/app/live-gd/:sessionId`
+  - Register route in `App.tsx`
 
 ---
 
-## ⚡ Developer 3: Real-Time & Integration Engineer
-**Focus**: *Tracking Sockets, Live Feeds, and Eventing*
+## 🧪 Dev-P2 — QA & Testing Engineer
+**Focus: E2E Testing, Cross-Browser, Mobile Audit, Security**
 
-- [ ] **Tracking Namespace Upgrade**: Enhance the `/tracking` socket to handle binary frame data and proctoring event emissions.
-- [ ] **Live Proctored Dashboard**: Build the real-time admin view for monitoring multiple active candidates with risk-level color coding.
-- [ ] **Event Broadcast System**: Wire the frontend to emit "tab-switch", "exit-fullscreen", and "copy-paste" attempts to the backend.
-- [ ] **State Sync**: Ensure proctoring-triggered "auto-termination" syncs correctly with the exam completion state.
+### Phase 10 — QA / Testing
+
+- [ ] **QA.1 — E2E Scenario 1** (Playwright or Selenium)
+  ```
+  Register new student → Email verify → Login → Enroll in course
+  → Watch lecture → Submit assignment → Verify progress on Dashboard
+  ```
+
+- [ ] **QA.2 — E2E Scenario 2** (Playwright or Selenium)
+  ```
+  Admin login → Create exam → Set batch access
+  → Student starts exam (proctoring triggers) → Admin sees alert
+  → Student submits → Score appears in Leaderboard
+  ```
+
+- [ ] **QA.3 — E2E Scenario 3** (Playwright or Selenium)
+  ```
+  Admin creates placement drive → Student applies
+  → Admin shortlists → Student sees status update in PlacementsHub
+  ```
+
+- [ ] **QA.4 — Cross-browser testing**
+  - Run all 3 E2E scenarios on: Chrome ✅ · Firefox · Safari · Edge
+  - Document any browser-specific failures
+
+- [ ] **QA.5 — Mobile responsive audit**
+  - Test every one of the 29 routes at **375px** (iPhone SE) and **768px** (tablet)
+  - Priority pages: Login, Discover, VideoPlayer, ExamInterface, Dashboard, ExamOps
+  - Fix any layout breaks found
+
+- [ ] **QA.6 — Security audit**
+  - Verify JWT is sent in `Authorization: Bearer` header on every API call (no localStorage leaks)
+  - Test XSS: submit `<script>` tag in Community post body — must be stripped
+  - Test rate limiting: hammer `POST /auth/login` > 10 times in 15 min → expect 429
+  - Verify CORS: curl from non-allowed origin → expect 403
+  - Test file upload: upload `.php` / `.exe` file in AssignmentSubmit → expect rejection
 
 ---
 
-## 🛡️ Developer 4: QA, Security & DevOps Engineer
-**Focus**: *Selenium Automation, Security Audits, and CI/CD*
+## 🚀 Dev-P3 — DevOps / Infrastructure Engineer
+**Focus: CI/CD, Docker, Deployment, Monitoring**
 
-- [ ] **Selenium E2E Automation**: Build the automated testing suite covering the "Candidate Journey" (Register -> Enroll -> AI-Proctored Exam -> Submit).
-- [ ] **Security Penetration Test**: Audit new proctoring endpoints for SQLi/XSS and verify rate-limiting on frame submissions.
-- [ ] **CI/CD Pipeline**: Finalize the production Docker deployment scripts for `ugskill-api` and `ugskill-web`.
-- [ ] **Audit Logging**: Verify that every proctoring violation and manual override is captured with a timestamped log.
+### Phase 10 — Deployment
+
+- [ ] **DO.1 — Finalize Docker Compose for production**
+  - Add `AI_API_URL` and `AI_API_KEY` env vars to `docker-compose.yml`
+  - Add `aiframeworkqueue` Redis config (separate DB index from CDC queue)
+  - Verify multi-stage build produces correct dist
+
+- [ ] **DO.2 — CI/CD Pipeline (GitHub Actions)**
+  - `.github/workflows/ci.yml`:
+    - On PR: `npm run build` + TypeScript check for both `ugskill-api` and `ugskill-web`
+    - On merge to main: Docker build + push to registry + deploy to VPS/Railway
+  - Add environment secrets: `SUPABASE_URL`, `MONGODB_URI`, `JWT_SECRET`, `AI_API_KEY`
+
+- [ ] **DO.3 — Production deployment**
+  - Deploy `ugskill-api` Docker container to Railway / Render / VPS
+  - Deploy `ugskill-web` to Vercel (automatic on main push)
+  - Set `VITE_API_URL=https://api.ugskill.com` and `VITE_SOCKET_URL=https://api.ugskill.com` in Vercel env
+  - Configure backend CORS to allow `https://ugskill.com`
+
+- [ ] **DO.4 — DNS & SSL**
+  - Point `ugskill.com` → Vercel
+  - Point `api.ugskill.com` → backend server
+  - Verify SSL certs are auto-provisioned (Vercel + Railway both handle this)
+
+- [ ] **DO.5 — Monitoring setup**
+  - UptimeRobot: monitor `GET /api/v1/health` every 5 min → alert on Slack/email
+  - Sentry: verify frontend DSN and backend DSN are both active in production env
+  - Set up log aggregation (Railway logs or self-hosted Loki)
+
+- [ ] **DO.6 — Load test (pre-launch)**
+  - Run existing `load/k6.test.js` script against staging environment
+  - Target: p95 < 500ms, 0 errors at 50 VUs ramp
+  - Document results
 
 ---
 
-### Sprint Protocol
-1. **Critical Path**: Dev 1 and Dev 2 must sync daily on the frame submission payload structure.
-2. **E2E Priority**: Selenium tests (Dev 4) should be written in parallel with feature development to catch regressions early.
-3. **Emergency Halt**: Any proctoring logic that triggers auto-termination must be reviewed by the full team to avoid false positives.
+## 🗓️ Sprint Protocol
+
+1. **Daily sync between Dev-AI-1 and Dev-AI-2** — agree on frame payload structure (`{ attemptId, frame, capturedAt }`) before Day 1 coding.
+2. **Dev-AI-2 cannot start AI.6** until Dev-P1 completes DB.1 and Dev-AI-1 has defined the `analyzeFrame` API contract.
+3. **Dev-P2 E2E tests** should be written in parallel with feature development — catch regressions early.
+4. **Any auto-termination logic** (AI.3, WS.1) requires team review before merging — false positives are a critical risk.
+5. **Dev-P3 deploys to staging first** — Dev-P2 runs full QA suite against staging, not production.
+
+---
+
+## ✅ Already Done (Do NOT Redo)
+
+- `React.lazy()` + `<Suspense>` for 5 heavy pages — implemented in `App.tsx`
+- Certificate route `GET /certificates/:id` — exists in `certificate.routes.ts`
+- `/readiness/me` and `/readiness/me/insights` — both exist in `placement.routes.ts`
+- `POST /placements/sessions/mock` — backend route exists (mismatch from Phase 8.5 already resolved)
+- Course Reviews section — live in `CourseLanding.tsx` with real API
+- All Phase 8 API integration (I1–I9) — complete
+- Basic proctoring module scaffold (`proctoring.routes.ts`, `proctoring.service.ts`, `proctoring.controller.ts`, `proctoring.model.ts`) — P9-P.1 ✅
+
+---
+
+## 🔮 Future Phases (Not This Sprint)
+
+| Phase | Feature | Owner (future) |
+|---|---|---|
+| P9-A | Razorpay / Stripe payments | TBD |
+| P9-B | Transactional email (Resend/SendGrid) | TBD |
+| P9-C | Browser push notifications | TBD |
+| P9-D | Judge0 coding judge | TBD |
+| P9-E | Real LLM chatbot (Gemini/GPT-4o) | TBD |
+| P9-F | Instructor / peer grading UI | TBD |
+| P9-G | Analytics & PDF exports | TBD |
+| P9-H | PWA / React Native mobile app | TBD |
+| P9-I | Multi-tenancy / SaaS model | TBD |
+| P9-J | Audit Logs admin page | TBD |
