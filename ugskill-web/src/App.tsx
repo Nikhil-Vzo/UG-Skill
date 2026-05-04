@@ -44,6 +44,7 @@ const QuizBuilder = lazy(() => import('./pages/admin/QuizBuilder').then(m => ({ 
 import { AdminCourses } from './pages/admin/AdminCourses';
 import { PlacementsConfig } from './pages/admin/PlacementsConfig';
 import { ExamOps } from './pages/admin/ExamOps';
+import { ProctoringReport } from './pages/admin/ProctoringReport';
 import { DriveConfig } from './pages/admin/DriveConfig';
 
 const PageFallback = () => (
@@ -110,6 +111,7 @@ function App() {
                 <Route path="placements" element={<PlacementsConfig />} />
                 <Route path="placements/:driveId" element={<DriveConfig />} />
                 <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />
+                <Route path="proctoring-report/:examId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ProctoringReport /></ProtectedRoute>} />
                 <Route path="courses" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><AdminCourses /></ProtectedRoute>} />
                 <Route path="courses/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><CourseBuilder /></ProtectedRoute>} />
                 <Route path="courses/:courseId/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><CourseBuilder /></ProtectedRoute>} />

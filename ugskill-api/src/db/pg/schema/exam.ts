@@ -34,6 +34,12 @@ export const exams = pgTable('exams', {
   difficulty: text('difficulty'),
   isPasswordProtected: boolean('is_password_protected').default(false),
   passwordHash: text('password_hash'),
+  // Proctoring configuration
+  gazeThreshold: integer('gaze_threshold').default(5),
+  faceTimeoutSeconds: integer('face_timeout_seconds').default(10),
+  allowMultipleFaces: boolean('allow_multiple_faces').default(false),
+  autoTerminateScore: integer('auto_terminate_score').default(80),
+  frameCaptureIntervalSec: integer('frame_capture_interval_sec').default(5),
   windowStart: timestamp('window_start', { withTimezone: true }),
   windowEnd: timestamp('window_end', { withTimezone: true }),
   mongoDefinitionId: text('mongo_definition_id'),

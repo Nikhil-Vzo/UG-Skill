@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../../config/postgres';
 import { examAttempts, exams } from '../../db/pg/schema/exam';
 import { eq, desc, and, gte } from 'drizzle-orm';
+import { proctoringService } from '../proctoring/proctoring.service';
 
 export const adminController = {
   getStats: async (req: Request, res: Response) => {
@@ -90,6 +91,18 @@ export const adminController = {
     } catch (error) {
       console.error('Admin incidents error:', error);
       res.status(500).json({ success: false, message: 'Error fetching incidents' });
+    }
+  },
+
+  /** GET /api/v1/admin/exams/:examId/proctoring-report */
+  getProctoringReport: async (req: Request, res: Response) => {
+    try {
+      const { examId } = req.params;
+      const report = await proctoringService.getProctoringReport(examId as string);
+      res.json({ success: true, data: report });
+    } catch (error) {
+      console.error('Admin proctoring report error:', error);
+      res.status(500).json({ success: false, message: 'Error fetching proctoring report' });
     }
   },
 };

@@ -37,12 +37,52 @@ export const proctoringController = {
 
   analyzeFrame: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { attemptId, frame } = req.body;
+      const { attemptId, frame, examId, studentId, capturedAt } = req.body;
       if (!attemptId || !frame) {
         return res.status(400).json({ success: false, message: 'attemptId and frame are required' });
       }
-      const result = await proctoringService.analyzeFrame(attemptId, frame);
-      res.json(successResponse(result));
+
+      if (attemptId === 'preflight') {
+        // Pre-flight requires synchronous response to unlock the "Begin Exam" button
+        const result = await proctoringService.analyzeFrame(attemptId, frame, examId, studentId);
+        return res.json(successResponse(result.data));
+      }
+
+      // During active exam, queue the heavy AI workload and return immediately
+      const { aiFrameQueue } = await import('../../config/queue');
+      await aiFrameQueue.add('analyze-frame', {
+        attemptId,
+        examId,
+        studentId: studentId || req.user?.userId,
+        frameBase64: frame,
+        capturedAt: capturedAt || new Date().toISOString(),
+      });
+
+      res.json(successResponse({ status: 'queued' }));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  overrideViolation: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { attemptId } = req.params;
+      const { eventId, reason } = req.body;
+      const adminId = req.user!.userId;
+      if (!eventId || !reason) {
+        return res.status(400).json({ success: false, message: 'eventId and reason are required' });
+      }
+      const event = await proctoringService.overrideEvent(attemptId as string, eventId, adminId, reason);
+      res.json(successResponse(event));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getAttemptSummary: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const summary = await proctoringService.getAttemptSummary(req.params.attemptId as string);
+      res.json(successResponse(summary));
     } catch (error) {
       next(error);
     }

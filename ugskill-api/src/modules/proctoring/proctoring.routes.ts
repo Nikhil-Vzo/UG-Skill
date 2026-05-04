@@ -10,6 +10,8 @@ router.post('/analyze-frame', requireAuth, proctoringController.analyzeFrame);
 
 // Admin routes
 router.get('/attempts/:attemptId', requireAuth, requireRole(['admin', 'instructor']), proctoringController.getAttemptEvents);
+router.get('/attempts/:attemptId/summary', requireAuth, requireRole(['admin', 'instructor']), proctoringController.getAttemptSummary);
+router.post('/attempts/:attemptId/override', requireAuth, requireRole(['admin', 'instructor']), proctoringController.overrideViolation);
 router.get('/incidents/recent', requireAuth, requireRole(['admin', 'instructor']), proctoringController.getRecentIncidents);
 
 export const proctoringRoutes = router;

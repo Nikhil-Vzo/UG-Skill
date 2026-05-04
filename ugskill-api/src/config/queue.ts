@@ -25,6 +25,7 @@ const defaultOptions: QueueOptions = {
 export const cdcSyncQueue = new Queue('cdc-sync', defaultOptions);
 export const notificationQueue = new Queue('notifications', defaultOptions);
 export const scoringQueue = new Queue('scoring', defaultOptions);
+export const aiFrameQueue = new Queue('ai-frame-analysis', defaultOptions);
 
 // Helper to gracefully shutdown queues
 export const closeQueues = async () => {
@@ -33,5 +34,6 @@ export const closeQueues = async () => {
     cdcSyncQueue.close(),
     notificationQueue.close(),
     scoringQueue.close(),
+    aiFrameQueue.close(),
   ]);
 };

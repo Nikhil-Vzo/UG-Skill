@@ -193,6 +193,29 @@ export class ExamService {
     return { attempt, score, response };
   }
 
+  async adminTerminateAttempt(attemptId: string, adminId: string) {
+    const attempt = await examAttemptRepository.findAttemptById(attemptId);
+    if (!attempt) throw new NotFoundError('Attempt not found');
+
+    const updated = await examAttemptRepository.updateAttempt(attemptId, {
+      status: 'terminated',
+      proctoringVerdict: 'admin_terminated',
+      submittedAt: new Date(),
+    });
+
+    // Log the admin action
+    await proctoringService.ingestEvent({
+      attemptId,
+      examId: attempt.examId,
+      studentId: attempt.studentId,
+      type: 'admin_terminate',
+      severity: 'CRITICAL',
+      metadata: { terminatedBy: adminId, reason: 'Admin manual termination' },
+    });
+
+    return updated;
+  }
+
   // --- PROCTORING EVENTS ---
 
   async ingestProctoringEvent(studentId: string, data: any) {

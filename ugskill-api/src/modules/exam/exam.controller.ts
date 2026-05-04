@@ -128,6 +128,17 @@ export const getResult = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+export const adminTerminateAttempt = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const attemptId = req.params.attemptId as string;
+    const adminId = req.user!.userId;
+    const attempt = await examService.adminTerminateAttempt(attemptId, adminId);
+    res.json({ success: true, data: attempt });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // --- PROCTORING ---
 
 export const ingestProctoringEvent = async (req: Request, res: Response, next: NextFunction) => {

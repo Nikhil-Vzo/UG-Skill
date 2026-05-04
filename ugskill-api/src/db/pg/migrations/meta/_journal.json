@@ -15,6 +15,13 @@
       "when": 1776769610370,
       "tag": "0001_outstanding_madrox",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777916607351,
+      "tag": "0002_steep_talos",
+      "breakpoints": true
     }
   ]
 }

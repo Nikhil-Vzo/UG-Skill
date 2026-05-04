@@ -11,6 +11,7 @@ import { registerTrackingNamespace } from './sockets/tracking.namespace';
 import { registerInterviewNamespace } from './sockets/interview.namespace';
 import { registerGdNamespace } from './sockets/gd.namespace';
 import { registerLeaderboardNamespace } from './sockets/leaderboard.namespace';
+import { proctoringService } from './modules/proctoring/proctoring.service';
 
 const startServer = async () => {
   try {
@@ -33,6 +34,9 @@ const startServer = async () => {
     registerInterviewNamespace(io);  // /interview   — 1:1 live interview sessions
     registerGdNamespace(io);         // /gd          — group discussion sessions
     registerLeaderboardNamespace(io); // /leaderboard — live score push to viewers
+
+    // 4b. Register proctoring service with Socket.io for real-time AI alerts
+    proctoringService.registerSocketServer(io);
 
     // 5. Start listening
     httpServer.listen(env.PORT, () => {
