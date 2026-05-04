@@ -38,6 +38,10 @@ const envSchema = z.object({
   // External AI team endpoint
   AI_EXTERNAL_URL: z.string().url().optional(),
 
+  // AI Proctoring Vision API
+  AI_API_URL: z.string().url().optional(),
+  AI_API_KEY: z.string().min(1).optional(),
+
   // Sentry
   SENTRY_DSN: z.string().url().optional(),
 });

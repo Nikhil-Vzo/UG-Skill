@@ -1,11 +1,12 @@
 import { Worker, Job } from 'bullmq';
 import { env } from '../config/env';
 import { logger } from '../lib/logger';
-import { cdcSyncQueue, notificationQueue } from '../config/queue';
+import { cdcSyncQueue, notificationQueue, aiFrameQueue } from '../config/queue';
 
-// Placeholder handlers
+// Job handlers
 import { handleCdcSync } from './cdcSync.job';
 import { handleNotification } from './notification.job';
+import { handleAiFrameAnalysis } from './aiFrameAnalysis.job';
 
 const connection = env.REDIS_URL ? new URL(env.REDIS_URL) : { host: '127.0.0.1', port: 6379 };
 const redisConnection = {
@@ -38,6 +39,20 @@ export const startWorkers = () => {
   
   notificationWorker.on('failed', (job, err) => {
     logger.error(`Notification Job ${job?.id} failed`, err);
+  });
+
+  // AI Frame Analysis Worker
+  const aiFrameWorker = new Worker(aiFrameQueue.name, async (job: Job) => {
+    logger.info(`Processing AI Frame Job ${job.id}`, { attemptId: job.data.attemptId });
+    await handleAiFrameAnalysis(job);
+  }, { connection: redisConnection });
+
+  aiFrameWorker.on('completed', (job) => {
+    logger.info(`AI Frame Job ${job.id} completed successfully`);
+  });
+
+  aiFrameWorker.on('failed', (job, err) => {
+    logger.error(`AI Frame Job ${job?.id} failed`, err);
   });
 };
 

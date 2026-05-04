@@ -119,6 +119,13 @@ router.get(
   examController.getResult
 );
 
+router.post(
+  '/:id/attempts/:attemptId/terminate',
+  requireAuth,
+  requireRole(['admin', 'proctor', 'instructor']),
+  examController.adminTerminateAttempt
+);
+
 // --- PROCTORING ---
 
 router.post(

@@ -123,6 +123,51 @@ export function registerTrackingNamespace(io: SocketServer): Namespace {
       }
     );
 
+    // ── Admin manually terminates an attempt ─────────────────────────────
+    socket.on(
+      'admin:terminate',
+      async ({ attemptId, reason }: { attemptId: string; reason?: string }) => {
+        const isMonitor = roles.includes('admin') || roles.includes('instructor') || roles.includes('proctor');
+        if (!isMonitor) {
+          socket.emit('error', { message: 'Forbidden: admin only' });
+          return;
+        }
+
+        try {
+          const attempt = await examAttemptRepository.findAttemptById(attemptId);
+          if (!attempt) {
+            socket.emit('error', { message: 'Attempt not found' });
+            return;
+          }
+
+          await examAttemptRepository.updateAttempt(attemptId, {
+            status: 'terminated',
+            proctoringVerdict: 'admin_terminated',
+          });
+
+          const room = `tracking:${attemptId}`;
+          trackingNS.to(room).emit('proctoring:terminated', {
+            attemptId,
+            studentId: attempt.studentId,
+            reason: reason || 'Terminated by admin',
+            terminatedBy: userId,
+            timestamp: new Date().toISOString(),
+          });
+          trackingNS.to('admin:monitoring').emit('proctoring:terminated', {
+            attemptId,
+            studentId: attempt.studentId,
+            reason: reason || 'Terminated by admin',
+            terminatedBy: userId,
+            timestamp: new Date().toISOString(),
+          });
+
+          logger.info(`[/tracking] Admin ${userId} terminated attempt ${attemptId}`, { reason });
+        } catch (err: any) {
+          socket.emit('error', { message: err.message || 'Failed to terminate' });
+        }
+      }
+    );
+
     socket.on('disconnect', () => {
       logger.debug(`[/tracking] Disconnected socketId=${socket.id} userId=${userId}`);
     });

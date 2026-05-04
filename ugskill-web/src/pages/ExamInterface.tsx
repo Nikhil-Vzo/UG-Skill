@@ -266,6 +266,7 @@ export const ExamInterface: React.FC = () => {
 
         api.post('/proctoring/analyze-frame', {
           attemptId,
+          examId,
           frame,
           capturedAt: new Date().toISOString(),
         }).catch(() => { /* fire-and-forget */ });
