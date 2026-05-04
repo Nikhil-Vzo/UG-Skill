@@ -73,9 +73,43 @@ async function seedExams() {
     });
     */
 
-    // 5. Grant Access to Test Student's Batch (or just general)
-    // For simplicity in E2E, we'll assume the student can see all 'published' exams 
-    // or we can seed a batch access if the app requires it.
+    // 5. Grant Access to Test Student's Batch
+    console.log('🔑 Granting exam access to test student...');
+    const [student] = await db.select().from(schema.users).where(eq(schema.users.email, 'student@ugskill.com')).limit(1);
+    
+    if (student) {
+      // Find a batch this student belongs to
+      const [enrollment] = await db.select().from(schema.batchMembers).where(eq(schema.batchMembers.userId, student.id)).limit(1);
+      
+      if (enrollment) {
+        console.log(`📡 Linking exam to batch: ${enrollment.batchId}`);
+        await db.insert(schema.examBatchAccess).values({
+          examId: exam.id,
+          batchId: enrollment.batchId,
+          grantedBy: admin.id,
+        }).onConflictDoNothing();
+      } else {
+        console.warn('⚠️ Student not enrolled in any batch. Creating a default batch...');
+        const [batch] = await db.insert(schema.batches).values({
+          name: 'E2E Test Batch',
+          description: 'Batch for end-to-end testing',
+        }).returning();
+        
+        await db.insert(schema.batchMembers).values({
+          batchId: batch.id,
+          userId: student.id,
+          role: 'student',
+        });
+        
+        await db.insert(schema.examBatchAccess).values({
+          examId: exam.id,
+          batchId: batch.id,
+          grantedBy: admin.id,
+        });
+      }
+    } else {
+      console.error('❌ Test student (test@ugskill.com) not found.');
+    }
     
     console.log('🎉 Exam Seeding Complete!');
   } catch (error) {
