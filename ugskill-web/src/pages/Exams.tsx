@@ -11,16 +11,17 @@ import api from '../lib/api';
 type ExamStatus = 'upcoming' | 'live' | 'completed' | 'missed';
 
 interface Exam {
-  _id: string;
+  id: string;
+  _id?: string; // fallback
   title: string;
   course?: string | { title: string };
-  duration: number; // minutes
+  durationMinutes: number;
   totalQuestions: number;
   scheduledAt: string;
   status: ExamStatus;
   score?: number;
   maxScore: number;
-  proctored: boolean;
+  isProctored: boolean;
 }
 
 /* ─────────── Config ─────────── */
@@ -60,7 +61,7 @@ const ExamCard: React.FC<{ exam: Exam; onEnter: () => void }> = ({ exam, onEnter
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
             <h3 style={{ color: 'var(--text-high)', fontSize: '1rem', fontWeight: 700, margin: 0 }}>{exam.title}</h3>
             <Badge variant={cfg.variant} size="sm">{cfg.label}</Badge>
-            {exam.proctored && <Badge variant="warning" size="sm"><Lock size={10} /> Proctored</Badge>}
+            {exam.isProctored && <Badge variant="warning" size="sm"><Lock size={10} /> Proctored</Badge>}
           </div>
           <p style={{ color: 'var(--text-lowest)', fontSize: '0.8125rem', margin: 0 }}>{resolveCourseName(exam.course)}</p>
         </div>
@@ -75,7 +76,7 @@ const ExamCard: React.FC<{ exam: Exam; onEnter: () => void }> = ({ exam, onEnter
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.8125rem', color: 'var(--text-low)' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Clock size={13} />{exam.duration} min</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Clock size={13} />{exam.durationMinutes} min</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><FileText size={13} />{exam.totalQuestions} questions</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Calendar size={13} />{formatScheduled(exam.scheduledAt)}</span>
       </div>
@@ -132,11 +133,12 @@ export const Exams: React.FC = () => {
   ];
 
   const handleEnter = (exam: Exam) => {
+    const finalId = exam.id || exam._id;
     // Proctored exams go through pre-flight, others enter directly
-    if (exam.proctored && exam.status === 'live') {
-      navigate(`/exams/${exam._id}/pre-flight`);
+    if (exam.isProctored && exam.status === 'live') {
+      navigate(`/exams/${finalId}/pre-flight`);
     } else {
-      navigate(`/exams/${exam._id}`);
+      navigate(`/exams/${finalId}`);
     }
   };
 
@@ -207,7 +209,7 @@ export const Exams: React.FC = () => {
           </div>
         ) : (
           filtered.map(e => (
-            <ExamCard key={e._id} exam={e} onEnter={() => handleEnter(e)} />
+            <ExamCard key={e.id || e._id} exam={e} onEnter={() => handleEnter(e)} />
           ))
         )}
       </div>

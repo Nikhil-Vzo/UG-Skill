@@ -339,10 +339,10 @@ export const VideoPlayer: React.FC = () => {
                       key={videoSrc}
                       src={videoSrc}
                       controls
-                      playbackRate={playbackSpeed}
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                       onEnded={() => { if (!activeLecture?.completed) completeMut.mutate(); }}
                       onTimeUpdate={(e) => setVideoProgress(e.currentTarget.currentTime)}
+                      onLoadedMetadata={(e) => { e.currentTarget.playbackRate = playbackSpeed; }}
                     />
                     {/* Playback Speed Control */}
                     <div className="video-controls">
