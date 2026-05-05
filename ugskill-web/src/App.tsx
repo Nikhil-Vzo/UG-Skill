@@ -20,6 +20,7 @@ import { AssignmentSubmit } from './pages/AssignmentSubmit';
 import { PlacementsHub } from './pages/PlacementsHub';
 import { CompanyDetail } from './pages/CompanyDetail';
 import { Community } from './pages/Community';
+import { PeerGroups } from './pages/PeerGroups';
 import { Exams } from './pages/Exams';
 const ExamInterface = lazy(() => import('./pages/ExamInterface').then(m => ({ default: m.ExamInterface })));
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -95,6 +96,7 @@ function App() {
               <Route path="placements/interview/:sessionId" element={<InterviewRoom />} />
               <Route path="placements/:driveId" element={<CompanyDetail />} />
               <Route path="community" element={<Community />} />
+              <Route path="peer-groups" element={<PeerGroups />} />
               <Route path="exams" element={<Exams />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="profile" element={<Profile />} />

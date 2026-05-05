@@ -1,6 +1,6 @@
 # UGSkill — Sprint Task Board (Full Audit)
 
-> **Last audited:** May 3, 2026  
+> **Last audited:** May 5, 2026  
 > **Team:** 2 AI-focused developers · 3 Platform/General developers  
 > **Current phase:** Phase 9-P (AI Proctoring) + Phase 10 (QA & Deploy)
 
@@ -30,8 +30,8 @@ After scanning every file in `ugskill-api/` and `ugskill-web/` against `TODO.md`
 | Phase 10 — Cross-browser testing | ❌ NOT DONE | Chrome/Firefox/Safari/Edge pass not executed |
 | Phase 10 — Mobile responsive audit | ❌ NOT DONE | No 375px / 768px audit run on all 29 routes |
 | Phase 10 — Performance (Phase 10 list) | ✅ DONE | `React.lazy()` already implemented in `App.tsx` for 5 heavy pages |
-| Orphaned feature — Peer Groups UI | ❌ NOT BUILT | Backend API exists, no frontend page |
-| Orphaned feature — Admin Invite button | ❌ NOT BUILT | Backend exists (`invite` module), no UI in UserDirectory |
+| Orphaned feature — Peer Groups UI | ✅ DONE | `PeerGroups.tsx` page created with listing, create, join, detail drawer |
+| Orphaned feature — Admin Invite button | ✅ DONE | `UserDirectory.tsx` Invite User modal wired to `POST /admin/invites` |
 | Phase 9-A — Payments (Razorpay) | 🔮 Future | Not started |
 | Phase 9-B — Transactional Email | 🔮 Future | Not started |
 | Phase 9-D — Coding Judge (Judge0) | 🔮 Future | Not started |
@@ -110,7 +110,7 @@ Platform Devs  → Dev-P1, Dev-P2, Dev-P3  (own backend fixes, frontend, QA, Dev
 
 ### Schema / DB
 
-- [ ] **DB.1 — Add `proctoringConfig` to `exams` PG table**
+- [x] **DB.1 — Add `proctoringConfig` to `exams` PG table**
   - Migration file: `src/db/migrations/add-proctoring-config.ts`
   - Columns to add:
     ```
@@ -123,13 +123,13 @@ Platform Devs  → Dev-P1, Dev-P2, Dev-P3  (own backend fixes, frontend, QA, Dev
   - Update Drizzle schema: `src/db/pg/schema/exam.ts`
   - Add to `exam.repository.ts` select
 
-- [ ] **DB.2 — Extend `exam_proctoring_events` Mongo schema** (`proctoring.model.ts`)
+- [x] **DB.2 — Extend `exam_proctoring_events` Mongo schema** (`proctoring.model.ts`)
   - Add fields: `aiConfidence`, `gazeDirection`, `riskScoreAtEvent`, `overriddenBy`, `overrideReason`
   - Match the schema defined in TODO.md P9-P.13
 
 ### WebSocket Upgrade
 
-- [ ] **WS.1 — Upgrade `tracking.namespace.ts` for AI events**
+- [x] **WS.1 — Upgrade `tracking.namespace.ts` for AI events**
   - Add new emit: `proctoring:ai-alert` → sent to admin room when AI returns HIGH/CRITICAL
   - Add new emit: `proctoring:warning` → sent to student when violation threshold crossed
   - Add new emit: `proctoring:terminated` → sent to student when exam auto-terminated
@@ -137,12 +137,12 @@ Platform Devs  → Dev-P1, Dev-P2, Dev-P3  (own backend fixes, frontend, QA, Dev
 
 ### Orphaned Features
 
-- [ ] **OF.1 — Admin Invite UI** (`pages/admin/UserDirectory.tsx`)
+- [x] **OF.1 — Admin Invite UI** (`pages/admin/UserDirectory.tsx`)
   - Add **"Invite User"** button in the user directory toolbar
   - Opens modal: input email + role (faculty/HR) → `POST /api/v1/invites`
   - Show success toast with invite link
 
-- [ ] **OF.2 — Peer Groups page** (`pages/PeerGroups.tsx`)
+- [x] **OF.2 — Peer Groups page** (`pages/PeerGroups.tsx`)
   - New student page at `/app/peer-groups`
   - List peer groups: `GET /api/v1/placements/peer-groups`
   - Create group: `POST /api/v1/placements/peer-groups`
