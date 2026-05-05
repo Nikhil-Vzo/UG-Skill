@@ -40,6 +40,11 @@ const patchUserStatus = async ({ userId, action }: { userId: string; action: 'su
   return data;
 };
 
+const inviteUser = async ({ email, role }: { email: string; role: string }) => {
+  const { data } = await api.post('/admin/invites', { email, role, companyName: 'UGSkill' });
+  return data;
+};
+
 /* ---------- row skeleton ---------- */
 const RowSkeleton = () => (
   <tr>
@@ -58,6 +63,9 @@ export const UserDirectory: React.FC = () => {
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState('');
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('student');
   const debouncedSearch = useDebounce(search, 400);
 
   const { data, isPending, isError } = useQuery<UsersResponse>({
@@ -77,6 +85,15 @@ export const UserDirectory: React.FC = () => {
   const statusMutation = useMutation({
     mutationFn: patchUserStatus,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: inviteUser,
+    onSuccess: () => {
+      setShowInvite(false);
+      setInviteEmail('');
+      setInviteRole('student');
+    },
   });
 
   const columns = [
@@ -158,7 +175,7 @@ export const UserDirectory: React.FC = () => {
             onChange={(e) => { setSearch((e.target as HTMLInputElement).value); setPage(1); }}
             style={{ minWidth: '260px' }}
           />
-          <Button leftIcon={<UserPlus size={18} />}>Invite User</Button>
+          <Button leftIcon={<UserPlus size={18} />} onClick={() => setShowInvite(true)}>Invite User</Button>
         </div>
       </header>
 
@@ -186,6 +203,55 @@ export const UserDirectory: React.FC = () => {
           />
         )}
       </Card>
+
+      {/* Invite User Modal */}
+      {showInvite && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+          onClick={() => setShowInvite(false)}
+        >
+          <Card style={{ width: '100%', maxWidth: 440, padding: '2rem' }} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+            <h2 style={{ margin: '0 0 1.5rem', color: 'var(--text-primary)' }}>Invite User</h2>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="user@example.com"
+              style={{ width: '100%', padding: '0.75rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-primary)', marginBottom: '1rem' }}
+            />
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              Role
+            </label>
+            <select
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value)}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-primary)', marginBottom: '1.5rem' }}
+            >
+              <option value="student">Student</option>
+              <option value="faculty">Faculty</option>
+              <option value="institution_admin">Institution Admin</option>
+              <option value="company_admin">Company Admin</option>
+              <option value="recruiter">Recruiter</option>
+            </select>
+            {inviteMutation.isError && (
+              <p style={{ color: 'var(--error)', fontSize: '0.875rem', marginBottom: '1rem' }}>Failed to send invite. Please try again.</p>
+            )}
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <Button variant="outline" onClick={() => setShowInvite(false)}>Cancel</Button>
+              <Button
+                variant="primary"
+                onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })}
+                disabled={inviteMutation.isPending || !inviteEmail}
+              >
+                {inviteMutation.isPending ? 'Sending…' : 'Send Invite'}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Edit Role Modal */}
       {editingUser && (

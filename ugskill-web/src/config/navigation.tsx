@@ -10,6 +10,7 @@ import {
   Settings, 
   Telescope, 
   Users2, 
+  Users,
   Monitor,
   CalendarDays,
   Target
@@ -30,6 +31,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: <BarChart3 size={18} strokeWidth={2.5} />, label: 'Leaderboards', to: '/app/leaderboards' },
   { icon: <ClipboardList size={18} strokeWidth={2.5} />, label: 'Exams & Quizzes', to: '/app/exams' },
   { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'Community', to: '/app/community' },
+  { icon: <Users size={18} strokeWidth={2.5} />, label: 'Peer Groups', to: '/app/peer-groups' },
   { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live Sessions', to: '/app/placements/prep' },
   { icon: <Target size={18} strokeWidth={2.5} />, label: 'Hall of Fame', to: '/app/showcase' },
 ];
