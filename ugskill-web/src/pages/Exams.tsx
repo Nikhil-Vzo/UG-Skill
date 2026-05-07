@@ -51,7 +51,7 @@ function formatScheduled(isoStr: string): string {
 
 /* ─────────── ExamCard ─────────── */
 const ExamCard: React.FC<{ exam: Exam; onEnter: () => void }> = ({ exam, onEnter }) => {
-  const cfg = STATUS_CFG[exam.status];
+  const cfg = STATUS_CFG[exam.status as ExamStatus] || { label: exam.status || 'Unknown', variant: 'secondary', color: 'var(--text-low)' };
   const canEnter = exam.status === 'live' || exam.status === 'upcoming';
 
   return (
@@ -136,9 +136,9 @@ export const Exams: React.FC = () => {
     const finalId = exam.id || exam._id;
     // Proctored exams go through pre-flight, others enter directly
     if (exam.isProctored && exam.status === 'live') {
-      navigate(`/exams/${finalId}/pre-flight`);
+      navigate(`/app/exams/${finalId}/pre-flight`);
     } else {
-      navigate(`/exams/${finalId}`);
+      navigate(`/app/exams/${finalId}`);
     }
   };
 

@@ -118,7 +118,7 @@ export const startAttemptSchema = z.object({
   body: z.object({
     ipAddress: z.string().optional(),
     deviceFingerprint: z.string().optional()
-  })
+  }).optional().default({})
 });
 
 // Save answers incrementally during an attempt
@@ -128,8 +128,10 @@ export const saveIncrementalResponseSchema = z.object({
     attemptId: z.string().uuid()
   }),
   body: z.object({
-    responses: z.array(z.any())
-  })
+    responses: z.array(z.any()).optional(),
+    questionId: z.string().optional(),
+    selectedOption: z.any().optional()
+  }).optional().default({})
 });
 
 export const submitAttemptSchema = z.object({
@@ -139,8 +141,8 @@ export const submitAttemptSchema = z.object({
   }),
   body: z.object({
     timeTakenSecs: z.number().int().optional(),
-    responses: z.array(z.any()).optional() // Optional full response array if not incrementally saved
-  })
+    responses: z.array(z.any()).optional()
+  }).optional().default({})
 });
 
 export const attemptQuerySchema = z.object({

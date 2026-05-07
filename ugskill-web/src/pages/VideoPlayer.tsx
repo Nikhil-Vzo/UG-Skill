@@ -5,7 +5,7 @@ import {
   ChevronLeft, ChevronRight, Play, CheckCircle, Bookmark, BookmarkCheck,
   MessageSquare, FileText, Lightbulb, Volume2, Maximize, Minimize, Settings,
   Loader2, Send, BookOpen, ExternalLink, Download, AlignLeft, Link as LinkIcon,
-  Keyboard, Clock, MoreVertical, X, RotateCcw, FastForward, Rewind
+  Keyboard, Clock, MoreVertical, X, RotateCcw, FastForward, Rewind, AlertCircle
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -91,7 +91,7 @@ export const VideoPlayer: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   /* ── Fetch course + curriculum ── */
-  const { data: course, isLoading: courseLoading } = useQuery<CourseDetail>({
+  const { data: course, isLoading: courseLoading, isError: courseError } = useQuery<CourseDetail>({
     queryKey: ['course', courseId],
     queryFn: async () => {
       const res = await api.get(`/lms/courses/${courseId}`);
@@ -296,8 +296,8 @@ export const VideoPlayer: React.FC = () => {
   return (
     <div style={{ display: 'flex', height: '100vh', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-root)' }}>
       {/* ── Top Bar ── */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', height: '52px', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', flexShrink: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+      <header className="vp-header">
+        <div className="vp-header-left">
           <button onClick={() => navigate(`/app/courses/${courseId}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-low)', display: 'flex', flexShrink: 0 }}>
             <ChevronLeft size={20} />
           </button>
@@ -310,8 +310,14 @@ export const VideoPlayer: React.FC = () => {
             </>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-          {!courseLoading && (
+        <div className="vp-header-right">
+          {courseError && (
+            <Badge variant="danger" size="sm">Error loading course</Badge>
+          )}
+          {!courseLoading && !courseError && allLectures.length === 0 && (
+            <Badge variant="warning" size="sm">No curriculum</Badge>
+          )}
+          {!courseLoading && !courseError && (
             <Badge variant="success" size="sm">{completedCount} / {allLectures.length} complete</Badge>
           )}
           <Button variant="outline" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -324,6 +330,24 @@ export const VideoPlayer: React.FC = () => {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* ─── Left: Video + Tabs ─── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+          {/* Course fetch error */}
+          {courseError && (
+            <div style={{ background: 'var(--error-container)', padding: '2rem', textAlign: 'center', borderBottom: '1px solid var(--surface-highest)' }}>
+              <AlertCircle size={32} style={{ color: 'var(--error)', marginBottom: '0.75rem' }} />
+              <p style={{ color: 'var(--error)', fontWeight: 600, margin: '0 0 0.5rem' }}>Failed to load course</p>
+              <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', margin: 0 }}>The course may not exist or the server is unavailable.</p>
+            </div>
+          )}
+
+          {/* Empty curriculum notice */}
+          {!courseLoading && !courseError && (course?.curriculum?.length ?? 0) === 0 && (
+            <div style={{ background: 'var(--surface-well)', padding: '2rem', textAlign: 'center', borderBottom: '1px solid var(--surface-highest)' }}>
+              <BookOpen size={32} style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }} />
+              <p style={{ color: 'var(--text-secondary)', fontWeight: 600, margin: '0 0 0.5rem' }}>No curriculum yet</p>
+              <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', margin: 0 }}>This course has no sections or lectures. Use the Course Builder to add content.</p>
+            </div>
+          )}
+
           {/* Content Frame — branches by lecture type */}
           <div style={{ background: '#000', aspectRatio: '16/9', width: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', maxHeight: '60vh' }}>
             {(() => {
@@ -485,8 +509,8 @@ export const VideoPlayer: React.FC = () => {
 
           {/* Mark Complete bar */}
           {activeLecture && !activeLecture.completed && (
-            <div style={{ padding: '0.75rem 1.5rem', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-low)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ padding: '0.75rem 1.25rem', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <span style={{ color: 'var(--text-low)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1 1 auto', minWidth: '200px' }}>
                 <BookOpen size={15} /> Mark this lecture as complete when done
               </span>
               <Button
@@ -495,6 +519,7 @@ export const VideoPlayer: React.FC = () => {
                 isLoading={completeMut.isPending}
                 onClick={() => completeMut.mutate()}
                 leftIcon={<CheckCircle size={14} />}
+                style={{ flexShrink: 0 }}
               >
                 Mark Complete
               </Button>
@@ -659,59 +684,67 @@ export const VideoPlayer: React.FC = () => {
 
         {/* ─── Right: Curriculum Sidebar ─── */}
         {sidebarOpen && (
-          <aside style={{ width: 320, flexShrink: 0, borderLeft: '1px solid var(--surface-highest)', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-container)' }}>
+          <div className="vp-sidebar-overlay open" onClick={() => setSidebarOpen(false)} />
+        )}
+        {sidebarOpen && (
+          <aside className="vp-sidebar" style={{ width: 320, flexShrink: 0, borderLeft: '1px solid var(--surface-highest)', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-container)' }}>
             <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--surface-highest)', flexShrink: 0 }}>
               <h2 style={{ color: 'var(--text-high)', fontSize: '0.9375rem', fontWeight: 700, margin: 0 }}>Curriculum</h2>
-              {!courseLoading && <p style={{ color: 'var(--text-low)', fontSize: '0.75rem', marginTop: '0.25rem', margin: '0.25rem 0 0' }}>{course?.curriculum?.length ?? 0} module{(course?.curriculum?.length ?? 0) !== 1 ? 's' : ''}</p>}
+              {!courseLoading && !courseError && <p style={{ color: 'var(--text-low)', fontSize: '0.75rem', marginTop: '0.25rem', margin: '0.25rem 0 0' }}>{course?.curriculum?.length ?? 0} module{(course?.curriculum?.length ?? 0) !== 1 ? 's' : ''}</p>}
+              {courseError && <p style={{ color: 'var(--error)', fontSize: '0.75rem', margin: '0.25rem 0 0' }}>Error loading course</p>}
             </div>
             <ul style={{ flex: 1, overflowY: 'auto', listStyle: 'none', padding: 0, margin: 0 }}>
-              {courseLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <li key={i} style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--surface-highest)' }}>
-                    <Skeleton variant="text" width="80%" />
-                    <Skeleton variant="text" width="40%" />
-                  </li>
-                ))
-              ) : (
-                (course?.curriculum ?? []).map(section => (
-                  <React.Fragment key={section._id}>
-                    <li style={{ padding: '0.5rem 1.25rem', background: 'var(--surface-container-high)', borderBottom: '1px solid var(--surface-highest)' }}>
-                      <span style={{ color: 'var(--text-lowest)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>{section.title}</span>
-                    </li>
-                    {section.lectures.map((lec, i) => (
-                      <li key={lec._id}>
-                        <button
-                          onClick={() => goToLecture(lec._id)}
-                          style={{
-                            width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
-                            padding: '0.875rem 1.25rem',
-                            background: activeLectureId === lec._id ? 'var(--primary-low)' : 'none',
-                            border: 'none', borderBottom: '1px solid var(--surface-highest)',
-                            cursor: 'pointer', textAlign: 'left',
-                            borderLeft: activeLectureId === lec._id ? '3px solid var(--primary-glow)' : '3px solid transparent',
-                          }}
-                        >
-                          <div style={{ flexShrink: 0, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {lec.completed ? (
-                              <CheckCircle size={18} color="var(--success)" />
-                            ) : activeLectureId === lec._id ? (
-                              <Play size={16} color="var(--primary-glow)" fill="var(--primary-glow)" />
-                            ) : (
-                              <span style={{ width: 18, height: 18, border: '2px solid var(--surface-highest)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', color: 'var(--text-lowest)', fontWeight: 700 }}>{i + 1}</span>
-                            )}
-                          </div>
-                          <div style={{ flex: 1, overflow: 'hidden' }}>
-                            <p style={{ color: activeLectureId === lec._id ? 'var(--primary-glow)' : lec.completed ? 'var(--text-medium)' : 'var(--text-low)', fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
-                              {lec.title}
-                            </p>
-                            <span style={{ color: 'var(--text-lowest)', fontSize: '0.6875rem' }}>{lec.duration ?? ''}</span>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </React.Fragment>
-                ))
+              {courseLoading && Array.from({ length: 6 }).map((_, i) => (
+                <li key={i} style={{ padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--surface-highest)' }}>
+                  <Skeleton variant="text" width="80%" />
+                  <Skeleton variant="text" width="40%" />
+                </li>
+              ))}
+              {!courseLoading && (course?.curriculum?.length ?? 0) === 0 && (
+                <li style={{ padding: '2rem 1.25rem', textAlign: 'center' }}>
+                  <BookOpen size={28} style={{ color: 'var(--text-muted)', marginBottom: '0.5rem' }} />
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>No curriculum available.</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0.25rem 0 0' }}>Add sections in the Course Builder.</p>
+                </li>
               )}
+              {!courseLoading && (course?.curriculum ?? []).map(section => (
+                <React.Fragment key={section._id}>
+                  <li style={{ padding: '0.5rem 1.25rem', background: 'var(--surface-container-high)', borderBottom: '1px solid var(--surface-highest)' }}>
+                    <span style={{ color: 'var(--text-lowest)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>{section.title}</span>
+                  </li>
+                  {section.lectures.map((lec, i) => (
+                    <li key={lec._id}>
+                      <button
+                        onClick={() => goToLecture(lec._id)}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
+                          padding: '0.875rem 1.25rem',
+                          background: activeLectureId === lec._id ? 'var(--primary-low)' : 'none',
+                          border: 'none', borderBottom: '1px solid var(--surface-highest)',
+                          cursor: 'pointer', textAlign: 'left',
+                          borderLeft: activeLectureId === lec._id ? '3px solid var(--primary-glow)' : '3px solid transparent',
+                        }}
+                      >
+                        <div style={{ flexShrink: 0, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {lec.completed ? (
+                            <CheckCircle size={18} color="var(--success)" />
+                          ) : activeLectureId === lec._id ? (
+                            <Play size={16} color="var(--primary-glow)" fill="var(--primary-glow)" />
+                          ) : (
+                            <span style={{ width: 18, height: 18, border: '2px solid var(--surface-highest)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', color: 'var(--text-lowest)', fontWeight: 700 }}>{i + 1}</span>
+                          )}
+                        </div>
+                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                          <p style={{ color: activeLectureId === lec._id ? 'var(--primary-glow)' : lec.completed ? 'var(--text-medium)' : 'var(--text-low)', fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>
+                            {lec.title}
+                          </p>
+                          <span style={{ color: 'var(--text-lowest)', fontSize: '0.6875rem' }}>{lec.duration ?? ''}</span>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </React.Fragment>
+              ))}
             </ul>
             <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid var(--surface-highest)', display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
               <Button variant="ghost" size="sm" style={{ flex: 1 }} leftIcon={<ChevronLeft size={14} />} disabled={currentIndex <= 0} onClick={goPrev}>Prev</Button>

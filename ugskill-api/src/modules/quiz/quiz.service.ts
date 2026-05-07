@@ -6,11 +6,61 @@ import { AppError } from '../../lib/errors';
 import mongoose from 'mongoose';
 
 export class QuizService {
+  private normalizeQuestions(questions: any[]): any[] {
+    // Accept both frontend format (option objects with isCorrect) and backend format (string options + correct_answer)
+    return questions.map((q: any) => {
+      // Frontend format: options = [{ id, text, isCorrect }]
+      if (q.options && q.options.length > 0 && typeof q.options[0] === 'object') {
+        const optionTexts = q.options.map((o: any) => o.text || String(o));
+        const correctOption = q.options.find((o: any) => o.isCorrect);
+        return {
+          type: q.type || 'single_choice',
+          text: q.text,
+          options: optionTexts,
+          correct_answer: correctOption ? correctOption.text : '',
+          score_weight: q.score_weight || 1,
+          explanation: q.explanation || '',
+        };
+      }
+      // Backend format already
+      return q;
+    });
+  }
+
   async createDefinition(creatorId: string, data: any) {
-    data.pg_creator_id = creatorId;
-    const quiz = await quizDefinitionRepository.create(data);
+    const payload = {
+      ...data,
+      pg_creator_id: creatorId,
+      pg_course_id: data.pg_course_id || null,
+      questions: this.normalizeQuestions(data.questions || []),
+    };
+    const quiz = await quizDefinitionRepository.create(payload);
     return quiz;
   }
+
+  async getDefinition(quizId: string) {
+    const quiz = await quizDefinitionRepository.findById(quizId);
+    if (!quiz) throw new AppError('Quiz not found', 404);
+    return quiz;
+  }
+
+  async updateDefinition(quizId: string, data: any) {
+    const existing = await quizDefinitionRepository.findById(quizId);
+    if (!existing) throw new AppError('Quiz not found', 404);
+
+    const payload: any = { ...data };
+    if (data.questions) {
+      payload.questions = this.normalizeQuestions(data.questions);
+    }
+
+    const quiz = await quizDefinitionRepository.update(quizId, payload);
+    return quiz;
+  }
+
+  async listDefinitions(query: any = {}) {
+    return await quizDefinitionRepository.findAll(query);
+  }
+
 
   async submitAttempt(
     studentId: string,

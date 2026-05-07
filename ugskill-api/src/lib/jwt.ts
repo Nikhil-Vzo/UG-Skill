@@ -20,7 +20,11 @@ export const signRefreshToken = (payload: { userId: string }): string => {
 };
 
 export const verifyAccessToken = (token: string): JwtPayload => {
-  return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+  const decoded = jwt.verify(token, env.JWT_SECRET) as any;
+  return {
+    ...decoded,
+    roles: decoded.roles || [],
+  };
 };
 
 export const verifyRefreshToken = (token: string): { userId: string } => {

@@ -101,7 +101,7 @@ export const startAttempt = async (req: Request, res: Response, next: NextFuncti
 export const saveIncrementalResponse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const attemptId = req.params.attemptId as string;
-    const updated = await examService.saveIncrementalResponse(req.user!.userId, attemptId, req.body.responses);
+    const updated = await examService.saveIncrementalResponse(req.user!.userId, attemptId, req.body);
     res.json({ success: true, data: updated });
   } catch (error) {
     next(error);

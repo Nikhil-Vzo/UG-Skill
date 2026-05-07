@@ -32,7 +32,8 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: <ClipboardList size={18} strokeWidth={2.5} />, label: 'Exams & Quizzes', to: '/app/exams' },
   { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'Community', to: '/app/community' },
   { icon: <Users size={18} strokeWidth={2.5} />, label: 'Peer Groups', to: '/app/peer-groups' },
-  { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live Sessions', to: '/app/placements/prep' },
+  { icon: <CalendarDays size={18} strokeWidth={2.5} />, label: 'Interview Prep', to: '/app/placements/prep' },
+  { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live GD Sessions', to: '/app/live-gd' },
   { icon: <Target size={18} strokeWidth={2.5} />, label: 'Hall of Fame', to: '/app/showcase' },
 ];
 
@@ -42,7 +43,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { icon: <CalendarDays size={18} strokeWidth={2.5} />, label: 'Exam Operations', to: '/app/admin/exams' },
   { icon: <Building2 size={18} strokeWidth={2.5} />, label: 'Placements Manager', to: '/app/admin/placements' },
   { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'Batch Management', to: '/app/admin/batches' },
-  { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'User Directory', to: '/app/admin/users' },
+  { icon: <Users size={18} strokeWidth={2.5} />, label: 'User Directory', to: '/app/admin/users' },
 ];
 
 export const FOOTER_NAV_ITEMS: NavItem[] = [

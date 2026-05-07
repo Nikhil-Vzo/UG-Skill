@@ -51,6 +51,32 @@ export class ExamResponseRepository {
     }
   }
 
+  async upsertSingleResponse(pg_attempt_id: string, response: any) {
+    try {
+      // 1. Remove any existing response for this question to avoid duplicates
+      await ExamResponseModel.updateOne(
+        { pg_attempt_id },
+        { $pull: { responses: { question_id: response.question_id } } }
+      );
+
+      // 2. Push the new response
+      const updated = await ExamResponseModel.findOneAndUpdate(
+        { pg_attempt_id },
+        { $push: { responses: response } },
+        { new: true }
+      ).lean();
+
+      if (!updated) {
+        throw new NotFoundError('Exam response document not found');
+      }
+
+      return updated;
+    } catch (error: any) {
+      if (error instanceof NotFoundError) throw error;
+      throw new AppError(`Failed to upsert single response: ${error.message}`, 500);
+    }
+  }
+
   async finalize(pg_attempt_id: string, finalResponses?: any[]) {
     try {
       const updateData: any = { submitted_at: new Date() };

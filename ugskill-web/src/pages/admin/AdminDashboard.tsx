@@ -157,7 +157,7 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
         
         {/* Revenue Line Chart */}
         <Card title="Revenue Growth" style={{ minHeight: '350px' }}>

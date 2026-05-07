@@ -109,12 +109,57 @@ export class ExamService {
       pg_exam_id: examId,
     });
 
-    return attempt;
+    // 5. Fetch questions from definition
+    const def = await examDefinitionRepository.findByPgExamId(examId);
+    let questionsList: any[] = [];
+    if (def && def.sections) {
+      const qIds: string[] = [];
+      def.sections.forEach((s: any) => {
+        if (s.question_sequence) {
+          qIds.push(...s.question_sequence);
+        }
+      });
+      if (qIds.length > 0) {
+        // dynamic import or use existing model
+        const { ExamQuestionBankModel } = require('../../db/mongo/models/exam');
+        const rawQs = await ExamQuestionBankModel.find({ _id: { $in: qIds } }).lean();
+        
+        // Ensure ordering matches the sequence (optional but good)
+        questionsList = qIds.map(qid => {
+          const q: any = rawQs.find((rq: any) => rq._id.toString() === qid.toString());
+          if (!q) return null;
+          return {
+            id: q._id.toString(),
+            text: q.stem || '',
+            options: q.options ? q.options.map((o: any) => o.text || o) : [],
+            marks: q.marks || 1
+          };
+        }).filter(Boolean);
+      }
+    }
+
+    return {
+      attemptId: attempt.id,
+      questions: questionsList,
+      durationSeconds: (exam.durationMinutes || 60) * 60,
+      examTitle: exam.title
+    };
   }
 
-  async saveIncrementalResponse(studentId: string, attemptId: string, responses: any[]) {
-    // We expect the controller to just pass the array. We overwrite the previous list.
-    return examResponseRepository.saveIncremental(attemptId, responses);
+  async saveIncrementalResponse(studentId: string, attemptId: string, data: any) {
+    if (data.responses) {
+      return examResponseRepository.saveIncremental(attemptId, data.responses);
+    }
+    
+    if (data.questionId !== undefined) {
+      return examResponseRepository.upsertSingleResponse(attemptId, {
+        question_id: data.questionId,
+        selected_option: data.selectedOption,
+        answered_at: new Date()
+      });
+    }
+    
+    return null;
   }
 
   async submitAttempt(studentId: string, attemptId: string, data: { timeTakenSecs?: number; responses?: any[] }) {
