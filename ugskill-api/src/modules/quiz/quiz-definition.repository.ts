@@ -19,6 +19,15 @@ export class QuizDefinitionRepository {
       'attach_to.id': new mongoose.Types.ObjectId(attachToId),
     }).lean();
   }
+
+  async findAll(query: any = {}) {
+    return await QuizDefinitionModel.find(query).sort({ createdAt: -1 }).lean();
+  }
+
+  async update(quizId: string, data: Partial<IQuizDefinition>) {
+    if (!mongoose.Types.ObjectId.isValid(quizId)) return null;
+    return await QuizDefinitionModel.findByIdAndUpdate(quizId, data, { new: true }).lean();
+  }
 }
 
 export const quizDefinitionRepository = new QuizDefinitionRepository();

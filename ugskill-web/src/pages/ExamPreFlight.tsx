@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 import { Skeleton } from '../components/loaders/Skeleton';
+import './ExamPreFlight.css';
 
 type FaceCheckStatus = 'idle' | 'checking' | 'detected' | 'no-face' | 'poor-lighting';
 
@@ -104,7 +105,7 @@ export const ExamPreFlight: React.FC = () => {
 
   const handleStartExam = () => {
     if (agreed && cameraActive && micActive && faceStatus === 'detected') {
-      navigate(`/exams/${examId}`);
+      navigate(`/app/exams/${examId}`);
     }
   };
 
@@ -131,7 +132,7 @@ export const ExamPreFlight: React.FC = () => {
       </header>
 
       <Card title="Hardware Verification">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+        <div className="preflight-grid">
           <div style={{ background: 'black', borderRadius: '8px', overflow: 'hidden', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
             <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             {!cameraActive && <Camera size={48} color="var(--text-muted)" style={{ position: 'absolute' }} />}

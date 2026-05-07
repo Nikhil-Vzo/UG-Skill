@@ -123,13 +123,14 @@ function App() {
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-
-            {/* ── Full-screen Routes ───────────────────────────────────── */}
+            {/* ── Full-screen Routes (must be before the wildcard catch-all) ── */}
             <Route path="/app/courses/:courseId/player" element={<ProtectedRoute><VideoPlayer /></ProtectedRoute>} />
             <Route path="/app/courses/:courseId/player/:lectureId" element={<ProtectedRoute><VideoPlayer /></ProtectedRoute>} />
             <Route path="/app/exams/:examId/pre-flight" element={<ProtectedRoute><ExamPreFlight /></ProtectedRoute>} />
             <Route path="/app/exams/:examId" element={<ProtectedRoute><ExamInterface /></ProtectedRoute>} />
+            <Route path="/app/live-interview/:sessionId" element={<ProtectedRoute><LiveInterview /></ProtectedRoute>} />
+
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </BrowserRouter>

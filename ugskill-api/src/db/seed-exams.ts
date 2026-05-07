@@ -11,6 +11,8 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './pg/schema';
 import { eq } from 'drizzle-orm';
+import mongoose from 'mongoose';
+import { ExamQuestionBankModel, ExamDefinitionModel } from './mongo/models/exam';
 
 async function seedExams() {
   const pgUrl = process.env.PG_DATABASE_URL;
@@ -19,10 +21,17 @@ async function seedExams() {
     process.exit(1);
   }
 
+  const mongoUrl = process.env.MONGO_URI;
+  if (!mongoUrl) {
+    console.error('❌ MONGO_URI is not set');
+    process.exit(1);
+  }
+
   const client = postgres(pgUrl, { ssl: 'require', max: 1 });
   const db = drizzle(client, { schema });
 
-  console.log('🔗 Connected to DB.');
+  await mongoose.connect(mongoUrl);
+  console.log('🔗 Connected to Postgres & MongoDB.');
 
   try {
     // 1. Get Admin User
@@ -31,6 +40,20 @@ async function seedExams() {
       console.error('❌ Admin user not found. Run seed:admin first.');
       process.exit(1);
     }
+
+    // 1.5 Delete existing E2E exams to prevent duplicates
+    console.log('🗑️ Cleaning up existing E2E exams...');
+    const existingExams = await db.select().from(schema.exams).where(eq(schema.exams.title, 'E2E Proctoring Test Exam'));
+    for (const ex of existingExams) {
+      await db.delete(schema.examBatchAccess).where(eq(schema.examBatchAccess.examId, ex.id));
+      await db.delete(schema.examSections).where(eq(schema.examSections.examId, ex.id));
+      await db.delete(schema.exams).where(eq(schema.exams.id, ex.id));
+      // Delete from Mongo too
+      await ExamDefinitionModel.deleteOne({ pg_exam_id: ex.id });
+    }
+    
+    // Clear old test questions from Mongo
+    await ExamQuestionBankModel.deleteMany({ source_exam: 'E2E Proctoring Test Exam' });
 
     // 2. Create Exam
     console.log('📝 Creating test exam...');
@@ -59,19 +82,53 @@ async function seedExams() {
       sectionOrder: 1,
     }).returning();
 
-    // 4. Create a Question (Note: Questions are in MongoDB, skipping PG insert)
-    /*
-    await db.insert(schema.examQuestions).values({
-      examId: exam.id,
-      sectionId: section.id,
-      content: 'What is the capital of AI?',
+    // 4. Create Questions in MongoDB
+    console.log('📝 Creating questions in MongoDB...');
+    const question1 = await ExamQuestionBankModel.create({
       type: 'mcq',
-      options: ['Sillicon Valley', 'Neural Network', 'Data Center', 'Localhost'],
-      correctAnswer: 'Localhost',
+      status: 'published',
+      stem: 'What is the capital of AI?',
+      options: [
+        { id: '1', text: 'Silicon Valley' },
+        { id: '2', text: 'Neural Network' },
+        { id: '3', text: 'Data Center' },
+        { id: '4', text: 'Localhost' }
+      ],
+      explanation: 'It is a joke.',
+      pg_created_by: admin.id,
+      source_exam: 'E2E Proctoring Test Exam',
       marks: 10,
-      difficulty: 'easy',
+      difficulty: 'easy'
     });
-    */
+    
+    const question2 = await ExamQuestionBankModel.create({
+      type: 'mcq',
+      status: 'published',
+      stem: 'Which protocol is used by the proctoring engine for real-time alerts?',
+      options: [
+        { id: '1', text: 'HTTP/1.1' },
+        { id: '2', text: 'WebSockets (Socket.io)' },
+        { id: '3', text: 'FTP' },
+        { id: '4', text: 'SMTP' }
+      ],
+      explanation: 'Socket.io enables real-time duplex communication.',
+      pg_created_by: admin.id,
+      source_exam: 'E2E Proctoring Test Exam',
+      marks: 10,
+      difficulty: 'medium'
+    });
+
+    // Link questions to the exam via ExamDefinition
+    await ExamDefinitionModel.create({
+      pg_exam_id: exam.id,
+      sections: [
+        {
+          sectionId: section.id,
+          name: section.name,
+          question_sequence: [question1._id, question2._id]
+        }
+      ]
+    });
 
     // 5. Grant Access to Test Student's Batch
     console.log('🔑 Granting exam access to test student...');
@@ -116,6 +173,7 @@ async function seedExams() {
     console.error('❌ Seed failed:', error);
   } finally {
     await client.end();
+    await mongoose.disconnect();
   }
 }
 

@@ -40,7 +40,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     if (!hasRole) {
       // Redirect to appropriate home based on their actual role
       if (user.roles?.includes('admin') || user.roles?.includes('super_admin') || user.roles?.includes('creator')) {
-        return <Navigate to="/admin/analytics" replace />;
+        return <Navigate to="/app/admin/analytics" replace />;
       }
       return <Navigate to="/app" replace />;
     }

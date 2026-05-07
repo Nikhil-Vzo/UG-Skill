@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Clock, AlertTriangle, ChevronLeft, ChevronRight,
-  Flag, CheckCircle, X, Camera, Monitor, Loader2
+  Flag, CheckCircle, X, Camera, Monitor, Loader2,
+  PanelRight
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import api from '../lib/api';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 import { useExamTimer } from '../hooks/useExamTimer';
+import './ExamInterface.css';
 
 /* ────────── Types ────────── */
 interface Question {
@@ -54,7 +56,7 @@ const QuestionPalette: React.FC<{
         else if (answered) bg = 'var(--success)';
         return (
           <button key={i} onClick={() => onJump(i)}
-            style={{ aspectRatio: '1', background: bg, border: 'none', color: isCurrent || answered || isFlagged ? 'var(--bg-app)' : 'var(--text-low)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'opacity 0.15s' }}>
+            style={{ aspectRatio: '1', minHeight: 36, minWidth: 36, background: bg, border: 'none', color: isCurrent || answered || isFlagged ? 'var(--bg-app)' : 'var(--text-low)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'opacity 0.15s' }}>
             {i + 1}
           </button>
         );
@@ -112,6 +114,7 @@ export const ExamInterface: React.FC = () => {
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
   const [proctoringEvents, setProctoringEvents] = useState<ProctoringEvent[]>([]);
   const [, setTabSwitchWarning] = useState(false);
   const [aiWarnings, setAiWarnings] = useState<{ count: number; max: number }>({ count: 0, max: 5 });
@@ -400,28 +403,33 @@ export const ExamInterface: React.FC = () => {
       )}
 
       {/* Top Bar */}
-      <div style={{ height: '3.5rem', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="exam-topbar" style={{ height: '3.5rem', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2rem', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div className="exam-topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--primary-glow)', fontSize: '0.9375rem' }}>UGSkill Exam</div>
           <div style={{ borderLeft: '1px solid var(--surface-highest)', paddingLeft: '1rem', color: 'var(--text-low)', fontSize: '0.875rem' }}>{examTitle}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <div className="exam-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isTimeCritical ? 'var(--error)' : 'var(--text-high)', fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 700 }}>
             <Clock size={16} style={{ color: isTimeCritical ? 'var(--error)' : 'var(--text-low)' }} />
             {formatTime(timeLeft)}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-low)', fontSize: '0.8125rem' }}>
+          <div className="exam-ai-status" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-low)', fontSize: '0.8125rem' }}>
             <span style={{
               display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
               background: 'var(--success)', animation: 'pulse-dot 2s ease-in-out infinite',
             }} />
             <span style={{ color: 'var(--success)', fontSize: '0.75rem' }}>AI Monitoring Active</span>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowSubmitModal(true)}>Submit Exam</Button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <Button variant="ghost" size="sm" className="exam-palette-toggle" onClick={() => setShowPalette(p => !p)}>
+              <PanelRight size={16} />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowSubmitModal(true)}>Submit Exam</Button>
+          </div>
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="exam-layout">
         {/* Question Area */}
         <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Progress */}
@@ -486,7 +494,7 @@ export const ExamInterface: React.FC = () => {
         </div>
 
         {/* Right Sidebar */}
-        <div style={{ width: 240, background: 'var(--surface-container)', borderLeft: '1px solid var(--surface-highest)', padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', flexShrink: 0 }}>
+        <div className={`exam-sidebar ${showPalette ? 'open' : ''}`} style={{ width: 240, background: 'var(--surface-container)', borderLeft: '1px solid var(--surface-highest)', padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', flexShrink: 0 }}>
           <div className="glass-panel" style={{ padding: '1rem' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Progress</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--success)', fontFamily: 'var(--font-display)' }}>{answered}<span style={{ fontSize: '0.875rem', color: 'var(--text-low)' }}>/{questions.length}</span></div>

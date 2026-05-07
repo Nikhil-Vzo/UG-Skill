@@ -345,7 +345,7 @@ export const ExamOps: React.FC = () => {
           ) : !proctorReport || proctorReport.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', padding: '1rem 0' }}>No proctoring data for this exam.</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1rem' }}>
               {proctorReport.map(student => {
                 const risk = riskBadge(student.riskScore);
                 return (

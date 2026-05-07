@@ -14,6 +14,35 @@ export class QuizController {
     }
   }
 
+  async getDefinition(req: Request, res: Response, next: NextFunction) {
+    try {
+      const quizId = req.params.quizId as string;
+      const quiz = await quizService.getDefinition(quizId);
+      res.status(200).json(successResponse(quiz));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateDefinition(req: Request, res: Response, next: NextFunction) {
+    try {
+      const quizId = req.params.quizId as string;
+      const quiz = await quizService.updateDefinition(quizId, req.body);
+      res.status(200).json(successResponse(quiz, { message: 'Quiz updated' }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async listDefinitions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const quizzes = await quizService.listDefinitions(req.query);
+      res.status(200).json(successResponse(quizzes, { total: quizzes.length }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async submitAttempt(req: Request, res: Response, next: NextFunction) {
     try {
       const studentId = req.user!.userId;
