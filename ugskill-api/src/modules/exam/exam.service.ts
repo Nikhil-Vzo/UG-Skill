@@ -146,6 +146,23 @@ export class ExamService {
       const exam = await examRepository.findById(examId);
       if (!exam) throw new NotFoundError('Exam not found');
 
+      const existingAttempt = await examAttemptRepository.findLatestAttempt(studentId, examId);
+      if (existingAttempt?.status === 'submitted' || existingAttempt?.status === 'terminated') {
+        throw new ValidationError('You have already completed this exam. Only one attempt is allowed.');
+      }
+
+      if (existingAttempt?.status === 'in_progress') {
+        const questionsList = await this.getAttemptQuestions(examId);
+        return {
+          attemptId: existingAttempt.id,
+          questions: questionsList,
+          durationSeconds: (Number(exam.durationMinutes) || 60) * 60,
+          examTitle: exam.title,
+          resumed: true,
+          startedAt: existingAttempt.startedAt,
+        };
+      }
+
       // 2. Compute attempt number
       const countStr = await examAttemptRepository.getAttemptCount(studentId, examId);
       const attemptNumber = Number(countStr || 0) + 1;
@@ -179,38 +196,7 @@ export class ExamService {
         throw new AppError(`Exam initialization failed (Storage Error): ${mongoErr.message}`, 500);
       }
 
-      // 5. Fetch questions from definition
-      const def = await examDefinitionRepository.findByPgExamId(examId);
-      let questionsList: any[] = [];
-      if (def && def.sections) {
-        const qIds: string[] = [];
-        def.sections.forEach((s: any) => {
-          if (s.question_sequence) {
-            qIds.push(...s.question_sequence);
-          }
-        });
-        
-        if (qIds.length > 0) {
-          try {
-            const { ExamQuestionBankModel } = require('../../db/mongo/models/exam');
-            const rawQs = await ExamQuestionBankModel.find({ _id: { $in: qIds } }).lean();
-            
-            // Ensure ordering matches the sequence
-            questionsList = qIds.map(qid => {
-              const q: any = rawQs.find((rq: any) => rq._id.toString() === qid.toString());
-              if (!q) return null;
-              return {
-                id: q._id.toString(),
-                text: q.stem || '',
-                options: q.options ? q.options.map((o: any) => o.text || o) : [],
-                marks: q.marks || 1
-              };
-            }).filter(Boolean);
-          } catch (qErr: any) {
-            logger.warn('Failed to fetch questions from bank', { error: qErr.message, examId });
-          }
-        }
-      }
+      const questionsList = await this.getAttemptQuestions(examId);
 
       return {
         attemptId: attempt.id,
@@ -225,7 +211,46 @@ export class ExamService {
     }
   }
 
+  private async getAttemptQuestions(examId: string) {
+    const def = await examDefinitionRepository.findByPgExamId(examId);
+    let questionsList: any[] = [];
+    if (def && def.sections) {
+      const qIds: string[] = [];
+      def.sections.forEach((s: any) => {
+        if (s.question_sequence) {
+          qIds.push(...s.question_sequence);
+        }
+      });
+
+      if (qIds.length > 0) {
+        try {
+          const { ExamQuestionBankModel } = require('../../db/mongo/models/exam');
+          const rawQs = await ExamQuestionBankModel.find({ _id: { $in: qIds } }).lean();
+
+          questionsList = qIds.map(qid => {
+            const q: any = rawQs.find((rq: any) => rq._id.toString() === qid.toString());
+            if (!q) return null;
+            return {
+              id: q._id.toString(),
+              text: q.stem || '',
+              options: q.options ? q.options.map((o: any) => o.text || o) : [],
+              marks: q.marks || 1
+            };
+          }).filter(Boolean);
+        } catch (qErr: any) {
+          logger.warn('Failed to fetch questions from bank', { error: qErr.message, examId });
+        }
+      }
+    }
+
+    return questionsList;
+  }
+
   async saveIncrementalResponse(studentId: string, attemptId: string, data: any) {
+    const attempt = await examAttemptRepository.findAttemptById(attemptId);
+    if (attempt.studentId !== studentId) throw new ValidationError('Cannot modify another student attempt');
+    if (attempt.status !== 'in_progress') throw new ValidationError('This attempt is already closed');
+
     if (data.responses) {
       return examResponseRepository.saveIncremental(attemptId, data.responses);
     }
@@ -242,8 +267,14 @@ export class ExamService {
   }
 
   async submitAttempt(studentId: string, attemptId: string, data: { timeTakenSecs?: number; responses?: any[] }) {
+    const existingAttempt = await examAttemptRepository.findAttemptById(attemptId);
+    if (existingAttempt.studentId !== studentId) throw new ValidationError('Cannot submit another student attempt');
+    if (existingAttempt.status === 'submitted' || existingAttempt.status === 'terminated') {
+      throw new ValidationError('This exam attempt is already closed');
+    }
+
     // 1. Mark as submitted in Mongo
-    const responseDoc = await examResponseRepository.finalize(attemptId, data.responses);
+    await examResponseRepository.finalize(attemptId, data.responses);
 
     // 2. Update PG attempt
     const attempt = await examAttemptRepository.updateAttempt(attemptId, {
@@ -267,20 +298,41 @@ export class ExamService {
 
     if (!responseDoc || !exam) return;
 
-    // VERY simplified manual scoring for MVP:
-    // This expects `responses` array to have objects like { marks_awarded: 2 } evaluated before, 
-    // or we evaluate them here against a key. 
-    // Since we don't have the key matching logic complexified yet, we generate a mock/placeholder score.
-    
-    // In a real scenario, we iterate through responseDoc.responses and against the QuestionBank models
     let totalScore = 0;
-    
+    let maxScore = Number(exam.totalMarks || 0);
+
     if (responseDoc.responses && Array.isArray(responseDoc.responses)) {
-      // Just a mock placeholder: counting 1 mark per response provided as a fallback
-      totalScore = responseDoc.responses.length; 
+      const { ExamQuestionBankModel } = require('../../db/mongo/models/exam');
+      const questionIds = responseDoc.responses
+        .map((r: any) => r.question_id || r.questionId)
+        .filter(Boolean);
+      const questions = await ExamQuestionBankModel.find({ _id: { $in: questionIds } }).lean();
+      const questionMap = new Map(questions.map((q: any) => [q._id.toString(), q]));
+
+      for (const response of responseDoc.responses) {
+        const questionId = String(response.question_id || response.questionId || '');
+        const question: any = questionMap.get(questionId);
+        if (!question) continue;
+
+        const marks = Number(question.marks ?? 1);
+        const negativeMarks = Number(question.negative_marks ?? exam.negativeMarking ?? 0);
+        if (maxScore <= 0) maxScore += marks;
+
+        const selected = response.selected_option ?? response.selectedOption ?? response.answer;
+        const selectedIndex = typeof selected === 'number' ? selected : Number(selected);
+        const selectedOption = Number.isFinite(selectedIndex) ? question.options?.[selectedIndex] : undefined;
+        const selectedText = selectedOption?.text ?? selectedOption;
+        const isCorrect = Boolean(selectedOption?.isCorrect)
+          || String(selectedText ?? '').trim() === String(question.correct_answer ?? '').trim()
+          || String(selected ?? '').trim() === String(question.correct_answer ?? '').trim();
+
+        if (isCorrect) totalScore += marks;
+        else if (selected !== undefined && selected !== null && selected !== '') totalScore -= negativeMarks;
+      }
     }
 
-    const maxScore = Number(exam.totalMarks || 100);
+    if (maxScore <= 0) maxScore = Number(exam.totalMarks || 100);
+    totalScore = Math.max(0, totalScore);
     const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
     const passed = exam.passPercent ? percentage >= Number(exam.passPercent) : true;
 
@@ -314,7 +366,15 @@ export class ExamService {
     const score = await examAttemptRepository.getScoreByAttempt(attemptId);
     const response = await examResponseRepository.findByAttemptId(attemptId);
 
-    return { attempt, score, response };
+    return {
+      attempt,
+      score,
+      response,
+      totalScore: score ? Number(score.totalScore) : 0,
+      maxScore: score ? Number(score.maxScore) : 0,
+      percentage: score ? Number(score.percentage) : 0,
+      passed: Boolean(score?.passed),
+    };
   }
 
   async adminTerminateAttempt(attemptId: string, adminId: string) {

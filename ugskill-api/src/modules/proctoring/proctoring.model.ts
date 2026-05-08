@@ -4,7 +4,7 @@ export interface IProctoringEvent extends Document {
   attemptId: string;
   examId: string;
   studentId: string;
-  type: 'gaze_away' | 'no_face' | 'multiple_faces' | 'eyes_closed' | 'tab_switch' | 'copy_paste' | 'fullscreen_exit';
+  type: 'gaze_away' | 'talking' | 'no_face' | 'multiple_faces' | 'phone_detected' | 'eyes_closed' | 'tab_switch' | 'copy_paste' | 'fullscreen_exit' | 'admin_terminate';
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   aiConfidence: number;          // 0–1, from AI API
   gazeDirection?: string;         // 'left' | 'right' | 'down' | 'up'
@@ -13,6 +13,7 @@ export interface IProctoringEvent extends Document {
   overriddenBy?: string;           // admin userId if false-positive cleared
   overrideReason?: string;
   evidenceUrl?: string;           // URL to image frame if saved
+  snapshotBase64?: string;         // inline evidence frame for flagged incidents
   metadata?: any;
 }
 
@@ -23,7 +24,7 @@ const ProctoringEventSchema = new Schema({
   type: { 
     type: String, 
     required: true,
-    enum: ['gaze_away', 'no_face', 'multiple_faces', 'eyes_closed', 'tab_switch', 'copy_paste', 'fullscreen_exit']
+    enum: ['gaze_away', 'talking', 'no_face', 'multiple_faces', 'phone_detected', 'eyes_closed', 'tab_switch', 'copy_paste', 'fullscreen_exit', 'admin_terminate']
   },
   severity: { 
     type: String, 
@@ -37,6 +38,7 @@ const ProctoringEventSchema = new Schema({
   overriddenBy: { type: String },
   overrideReason: { type: String },
   evidenceUrl: { type: String },
+  snapshotBase64: { type: String },
   metadata: { type: Schema.Types.Mixed },
 }, { timestamps: { createdAt: true, updatedAt: true } });
 
