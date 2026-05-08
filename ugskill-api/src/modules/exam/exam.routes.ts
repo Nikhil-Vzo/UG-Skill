@@ -69,6 +69,20 @@ router.post(
   examController.grantBatchAccess
 );
 
+router.get(
+  '/:id/batch-access',
+  requireAuth,
+  requireRole(['admin', 'creator', 'faculty']),
+  examController.listBatchAccess
+);
+
+router.delete(
+  '/:id/batch-access/:batchId',
+  requireAuth,
+  requireRole(['admin']),
+  examController.revokeBatchAccess
+);
+
 // --- QUESTION BANK ---
 
 router.post(

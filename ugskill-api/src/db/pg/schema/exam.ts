@@ -96,7 +96,7 @@ export const examAttempts = pgTable('exam_attempts', {
 
 // --- EXAM SCORES ---
 export const examScores = pgTable('exam_scores', {
-  id: uuid('id').defaultRandom(),
+  id: uuid('id').primaryKey().defaultRandom(),
   attemptId: uuid('attempt_id').notNull().references(() => examAttempts.id),
   studentId: uuid('student_id').notNull().references(() => users.id),
   examId: uuid('exam_id').notNull().references(() => exams.id),
@@ -124,7 +124,7 @@ export const examRankings = pgTable('exam_rankings', {
 
 // --- NOTIFICATION LOGS ---
 export const notificationLogs = pgTable('notification_logs', {
-  id: uuid('id').defaultRandom(),
+  id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id),
   channel: text('channel').notNull(),
   type: text('type').notNull(),

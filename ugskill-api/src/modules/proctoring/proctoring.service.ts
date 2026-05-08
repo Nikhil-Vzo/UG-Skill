@@ -97,11 +97,20 @@ export class ProctoringService {
       // 6. Emit real-time warning to student if MEDIUM+
       if (['MEDIUM', 'HIGH', 'CRITICAL'].includes(data.severity)) {
         const room = `tracking:${data.attemptId}`;
+        
+        // Fetch updated violation count from DB
+        const [updatedAttempt] = await db.select({ violationCount: examAttempts.violationCount })
+          .from(examAttempts)
+          .where(eq(examAttempts.id, data.attemptId))
+          .limit(1);
+
         this.emitToRoom(room, 'proctoring:warning', {
           attemptId: data.attemptId,
           severity: data.severity,
           type: data.type,
           riskScore: newRiskScore,
+          count: updatedAttempt?.violationCount || 0,
+          max: config?.gazeThreshold || 5,
           message: `Proctoring alert: ${data.type} (${data.severity})`,
           timestamp: new Date().toISOString(),
         });

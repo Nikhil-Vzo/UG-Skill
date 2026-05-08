@@ -125,11 +125,13 @@ export const searchCourses = async (req: Request, res: Response, next: NextFunct
   try {
     const querySchema = z.object({
       q: z.string().optional(),
+      search: z.string().optional(),
       status: z.string().optional(),
       category: z.string().optional(),
     });
     const query = querySchema.parse(req.query);
-    const courses = await courseService.searchCourses(query.q, {
+    const searchTerm = query.q || query.search;
+    const courses = await courseService.searchCourses(searchTerm, {
       status: query.status,
       category: query.category,
     });

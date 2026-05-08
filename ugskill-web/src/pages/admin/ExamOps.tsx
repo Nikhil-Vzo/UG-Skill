@@ -271,7 +271,7 @@ export const ExamOps: React.FC = () => {
           >
             <RefreshCw size={14} /> Refresh
           </button>
-          <Button variant="primary" leftIcon={<Play size={18} />}>Launch Exam</Button>
+          <Button variant="primary" leftIcon={<Play size={18} />} onClick={() => navigate('/app/admin/exams/builder')}>Create New Exam</Button>
         </div>
       </header>
 

@@ -4,7 +4,7 @@ import { env } from './config/env';
 import { connectMongo } from './config/mongodb';
 import { logger } from './lib/logger';
 import { seedAdmin } from './db/seed-admin';
-import { createSocketServer } from './sockets/socket.server';
+import { createSocketServer, socketAuthMiddleware } from './sockets/socket.server';
 import { registerExamNamespace } from './sockets/exam.namespace';
 import { registerChatNamespace } from './sockets/chat.namespace';
 import { registerTrackingNamespace } from './sockets/tracking.namespace';
@@ -24,8 +24,16 @@ const startServer = async () => {
     // 2. Wrap Express in a raw HTTP server so Socket.io can share the port
     const httpServer = http.createServer(app);
 
-    // 3. Boot Socket.io (JWT auth applied globally)
+    // 3. Boot Socket.io (JWT auth applied globally on root namespace)
     const io = createSocketServer(httpServer);
+
+    // Apply the socket auth middleware to each custom namespace BEFORE registering listeners
+    io.of('/exam').use(socketAuthMiddleware);
+    io.of('/chat').use(socketAuthMiddleware);
+    io.of('/tracking').use(socketAuthMiddleware);
+    io.of('/interview').use(socketAuthMiddleware);
+    io.of('/gd').use(socketAuthMiddleware);
+    io.of('/leaderboard').use(socketAuthMiddleware);
 
     // 4. Register namespaces
     registerExamNamespace(io);       // /exam        — timer ticks, auto-submit
