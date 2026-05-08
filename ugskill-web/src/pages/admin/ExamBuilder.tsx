@@ -365,160 +365,173 @@ export const ExamBuilder: React.FC = () => {
 
         {/* ── Tab 1: Basic Details ── */}
         {tab === 'Basic Details' && (
-          <PremiumCard
-            title={
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span>Assessment Configuration</span>
-                {savedExamId && <Badge variant="success">Saved ✓</Badge>}
-              </span>
-            }
-            footer={
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
-                {saveExamMutation.isError && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: ANTHRO.error, fontSize: '0.875rem', padding: '0.75rem 1rem', background: `${ANTHRO.error}10`, borderRadius: '10px' }}>
-                    <AlertCircle size={16} />
-                    <span>Failed to save. Check all required fields and try again.</span>
-                  </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="primary"
-                    leftIcon={<Save size={18} />}
-                    onClick={() => saveExamMutation.mutate()}
-                    disabled={!form.title.trim() || form.durationMinutes < 1 || saveExamMutation.isPending}
-                    style={{ background: ANTHRO.text, color: ANTHRO.white, borderRadius: '12px', padding: '0.75rem 2rem', fontSize: '1rem', fontWeight: 600 }}
-                  >
-                    {saveExamMutation.isPending ? 'Saving…' : savedExamId ? 'Update & Continue →' : 'Save & Continue →'}
-                  </Button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            
+            {/* Required fields notice */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: `${ANTHRO.accentSecondary}10`, borderRadius: '12px', border: `1px solid ${ANTHRO.accentSecondary}30`, fontSize: '0.875rem', color: ANTHRO.accentSecondary }}>
+              <Info size={16} />
+              <span>Fields marked <strong>*</strong> are required to save the draft. Fill in the rest as needed.</span>
+            </div>
+
+            {/* General Information Card */}
+            <PremiumCard title="1. General Information">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div>
+                  <label style={labelStyle}>Assessment Title <span style={{ color: ANTHRO.error }}>*</span></label>
+                  <input
+                    style={{
+                      ...inputStyle,
+                      fontSize: '1.125rem', fontWeight: 600,
+                      borderColor: !form.title.trim() ? ANTHRO.error : ANTHRO.gray,
+                    }}
+                    placeholder="e.g. Mid-Term Examination: Data Structures"
+                    value={form.title}
+                    onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  />
+                  {!form.title.trim() && (
+                    <p style={{ color: ANTHRO.error, fontSize: '0.8rem', marginTop: '0.375rem' }}>A unique title is required (min 3 characters).</p>
+                  )}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Description & Instructions <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span></label>
+                  <textarea
+                    style={{ ...inputStyle, minHeight: 120, resize: 'vertical' }}
+                    placeholder="Provide candidate instructions, syllabus covered, and any specific guidelines..."
+                    value={form.description}
+                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  />
                 </div>
               </div>
-            }
-          >
-            {/* Required fields notice */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', padding: '0.75rem 1rem', background: `${ANTHRO.accentSecondary}10`, borderRadius: '10px', fontSize: '0.8125rem', color: ANTHRO.accentSecondary }}>
-              <Info size={14} />
-              <span>Fields marked <strong>*</strong> are required. All others are optional.</span>
-            </div>
+            </PremiumCard>
 
-            {/* Title */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={labelStyle}>Exam Title <span style={{ color: ANTHRO.error }}>*</span></label>
-              <input
-                style={{
-                  ...inputStyle,
-                  fontSize: '1.125rem', fontWeight: 600,
-                  borderColor: !form.title.trim() ? ANTHRO.error : ANTHRO.gray,
-                }}
-                placeholder="e.g. GATE CS 2025 Mock Test — Full Syllabus"
-                value={form.title}
-                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              />
-              {!form.title.trim() && (
-                <p style={{ color: ANTHRO.error, fontSize: '0.8rem', marginTop: '0.375rem' }}>Title is required (min 3 characters)</p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={labelStyle}>Instructions / Description <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span></label>
-              <textarea
-                style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }}
-                placeholder="Describe the exam scope, rules, and any special instructions for candidates…"
-                value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              />
-            </div>
-
-            {/* Numeric fields row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-              <div>
-                <label style={labelStyle}>
-                  <Clock size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
-                  Duration (mins) <span style={{ color: ANTHRO.error }}>*</span>
-                </label>
-                <input
-                  style={{ ...inputStyle, borderColor: form.durationMinutes < 1 ? ANTHRO.error : ANTHRO.gray }}
-                  type="number" min={1} max={600}
-                  value={form.durationMinutes}
-                  onChange={e => setForm(f => ({ ...f, durationMinutes: Math.max(1, Number(e.target.value)) }))}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>
-                  <Award size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
-                  Total Marks
-                </label>
-                <input
-                  style={inputStyle}
-                  type="number" min={1}
-                  value={form.totalMarks}
-                  onChange={e => setForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
-                />
-              </div>
-              <div>
-                <label style={labelStyle}>Pass % Cutoff</label>
-                <input
-                  style={inputStyle}
-                  type="number" min={0} max={100}
-                  value={form.passPercent}
-                  onChange={e => setForm(f => ({ ...f, passPercent: Number(e.target.value) }))}
-                />
-              </div>
-            </div>
-
-            {/* Window dates */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-              <div>
-                <label style={labelStyle}>
-                  <CalendarRange size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
-                  Available From <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span>
-                </label>
-                <input style={inputStyle} type="datetime-local" value={form.windowStart} onChange={e => setForm(f => ({ ...f, windowStart: e.target.value }))} />
-              </div>
-              <div>
-                <label style={labelStyle}>
-                  <CalendarRange size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
-                  Available Until <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span>
-                </label>
-                <input style={inputStyle} type="datetime-local" value={form.windowEnd} onChange={e => setForm(f => ({ ...f, windowEnd: e.target.value }))} />
-              </div>
-            </div>
-
-            {/* Toggle options */}
-            <div>
-              <label style={{ ...labelStyle, marginBottom: '1rem', display: 'block' }}>Exam Settings</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                {[
-                  { key: 'isProctored', label: 'AI Proctoring', desc: 'Monitor via webcam', icon: <ShieldCheck size={18} />, color: ANTHRO.accentSecondary },
-                  { key: 'shuffleQuestions', label: 'Shuffle Questions', desc: 'Randomize question order', icon: <Shuffle size={18} />, color: ANTHRO.accentTertiary },
-                  { key: 'shuffleOptions', label: 'Shuffle Options', desc: 'Randomize answer choices', icon: <Shuffle size={18} />, color: ANTHRO.accent },
-                ].map(({ key, label, desc, icon, color }) => (
-                  <label
-                    key={key}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem',
-                      border: `2px solid ${form[key as keyof ExamForm] ? color : ANTHRO.gray}`,
-                      borderRadius: '14px', cursor: 'pointer',
-                      background: form[key as keyof ExamForm] ? `${color}0d` : ANTHRO.white,
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <div style={{ color: form[key as keyof ExamForm] ? color : ANTHRO.mid }}>{icon}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.875rem', color: form[key as keyof ExamForm] ? color : ANTHRO.text }}>{label}</div>
-                      <div style={{ fontSize: '0.75rem', color: ANTHRO.mid }}>{desc}</div>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={form[key as keyof ExamForm] as boolean}
-                      onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
-                      style={{ width: '18px', height: '18px', accentColor: color, cursor: 'pointer' }}
-                    />
+            {/* Timing and Scoring Card */}
+            <PremiumCard title="2. Timing & Scoring">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                <div>
+                  <label style={labelStyle}>
+                    <Clock size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
+                    Duration (mins) <span style={{ color: ANTHRO.error }}>*</span>
                   </label>
-                ))}
+                  <input
+                    style={{ ...inputStyle, borderColor: form.durationMinutes < 1 ? ANTHRO.error : ANTHRO.gray }}
+                    type="number" min={1} max={600}
+                    value={form.durationMinutes}
+                    onChange={e => setForm(f => ({ ...f, durationMinutes: Math.max(1, Number(e.target.value)) }))}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>
+                    <Award size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
+                    Total Marks
+                  </label>
+                  <input
+                    style={inputStyle}
+                    type="number" min={1}
+                    value={form.totalMarks}
+                    onChange={e => setForm(f => ({ ...f, totalMarks: Number(e.target.value) }))}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Pass % Cutoff</label>
+                  <input
+                    style={inputStyle}
+                    type="number" min={0} max={100}
+                    value={form.passPercent}
+                    onChange={e => setForm(f => ({ ...f, passPercent: Number(e.target.value) }))}
+                  />
+                </div>
+              </div>
+            </PremiumCard>
+
+            {/* Security and Availability Card */}
+            <PremiumCard title="3. Security & Availability">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                
+                {/* Window dates */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <label style={labelStyle}>
+                      <CalendarRange size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
+                      Available From <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span>
+                    </label>
+                    <input style={inputStyle} type="datetime-local" value={form.windowStart} onChange={e => setForm(f => ({ ...f, windowStart: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>
+                      <CalendarRange size={14} style={{ display: 'inline', marginRight: '0.375rem', verticalAlign: 'middle' }} />
+                      Available Until <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span>
+                    </label>
+                    <input style={inputStyle} type="datetime-local" value={form.windowEnd} onChange={e => setForm(f => ({ ...f, windowEnd: e.target.value }))} />
+                  </div>
+                </div>
+
+                {/* Toggle options */}
+                <div>
+                  <label style={{ ...labelStyle, marginBottom: '1rem', display: 'block' }}>Delivery Settings</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                    {[
+                      { key: 'isProctored', label: 'AI Proctoring', desc: 'Monitor via webcam', icon: <ShieldCheck size={18} />, color: ANTHRO.accentSecondary },
+                      { key: 'shuffleQuestions', label: 'Shuffle Questions', desc: 'Randomize question order', icon: <Shuffle size={18} />, color: ANTHRO.accentTertiary },
+                      { key: 'shuffleOptions', label: 'Shuffle Options', desc: 'Randomize answer choices', icon: <Shuffle size={18} />, color: ANTHRO.accent },
+                    ].map(({ key, label, desc, icon, color }) => (
+                      <label
+                        key={key}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem',
+                          border: `2px solid ${form[key as keyof ExamForm] ? color : ANTHRO.gray}`,
+                          borderRadius: '14px', cursor: 'pointer',
+                          background: form[key as keyof ExamForm] ? `${color}0d` : ANTHRO.white,
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{ color: form[key as keyof ExamForm] ? color : ANTHRO.mid }}>{icon}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.875rem', color: form[key as keyof ExamForm] ? color : ANTHRO.text }}>{label}</div>
+                          <div style={{ fontSize: '0.75rem', color: ANTHRO.mid }}>{desc}</div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={form[key as keyof ExamForm] as boolean}
+                          onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
+                          style={{ width: '18px', height: '18px', accentColor: color, cursor: 'pointer' }}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </PremiumCard>
+
+            {/* Action Bar */}
+            <div style={{ 
+              display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem', 
+              padding: '1.5rem', background: ANTHRO.white, borderRadius: '16px', 
+              boxShadow: '0 4px 24px rgba(0,0,0,0.04)', border: `1px solid ${ANTHRO.gray}`
+            }}>
+              {saveExamMutation.isError && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: ANTHRO.error, fontSize: '0.875rem', padding: '0.75rem 1rem', background: `${ANTHRO.error}10`, borderRadius: '10px' }}>
+                  <AlertCircle size={16} />
+                  <span>Failed to save. Check all required fields and try again.</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ color: ANTHRO.mid, fontSize: '0.875rem' }}>
+                  {savedExamId ? <><span style={{ color: ANTHRO.accentSecondary, fontWeight: 600 }}>✓ Auto-saved</span> • You can move to the next tab.</> : 'Draft not saved yet.'}
+                </div>
+                <Button
+                  variant="primary"
+                  leftIcon={<Save size={18} />}
+                  onClick={() => saveExamMutation.mutate()}
+                  disabled={!form.title.trim() || form.durationMinutes < 1 || saveExamMutation.isPending}
+                  style={{ background: ANTHRO.text, color: ANTHRO.white, borderRadius: '12px', padding: '0.75rem 2.5rem', fontSize: '1rem', fontWeight: 600 }}
+                >
+                  {saveExamMutation.isPending ? 'Saving…' : savedExamId ? 'Update Configuration →' : 'Save & Continue →'}
+                </Button>
               </div>
             </div>
-          </PremiumCard>
+
+          </div>
         )}
 
         {/* ── Tab 2: Sections & Questions ── */}

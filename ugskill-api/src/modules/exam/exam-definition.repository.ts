@@ -2,13 +2,17 @@ import { ExamDefinitionModel } from '../../db/mongo/models/exam';
 import { AppError, NotFoundError } from '../../lib/errors';
 
 export class ExamDefinitionRepository {
+  /**
+   * Upsert the exam definition so that re-creating an exam (e.g. after a
+   * previous partial failure) never violates the unique index on pg_exam_id.
+   */
   async create(pg_exam_id: string, data: any) {
     try {
-      const definition = new ExamDefinitionModel({
-        pg_exam_id,
-        ...data
-      });
-      await definition.save();
+      const definition = await ExamDefinitionModel.findOneAndUpdate(
+        { pg_exam_id },
+        { $setOnInsert: { pg_exam_id, ...data } },
+        { upsert: true, new: true, runValidators: true }
+      ).lean();
       return definition;
     } catch (error: any) {
       throw new AppError(`Failed to create exam definition: ${error.message}`, 500);
