@@ -21,6 +21,13 @@ interface LiveAttempt {
   totalWarnings: number;
   status: 'live' | 'paused' | 'ended';
   examId: string;
+  attempts?: {
+    id: string;
+    studentId: string;
+    violationCount: number;
+    proctoringVerdict: string;
+    startedAt: string;
+  }[];
 }
 
 interface Incident {
@@ -31,6 +38,9 @@ interface Incident {
   type: string;
   occurredAt: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
+  riskScore?: number;
+  aiConfidence?: number;
+  hasEvidence?: boolean;
 }
 
 interface StudentProctor {
@@ -39,7 +49,8 @@ interface StudentProctor {
   riskScore: number;
   violationCount: number;
   avgAiConfidence: number;
-  flaggedEvents: { type: string; severity: string; timestamp: string; aiConfidence: number }[];
+  evidenceCount?: number;
+  flaggedEvents: { id: string; type: string; severity: string; timestamp: string; aiConfidence: number; snapshotBase64?: string; metadata?: Record<string, unknown> }[];
 }
 
 interface AlertToast {
@@ -131,10 +142,11 @@ export const ExamOps: React.FC = () => {
 
     const onAIAlert = (payload: any) => {
       onAlert();
+      const severity = String(payload.severity || 'medium').toLowerCase();
       const toast: AlertToast = {
         id: `${Date.now()}-${Math.random()}`,
         attemptId: payload.attemptId,
-        severity: payload.severity,
+        severity,
         type: payload.type,
         message: `AI Alert: ${payload.type} (${payload.severity}) — Risk ${payload.riskScore}`,
       };
@@ -178,6 +190,9 @@ export const ExamOps: React.FC = () => {
   const totalWarnings = liveExams?.reduce((s, e) => s + (e.totalWarnings || 0), 0) ?? 0;
   const totalActive = liveExams?.reduce((s, e) => s + (e.activeUsers || 0), 0) ?? 0;
   const criticalIncidents = incidents?.filter((i) => i.severity === 'high' || i.severity === 'critical').length ?? 0;
+  const evidencePackages = incidents?.filter((i) => i.hasEvidence).length ?? 0;
+  const cleanSessions = Math.max(0, totalActive - (proctorReport?.filter((s) => s.violationCount > 0).length ?? 0));
+  const reviewQueue = proctorReport?.filter((s) => s.riskScore >= 50).length ?? criticalIncidents;
 
   const examColumns = [
     {
@@ -197,9 +212,12 @@ export const ExamOps: React.FC = () => {
       key: 'totalWarnings',
       header: 'Warnings',
       render: (row: LiveAttempt) => (
-        <span style={{ color: (row.totalWarnings || 0) > 10 ? 'var(--error)' : 'var(--text-primary)', fontWeight: (row.totalWarnings || 0) > 10 ? 700 : 400 }}>
-          {row.totalWarnings || 0}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ color: (row.totalWarnings || 0) > 10 ? 'var(--error)' : 'var(--text-primary)', fontWeight: (row.totalWarnings || 0) > 10 ? 700 : 400 }}>
+            {row.totalWarnings || 0}
+          </span>
+          {(row.totalWarnings || 0) > 0 && <Badge variant={(row.totalWarnings || 0) > 10 ? 'error' : 'warning'}>review</Badge>}
+        </div>
       ),
     },
     {
@@ -228,6 +246,7 @@ export const ExamOps: React.FC = () => {
       header: 'Time',
       render: (row: Incident) => new Date(row.occurredAt).toLocaleTimeString(),
     },
+    { key: 'examName', header: 'Exam', render: (row: Incident) => row.examName },
     { key: 'userLabel', header: 'User' },
     { key: 'type', header: 'Incident Type' },
     {
@@ -239,6 +258,16 @@ export const ExamOps: React.FC = () => {
           <span style={{ textTransform: 'capitalize' }}>{row.severity}</span>
         </div>
       ),
+    },
+    {
+      key: 'riskScore',
+      header: 'Risk',
+      render: (row: Incident) => row.riskScore ?? '-',
+    },
+    {
+      key: 'hasEvidence',
+      header: 'Evidence',
+      render: (row: Incident) => row.hasEvidence ? <Badge variant="primary">snapshot</Badge> : <Badge variant="outline">none</Badge>,
     },
   ];
 
@@ -299,12 +328,45 @@ export const ExamOps: React.FC = () => {
         </Card>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '1rem', backgroundColor: 'rgba(34,197,94,0.1)', borderRadius: '0.5rem', color: 'var(--success)' }}>
+              <ShieldAlert size={24} />
+            </div>
+            <div>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Clean Live Sessions</p>
+              <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem' }}>{cleanSessions}</h2>
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ padding: '1rem', backgroundColor: 'var(--primary-transparent)', borderRadius: '0.5rem', color: 'var(--primary)' }}>
               <Monitor size={24} />
             </div>
             <div>
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Active Test Takers</p>
               <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem' }}>{totalActive}</h2>
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '1rem', backgroundColor: 'rgba(59,130,246,0.12)', borderRadius: '0.5rem', color: '#3b82f6' }}>
+              <FileBarChart size={24} />
+            </div>
+            <div>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Evidence Packages</p>
+              <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem' }}>{evidencePackages}</h2>
+            </div>
+          </div>
+        </Card>
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '1rem', backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: '0.5rem', color: '#f59e0b' }}>
+              <Flag size={24} />
+            </div>
+            <div>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Review Queue</p>
+              <h2 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.5rem' }}>{reviewQueue}</h2>
             </div>
           </div>
         </Card>
@@ -370,8 +432,9 @@ export const ExamOps: React.FC = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       <div>Risk: <strong style={{ color: 'var(--text-primary)' }}>{student.riskScore}</strong></div>
                       <div>Violations: <strong style={{ color: 'var(--text-primary)' }}>{student.violationCount}</strong></div>
-                      <div>Confidence: <strong style={{ color: 'var(--text-primary)' }}>{student.avgAiConfidence}</strong></div>
+                      <div>Confidence: <strong style={{ color: 'var(--text-primary)' }}>{Math.round(student.avgAiConfidence * 100)}%</strong></div>
                       <div>Flags: <strong style={{ color: 'var(--text-primary)' }}>{student.flaggedEvents.length}</strong></div>
+                      <div>Evidence: <strong style={{ color: 'var(--text-primary)' }}>{student.evidenceCount ?? 0}</strong></div>
                     </div>
                     <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
                       <Button
@@ -456,9 +519,18 @@ export const ExamOps: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {selectedStudent.flaggedEvents.map((evt, idx) => (
                     <div key={idx} style={{ padding: '0.75rem', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--surface-highest)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500 }}>{evt.type}</p>
-                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(evt.timestamp).toLocaleString()}</p>
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        {evt.snapshotBase64 && (
+                          <img
+                            src={evt.snapshotBase64}
+                            alt="Incident evidence"
+                            style={{ width: 72, height: 44, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--surface-highest)' }}
+                          />
+                        )}
+                        <div>
+                          <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500 }}>{evt.type}</p>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{new Date(evt.timestamp).toLocaleString()}</p>
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Badge variant={evt.severity === 'CRITICAL' ? 'error' : evt.severity === 'HIGH' ? 'warning' : 'default'}>{evt.severity}</Badge>
@@ -469,7 +541,7 @@ export const ExamOps: React.FC = () => {
                           leftIcon={<Flag size={14} />}
                           onClick={() => {
                             const reason = window.prompt('Override reason?');
-                            if (reason) overrideMutation.mutate({ attemptId: selectedStudent.attemptId, eventId: String(idx), reason });
+                            if (reason) overrideMutation.mutate({ attemptId: selectedStudent.attemptId, eventId: evt.id, reason });
                           }}
                         >
                           Override

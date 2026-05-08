@@ -42,3 +42,28 @@ Create a specialized service that abstracts the AI complexity:
 ## LOG ENTRIES
 
 [2026-05-09 01:40] [Antigravity] Initialized implementation plan for Codex. Standing by for Phase 1 (Dependency Setup).
+
+[2026-05-09 02:20] [Codex] Phase 0 research complete. Local files implementation_plan.md and task.md were not present in the workspace root, so I used the user-provided plan and this existing log as the working source of truth. Open-source findings:
+- vardanagarwal/Proctoring-AI: Eye tracking computes eyeball position by comparing pupil/contour center against eye ROI endpoints: x_ratio = (left_edge - cx) / (cx - right_edge), y_ratio = (cy - top_edge) / (bottom_edge - cy), then flags left/right/up when ratios cross extreme thresholds. Mouth opening records baseline vertical distances between paired upper/lower lip landmarks, then flags mouth open when most outer and inner pairs exceed baseline by small pixel deltas. Person/phone detection counts COCO/YOLO classes where person=0 and cell phone=67.
+- narender-rk10/MyProctor.ai and narender-rk10/proctoring: Best reusable product logic is the event taxonomy and capture cadence: tab/window logs, audio snapshots every 5 seconds, phone detection, more-than-one-person detection, gaze estimation, and periodic student image logs. The Python package exposes base64 image analysis with statuses for mobile, person count, head movement, and eye movement.
+- openedx/edx-proctoring: Strong reference for platform integration rather than CV math. The useful pattern is treating proctoring as an exam subsystem with attempt status, provider/config separation, auditability, and admin review/override flows.
+
+Integration plan for ugskill-web/src/lib/proctoring/ProctoringEngine.ts:
+- Use MediaPipe FaceLandmarker in the browser for face landmarks and blendshapes. Convert Vardan's endpoint-ratio idea into normalized iris ratios: irisX = (irisCenterX - eyeLeftX) / (eyeRightX - eyeLeftX), irisY = (irisCenterY - eyeTopY) / (eyeBottomY - eyeTopY). Flag gaze_away only after sustained off-center ratios/head yaw for >2 seconds.
+- Use Mouth Aspect Ratio instead of raw pixel deltas: MAR = mean(vertical lip distances) / mouth width. Treat talking as sustained MAR > 0.4 plus oscillation over a short sample window, reducing false positives from a single yawn or static open mouth.
+- Use COCO-SSD for person and cell-phone detection with confidence thresholds, mapping >1 person to CRITICAL and phone to HIGH/CRITICAL depending on confidence.
+- Add adaptive FPS: normal state near 2 FPS, suspicious state near 10 FPS, and report incidents through an onIncident callback so ExamInterface can show a webcam HUD, toast warnings, emit socket events, and capture 720p evidence frames.
+
+[2026-05-09 02:55] [Codex] Phase 1 dependency setup and engine construction complete.
+- Installed web dependencies: @mediapipe/tasks-vision, @tensorflow/tfjs, and @tensorflow-models/coco-ssd.
+- Added ugskill-web/src/lib/proctoring/ProctoringEngine.ts with lazy model loading, normalized iris-ratio gaze tracking, MAR-based talking detection, COCO-SSD phone/person detection, incident cooldowns, and adaptive 2 FPS / 10 FPS scheduling.
+- Updated ExamInterface.tsx and ExamInterface.css with a visible secure-camera HUD, local incident banner updates, 720p evidence capture for HIGH/CRITICAL incidents, and POST /proctoring/events ingestion from the edge engine.
+- Updated the API proctoring Mongo model/service typing so talking, phone_detected, and snapshotBase64 evidence are persisted instead of discarded.
+- Verification: npm.cmd run build passed in ugskill-web; npm.cmd run build passed in ugskill-api. npm audit still reports 1 high-severity dependency issue after install; not auto-fixed because it may require broader dependency changes.
+
+[2026-05-09 03:30] [Codex] Real-world proctoring hardening pass started after user review.
+- Found and fixed attempt lifecycle gap: startAttempt now resumes an in-progress attempt but rejects any student who already submitted or was terminated, enforcing one attempt per exam.
+- Found and fixed scoring gap: submitAttempt now verifies attempt ownership/status, closes the attempt once, and computeScore compares submitted answers against Mongo question-bank options with isCorrect/correct_answer instead of counting answered questions as marks.
+- Found and fixed incident logging gap: socket-only tab/right-click flags now persist through ProctoringService into Mongo/PG instead of only broadcasting and incrementing counters.
+- Expanded admin operations data shape: /admin/exams/live now groups live attempts by exam with active users/warnings; /admin/exams/incidents/recent now reads real proctoring incidents and includes risk/evidence metadata for the Exam Ops dashboard.
+- Improved admin Exam Ops UI with clean sessions, evidence packages, review queue, incident risk/evidence columns, event thumbnails in the student drawer, and real event IDs for override actions.

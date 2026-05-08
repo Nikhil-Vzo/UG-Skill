@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../../config/postgres';
 import { examAttempts, exams } from '../../db/pg/schema/exam';
-import { eq, desc, and, gte } from 'drizzle-orm';
+import { eq, desc, and, gte, inArray } from 'drizzle-orm';
 import { proctoringService } from '../proctoring/proctoring.service';
 
 export const adminController = {
@@ -41,6 +41,7 @@ export const adminController = {
         .select({
           id: examAttempts.id,
           examId: examAttempts.examId,
+          examName: exams.title,
           studentId: examAttempts.studentId,
           status: examAttempts.status,
           startedAt: examAttempts.startedAt,
@@ -48,6 +49,7 @@ export const adminController = {
           proctoringVerdict: examAttempts.proctoringVerdict,
         })
         .from(examAttempts)
+        .leftJoin(exams, eq(examAttempts.examId, exams.id))
         .where(
           and(
             eq(examAttempts.status, 'in_progress'),
@@ -57,7 +59,24 @@ export const adminController = {
         .orderBy(desc(examAttempts.startedAt))
         .limit(100);
 
-      res.json({ success: true, data: liveAttempts });
+      const byExam = new Map<string, any>();
+      for (const attempt of liveAttempts) {
+        const current = byExam.get(attempt.examId) ?? {
+          id: attempt.examId,
+          examId: attempt.examId,
+          name: attempt.examName || `Exam ${attempt.examId.slice(0, 8)}`,
+          activeUsers: 0,
+          totalWarnings: 0,
+          status: 'live',
+          attempts: [],
+        };
+        current.activeUsers += 1;
+        current.totalWarnings += Number(attempt.violationCount ?? 0);
+        current.attempts.push(attempt);
+        byExam.set(attempt.examId, current);
+      }
+
+      res.json({ success: true, data: Array.from(byExam.values()) });
     } catch (error) {
       console.error('Admin live exams error:', error);
       res.status(500).json({ success: false, message: 'Error fetching live exams' });
@@ -67,27 +86,29 @@ export const adminController = {
   /** GET /api/v1/admin/exams/incidents/recent — attempts with 1+ violations in last 24h */
   getRecentIncidents: async (req: Request, res: Response) => {
     try {
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const events = await proctoringService.getRecentIncidents(50);
+      const examIds = Array.from(new Set(events.map((event: any) => event.examId).filter(Boolean)));
+      const examRows = examIds.length
+        ? await db.select({ id: exams.id, title: exams.title }).from(exams).where(inArray(exams.id, examIds))
+        : [];
+      const examNames = new Map(examRows.map((exam) => [exam.id, exam.title]));
 
-      const incidents = await db
-        .select({
-          id: examAttempts.id,
-          examId: examAttempts.examId,
-          studentId: examAttempts.studentId,
-          status: examAttempts.status,
-          violationCount: examAttempts.violationCount,
-          proctoringVerdict: examAttempts.proctoringVerdict,
-          startedAt: examAttempts.startedAt,
-        })
-        .from(examAttempts)
-        .where(gte(examAttempts.startedAt, since))
-        .orderBy(desc(examAttempts.violationCount))
-        .limit(50);
+      const incidents = events.map((event: any) => ({
+        id: String(event._id),
+        attemptId: event.attemptId,
+        userId: event.studentId,
+        userLabel: event.studentId ? `Student ${String(event.studentId).slice(0, 8)}` : 'Unknown student',
+        examId: event.examId,
+        examName: examNames.get(event.examId) || `Exam ${String(event.examId || '').slice(0, 8)}`,
+        type: event.type,
+        occurredAt: event.frameTimestamp || event.createdAt,
+        severity: String(event.severity || 'LOW').toLowerCase(),
+        riskScore: event.riskScoreAtEvent,
+        aiConfidence: event.aiConfidence,
+        hasEvidence: Boolean(event.snapshotBase64 || event.evidenceUrl),
+      }));
 
-      // Only return attempts with at least 1 violation
-      const flagged = incidents.filter((a) => (a.violationCount ?? 0) > 0);
-
-      res.json({ success: true, data: flagged });
+      res.json({ success: true, data: incidents });
     } catch (error) {
       console.error('Admin incidents error:', error);
       res.status(500).json({ success: false, message: 'Error fetching incidents' });

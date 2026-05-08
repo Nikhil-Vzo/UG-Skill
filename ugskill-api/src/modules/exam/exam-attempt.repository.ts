@@ -73,6 +73,20 @@ export class ExamAttemptRepository {
     }
   }
 
+  async findLatestAttempt(studentId: string, examId: string) {
+    try {
+      const [attempt] = await db
+        .select()
+        .from(examAttempts)
+        .where(and(eq(examAttempts.studentId, studentId), eq(examAttempts.examId, examId)))
+        .orderBy(desc(examAttempts.startedAt))
+        .limit(1);
+      return attempt || null;
+    } catch (error: any) {
+      throw new AppError(`Failed to find latest exam attempt: ${error.message}`, 500);
+    }
+  }
+
   async findManyAttempts(filters: { studentId?: string; examId?: string; status?: string; page?: number; limit?: number }) {
     try {
       const page = Math.max(1, Number(filters.page) || 1);

@@ -2,6 +2,23 @@ import { Namespace, Server as SocketServer } from 'socket.io';
 import { AuthenticatedSocket } from './socket.server';
 import { logger } from '../lib/logger';
 import { examAttemptRepository } from '../modules/exam/exam-attempt.repository';
+import { proctoringService } from '../modules/proctoring/proctoring.service';
+
+const normalizeEventType = (eventType: string) => {
+  const normalized = eventType.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const aliases: Record<string, string> = {
+    tab_switch_detected: 'tab_switch',
+    tab_switch: 'tab_switch',
+    right_click_blocked: 'copy_paste',
+    face_not_detected: 'no_face',
+    multiple_faces: 'multiple_faces',
+    multiple_people: 'multiple_faces',
+    phone_detected: 'phone_detected',
+    gaze_away: 'gaze_away',
+    talking: 'talking',
+  };
+  return aliases[normalized] || normalized;
+};
 
 /**
  * Registers the /tracking namespace.
@@ -106,20 +123,29 @@ export function registerTrackingNamespace(io: SocketServer): Namespace {
           timestamp: new Date().toISOString(),
         };
 
+        try {
+          const attempt = await examAttemptRepository.findAttemptById(attemptId);
+          await proctoringService.ingestEvent({
+            attemptId,
+            examId: attempt.examId,
+            studentId: attempt.studentId,
+            type: normalizeEventType(eventType),
+            severity: severity.toUpperCase() as any,
+            metadata: {
+              ...metadata,
+              source: 'tracking-socket',
+              originalEventType: eventType,
+              emittedBy: userId,
+            },
+          });
+        } catch (err) {
+          logger.error(`[/tracking] Failed to persist flag:event for ${attemptId}`, err);
+        }
+
         // Broadcast to all monitors in the room and global admin room
         trackingNS.to(room).emit('flag:alert', alert);
         trackingNS.to('admin:monitoring').emit('flag:alert', alert);
         logger.info(`[/tracking] flag:event type=${eventType} severity=${severity} attemptId=${attemptId} userId=${userId}`);
-
-        // For high/critical, also increment the violation count in PG
-        if (severity === 'high' || severity === 'critical') {
-          try {
-            await examAttemptRepository.incrementViolation(attemptId);
-            logger.info(`[/tracking] Violation incremented for attemptId=${attemptId}`);
-          } catch (err) {
-            logger.error(`[/tracking] Failed to increment violation for ${attemptId}`, err);
-          }
-        }
       }
     );
 
@@ -143,6 +169,19 @@ export function registerTrackingNamespace(io: SocketServer): Namespace {
           await examAttemptRepository.updateAttempt(attemptId, {
             status: 'terminated',
             proctoringVerdict: 'admin_terminated',
+          });
+
+          await proctoringService.ingestEvent({
+            attemptId,
+            examId: attempt.examId,
+            studentId: attempt.studentId,
+            type: 'admin_terminate',
+            severity: 'CRITICAL',
+            metadata: {
+              source: 'tracking-socket',
+              terminatedBy: userId,
+              reason: reason || 'Terminated by admin',
+            },
           });
 
           const room = `tracking:${attemptId}`;
