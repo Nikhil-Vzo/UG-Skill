@@ -12,9 +12,9 @@ export const validate = (schema: ZodObject<ZodRawShape>) => {
       });
       
       // Replace with parsed/sanitized data
-      req.body = parsed.body;
-      Object.assign(req.query, parsed.query);
-      Object.assign(req.params, parsed.params);
+      if (parsed.body !== undefined) req.body = parsed.body;
+      if (parsed.query !== undefined) Object.assign(req.query, parsed.query);
+      if (parsed.params !== undefined) Object.assign(req.params, parsed.params);
       
       next();
     } catch (error) {
