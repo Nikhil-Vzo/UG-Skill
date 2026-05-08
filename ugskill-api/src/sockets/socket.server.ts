@@ -11,6 +11,32 @@ export interface AuthenticatedSocket extends Socket {
   };
 }
 
+export const socketAuthMiddleware = (socket: Socket, next: (err?: Error) => void) => {
+  try {
+    const token =
+      (socket.handshake.auth?.token as string) ||
+      (socket.handshake.headers.authorization?.split(' ')[1] as string);
+
+    if (!token) {
+      logger.warn(`[Socket] Unauthenticated connection attempt from ${socket.handshake.address}`);
+      return next(new Error('UNAUTHORIZED: token required'));
+    }
+
+    const payload = verifyAccessToken(token);
+    (socket as AuthenticatedSocket).data = {
+      userId: payload.userId,
+      email: payload.email,
+      roles: payload.roles,
+    };
+
+    logger.debug(`[Socket] Authenticated: userId=${payload.userId} socketId=${socket.id}`);
+    next();
+  } catch (err) {
+    logger.warn(`[Socket] Invalid token from ${socket.handshake.address}`);
+    next(new Error('UNAUTHORIZED: invalid token'));
+  }
+};
+
 /**
  * Creates and configures the Socket.io server.
  * Attaches JWT auth middleware — any socket without a valid Bearer token
@@ -26,31 +52,7 @@ export function createSocketServer(httpServer: HttpServer): SocketServer {
   });
 
   // ── Global JWT Auth Middleware ──────────────────────────────────────────
-  io.use((socket: Socket, next) => {
-    try {
-      const token =
-        (socket.handshake.auth?.token as string) ||
-        (socket.handshake.headers.authorization?.split(' ')[1] as string);
-
-      if (!token) {
-        logger.warn(`[Socket] Unauthenticated connection attempt from ${socket.handshake.address}`);
-        return next(new Error('UNAUTHORIZED: token required'));
-      }
-
-      const payload = verifyAccessToken(token);
-      (socket as AuthenticatedSocket).data = {
-        userId: payload.userId,
-        email: payload.email,
-        roles: payload.roles,
-      };
-
-      logger.debug(`[Socket] Authenticated: userId=${payload.userId} socketId=${socket.id}`);
-      next();
-    } catch (err) {
-      logger.warn(`[Socket] Invalid token from ${socket.handshake.address}`);
-      next(new Error('UNAUTHORIZED: invalid token'));
-    }
-  });
+  io.use(socketAuthMiddleware);
 
   logger.info('[Socket] Socket.io server initialized');
   return io;

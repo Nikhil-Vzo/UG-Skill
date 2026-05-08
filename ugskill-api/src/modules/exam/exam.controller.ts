@@ -25,7 +25,8 @@ export const getExam = async (req: Request, res: Response, next: NextFunction) =
 
 export const listExams = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const exams = await examService.listExams(req.query);
+    const filters = { ...req.query, studentId: req.user?.userId };
+    const exams = await examService.listExams(filters);
     res.json({ success: true, ...exams });
   } catch (error) {
     next(error);
@@ -57,9 +58,30 @@ export const addSection = async (req: Request, res: Response, next: NextFunction
 export const grantBatchAccess = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const examId = req.params.id as string;
-    const adminId = req.user!.userId;
-    const access = await examService.grantBatchAccess(examId, req.body.batchId, adminId);
+    const { batchId } = req.body;
+    const access = await examService.grantBatchAccess(examId, batchId, req.user!.userId);
     res.status(201).json({ success: true, data: access });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listBatchAccess = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const examId = req.params.id as string;
+    const accessList = await examService.listBatchAccess(examId);
+    res.json({ success: true, data: accessList });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const revokeBatchAccess = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    const batchId = req.params.batchId as string;
+    await examService.revokeBatchAccess(id, batchId);
+    res.json({ success: true, message: 'Access revoked' });
   } catch (error) {
     next(error);
   }

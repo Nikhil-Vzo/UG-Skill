@@ -47,6 +47,7 @@ import { PlacementsConfig } from './pages/admin/PlacementsConfig';
 import { ExamOps } from './pages/admin/ExamOps';
 import { ProctoringReport } from './pages/admin/ProctoringReport';
 import { DriveConfig } from './pages/admin/DriveConfig';
+import { ExamBuilder } from './pages/admin/ExamBuilder';
 
 const PageFallback = () => (
   <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -113,6 +114,8 @@ function App() {
                 <Route path="placements" element={<PlacementsConfig />} />
                 <Route path="placements/:driveId" element={<DriveConfig />} />
                 <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />
+                <Route path="exams/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><ExamBuilder /></ProtectedRoute>} />
+                <Route path="exams/:examId/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><ExamBuilder /></ProtectedRoute>} />
                 <Route path="proctoring-report/:examId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ProctoringReport /></ProtectedRoute>} />
                 <Route path="courses" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><AdminCourses /></ProtectedRoute>} />
                 <Route path="courses/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><CourseBuilder /></ProtectedRoute>} />

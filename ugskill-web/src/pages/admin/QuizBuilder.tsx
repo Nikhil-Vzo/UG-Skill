@@ -42,9 +42,9 @@ const saveQuiz = async (payload: { quizId?: string; title: string; questions: Qu
 };
 
 /* ---------- helpers ---------- */
-const makeOption = (): Option => ({ id: `opt_${Date.now()}`, text: '', isCorrect: false });
+const makeOption = (): Option => ({ id: `opt_${crypto.randomUUID()}`, text: '', isCorrect: false });
 const makeQuestion = (): Question => ({
-  id: `q_${Date.now()}`,
+  id: `q_${crypto.randomUUID()}`,
   text: '',
   explanation: '',
   options: [makeOption(), makeOption()],
