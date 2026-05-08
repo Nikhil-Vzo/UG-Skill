@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import api from '../lib/api';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 import { useExamTimer } from '../hooks/useExamTimer';
+import { ProctoringEngine, type ProctoringEngineStatus, type ProctoringIncident } from '../lib/proctoring/ProctoringEngine';
 import './ExamInterface.css';
 
 /* ────────── Types ────────── */
@@ -20,7 +21,7 @@ interface Question {
   marks: number;
 }
 
-type ProctoringEvent = { type: string; ts: number };
+type ProctoringEvent = { type: string; message?: string; severity?: string; ts: number };
 
 /* ────────── Proctoring Overlay ────────── */
 const ProctoringBanner: React.FC<{ events: ProctoringEvent[] }> = ({ events }) => {
@@ -28,7 +29,50 @@ const ProctoringBanner: React.FC<{ events: ProctoringEvent[] }> = ({ events }) =
   if (!recent || Date.now() - recent.ts > 4000) return null;
   return (
     <div style={{ position: 'fixed', top: '4.5rem', left: '50%', transform: 'translateX(-50%)', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.5)', backdropFilter: 'blur(8px)', color: '#ef4444', padding: '0.5rem 1.25rem', fontSize: '0.8125rem', fontWeight: 600, zIndex: 999, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <AlertTriangle size={14} /> Proctoring Alert: {recent.type}
+      <AlertTriangle size={14} /> Proctoring Alert: {recent.message ?? recent.type}
+    </div>
+  );
+};
+
+const ProctoringHud: React.FC<{
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  status: ProctoringEngineStatus;
+  alerts: number;
+}> = ({ videoRef, status, alerts }) => {
+  const statusLabel = status.state === 'running'
+    ? 'AI Monitoring Active'
+    : status.state === 'loading'
+      ? 'Loading AI Models'
+      : status.state === 'degraded'
+        ? 'Limited Monitoring'
+        : status.state === 'error'
+          ? 'Camera Unavailable'
+          : 'Camera Ready';
+
+  return (
+    <div className="proctoring-hud" aria-label="Proctoring camera preview">
+      <div className="proctoring-hud-videoWrap">
+        <video ref={videoRef} className="proctoring-hud-video" autoPlay muted playsInline />
+        <div className="proctoring-hud-scan" />
+      </div>
+      <div className="proctoring-hud-meta">
+        <div>
+          <div className="proctoring-hud-title">Secure Camera</div>
+          <div className="proctoring-hud-status">
+            <span className={`proctoring-hud-dot ${status.state}`} />
+            {statusLabel}
+          </div>
+        </div>
+        <div className="proctoring-hud-count">
+          <span>{alerts}</span>
+          <small>alerts</small>
+        </div>
+      </div>
+      <div className="proctoring-hud-foot">
+        <span>{status.faceReady ? 'Face mesh' : 'Face mesh pending'}</span>
+        <span>{status.objectReady ? 'Object scan' : 'Object scan pending'}</span>
+        <span>{status.fps} FPS</span>
+      </div>
     </div>
   );
 };
@@ -84,7 +128,7 @@ export const ExamInterface: React.FC = () => {
   const navigate = useNavigate();
 
   // ── Start Attempt (fires on mount) ──
-  const { data: attemptData, isLoading: startingExam } = useQuery({
+  const { data: attemptData, isLoading: startingExam, isError: startExamError, error: startExamFailure } = useQuery({
     queryKey: ['exam-attempt', examId],
     queryFn: async () => {
       const res = await api.post(`/exams/${examId}/attempts/start`);
@@ -116,6 +160,12 @@ export const ExamInterface: React.FC = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [proctoringEvents, setProctoringEvents] = useState<ProctoringEvent[]>([]);
+  const [proctoringStatus, setProctoringStatus] = useState<ProctoringEngineStatus>({
+    state: 'idle',
+    fps: 2,
+    faceReady: false,
+    objectReady: false,
+  });
   const [, setTabSwitchWarning] = useState(false);
   const [aiWarnings, setAiWarnings] = useState<{ count: number; max: number }>({ count: 0, max: 5 });
   const [terminated, setTerminated] = useState(false);
@@ -123,8 +173,8 @@ export const ExamInterface: React.FC = () => {
   // ── Frame capture refs ──
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const frameIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const aiMonitoringRef = useRef<boolean>(true);
+  const proctoringEngineRef = useRef<ProctoringEngine | null>(null);
 
   // ── Submit mutation ──
   const submitMut = useMutation({
@@ -222,77 +272,124 @@ export const ExamInterface: React.FC = () => {
     return () => document.removeEventListener('contextmenu', onContextMenu);
   }, [submitted, attemptId]);
 
-  // ── Frame Capture Loop (5s interval) ──
+  const captureEvidenceFrame = useCallback((quality = 0.82) => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return undefined;
+
+    const canvas = canvasRef.current ?? document.createElement('canvas');
+    canvasRef.current = canvas;
+
+    const sourceWidth = video.videoWidth || 1280;
+    const sourceHeight = video.videoHeight || 720;
+    const targetWidth = 1280;
+    const targetHeight = 720;
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return undefined;
+
+    ctx.fillStyle = '#05070d';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+    const scale = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    ctx.drawImage(video, (targetWidth - drawWidth) / 2, (targetHeight - drawHeight) / 2, drawWidth, drawHeight);
+
+    return canvas.toDataURL('image/jpeg', quality);
+  }, []);
+
+  const handleAiIncident = useCallback((incident: ProctoringIncident) => {
+    const shouldCapture = incident.severity === 'HIGH' || incident.severity === 'CRITICAL';
+    const snapshotBase64 = shouldCapture ? captureEvidenceFrame() : undefined;
+
+    setProctoringEvents(evs => [...evs, {
+      type: incident.type,
+      message: incident.message,
+      severity: incident.severity,
+      ts: incident.timestamp,
+    }]);
+
+    setAiWarnings(prev => ({
+      count: Math.min(prev.max, prev.count + (incident.severity === 'LOW' ? 0 : 1)),
+      max: prev.max,
+    }));
+
+    api.post('/proctoring/events', {
+      attemptId,
+      examId,
+      type: incident.type,
+      severity: incident.severity,
+      aiConfidence: incident.confidence,
+      gazeDirection: typeof incident.metadata.direction === 'string' ? incident.metadata.direction : undefined,
+      snapshotBase64,
+      metadata: {
+        ...incident.metadata,
+        source: 'edge-proctor',
+        capturedLocally: Boolean(snapshotBase64),
+      },
+    }).catch(() => { /* Keep exam running if logging has a transient failure. */ });
+  }, [attemptId, captureEvidenceFrame, examId]);
+
+  // ── Edge AI Proctoring Loop ──
   useEffect(() => {
     if (submitted || !attemptId) return;
 
-    const startFrameCapture = async () => {
+    let cancelled = false;
+    let stream: MediaStream | null = null;
+
+    const startEdgeProctoring = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (!videoRef.current) {
-          const v = document.createElement('video');
-          v.setAttribute('playsinline', '');
-          v.muted = true;
-          v.style.position = 'fixed';
-          v.style.top = '-9999px';
-          v.style.left = '-9999px';
-          v.style.width = '1px';
-          v.style.height = '1px';
-          v.style.opacity = '0';
-          v.style.pointerEvents = 'none';
-          document.body.appendChild(v);
-          v.srcObject = stream;
-          await v.play();
-          videoRef.current = v;
-        }
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user',
+          },
+          audio: false,
+        });
+
+        if (cancelled || !videoRef.current) return;
+
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+
+        const engine = new ProctoringEngine({
+          video: videoRef.current,
+          onIncident: handleAiIncident,
+          onStatusChange: setProctoringStatus,
+        });
+        proctoringEngineRef.current = engine;
+        await engine.initialize();
+        if (!cancelled) engine.start();
       } catch {
         aiMonitoringRef.current = false;
-        return;
+        setProctoringStatus({
+          state: 'error',
+          fps: 0,
+          faceReady: false,
+          objectReady: false,
+          lastError: 'Camera permission denied or unavailable',
+        });
       }
-
-      if (!canvasRef.current) {
-        const c = document.createElement('canvas');
-        c.width = 320;
-        c.height = 240;
-        canvasRef.current = c;
-      }
-
-      const captureAndSend = () => {
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        if (!video || !canvas || video.readyState < 2) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const frame = canvas.toDataURL('image/jpeg', 0.6);
-
-        api.post('/proctoring/analyze-frame', {
-          attemptId,
-          examId,
-          frame,
-          capturedAt: new Date().toISOString(),
-        }).catch(() => { /* fire-and-forget */ });
-      };
-
-      frameIntervalRef.current = setInterval(captureAndSend, 5000);
     };
 
-    startFrameCapture();
+    startEdgeProctoring();
 
     return () => {
-      if (frameIntervalRef.current) {
-        clearInterval(frameIntervalRef.current);
-        frameIntervalRef.current = null;
-      }
-      if (videoRef.current) {
-        const stream = videoRef.current.srcObject as MediaStream | null;
-        stream?.getTracks().forEach((t) => t.stop());
-        videoRef.current.remove();
-        videoRef.current = null;
+      cancelled = true;
+      proctoringEngineRef.current?.stop();
+      proctoringEngineRef.current = null;
+      stream?.getTracks().forEach((t) => t.stop());
+      if (videoRef.current?.srcObject) {
+        const activeStream = videoRef.current.srcObject as MediaStream;
+        activeStream.getTracks().forEach((t) => t.stop());
+        videoRef.current.srcObject = null;
       }
     };
-  }, [submitted, attemptId]);
+
+  }, [submitted, attemptId, handleAiIncident]);
 
 
   const formatTime = (secs: number) => {
@@ -312,6 +409,21 @@ export const ExamInterface: React.FC = () => {
       <div style={{ minHeight: '100vh', background: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
         <Loader2 size={36} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-glow)' }} />
         <p style={{ color: 'var(--text-low)' }}>Initializing secure exam session...</p>
+      </div>
+    );
+  }
+
+  if (startExamError) {
+    const message = (startExamFailure as any)?.response?.data?.message
+      || 'This exam cannot be started. It may already be completed or outside the allowed window.';
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div className="glass-panel" style={{ maxWidth: 520, width: '100%', padding: '2rem', textAlign: 'center' }}>
+          <AlertTriangle size={36} style={{ color: 'var(--warning)', marginBottom: '1rem' }} />
+          <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--text-high)', margin: '0 0 0.75rem', fontSize: '1.25rem' }}>Exam Locked</h1>
+          <p style={{ color: 'var(--text-low)', margin: 0, lineHeight: 1.6 }}>{message}</p>
+          <Button variant="primary" onClick={() => navigate('/app/exams')} style={{ marginTop: '1.5rem' }}>Back to Exams</Button>
+        </div>
       </div>
     );
   }
@@ -352,8 +464,8 @@ export const ExamInterface: React.FC = () => {
                 <div style={{ padding: '0.5rem' }}>Loading verified score...</div>
               ) : resultData ? (
                 <>
-                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: (resultData.score / resultData.maxScore) >= 0.6 ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-display)' }}>
-                    {resultData.score}/{resultData.maxScore}
+                  <div style={{ fontSize: '2.5rem', fontWeight: 900, color: resultData.passed ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-display)' }}>
+                    {resultData.totalScore}/{resultData.maxScore}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Final Score</div>
                 </>
@@ -382,6 +494,7 @@ export const ExamInterface: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column', userSelect: 'none' }}>
       <ProctoringBanner events={proctoringEvents} />
+      <ProctoringHud videoRef={videoRef} status={proctoringStatus} alerts={proctoringEvents.length} />
 
       {/* AI Gaze Warning Banner */}
       {aiWarnings.count > 0 && (

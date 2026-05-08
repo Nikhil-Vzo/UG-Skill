@@ -57,6 +57,7 @@ export class ProctoringService {
     gazeDirection?: string;
     metadata?: any;
     evidenceUrl?: string;
+    snapshotBase64?: string;
   }) {
     try {
       // 1. Load exam config for threshold-aware scoring
@@ -285,11 +286,15 @@ export class ProctoringService {
         riskScore,
         avgAiConfidence: Number(avgConfidence.toFixed(2)),
         flaggedEvents: nonOverridden.filter(e => e.severity === 'HIGH' || e.severity === 'CRITICAL').map(e => ({
+          id: String(e._id),
           type: e.type,
           severity: e.severity,
           timestamp: e.frameTimestamp,
           aiConfidence: e.aiConfidence,
+          snapshotBase64: e.snapshotBase64,
+          metadata: e.metadata,
         })),
+        evidenceCount: nonOverridden.filter(e => Boolean(e.snapshotBase64 || e.evidenceUrl)).length,
       };
     });
 
