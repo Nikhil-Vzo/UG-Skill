@@ -7,6 +7,7 @@ import { ExamProctoringEventModel } from '../../db/mongo/models/exam';
 import { proctoringService } from '../proctoring/proctoring.service';
 import { AppError, NotFoundError, ValidationError } from '../../lib/errors';
 import { db } from '../../config/postgres';
+import { logger } from '../../lib/logger';
 
 export class ExamService {
   // --- EXAM CRUD ---
@@ -40,7 +41,53 @@ export class ExamService {
   }
 
   async listExams(filters: any) {
-    return examRepository.findMany(filters);
+    const result = await examRepository.findMany(filters);
+    
+    // Fetch user attempts if studentId is provided
+    let userAttemptsMap = new Map<string, any>();
+    if (filters.studentId) {
+      const attempts = await examAttemptRepository.findManyAttempts({ studentId: filters.studentId, limit: 1000 });
+      attempts.data.forEach(a => {
+        // Keep the latest/highest status. For MVP we just care if ANY attempt is submitted/terminated
+        if (a.status === 'submitted' || a.status === 'terminated') {
+          userAttemptsMap.set(a.examId, a);
+        } else if (!userAttemptsMap.has(a.examId)) {
+          userAttemptsMap.set(a.examId, a);
+        }
+      });
+    }
+
+    // Inject virtual statuses for student consumption
+    const enrichedData = result.data.map((exam: any) => {
+      if (exam.status !== 'published') return exam;
+
+      const now = new Date();
+      const scheduled = new Date(exam.scheduledAt);
+      const duration = Number(exam.durationMinutes) || 60;
+      const endsAt = new Date(scheduled.getTime() + duration * 60000);
+
+      let virtualStatus = 'published';
+      const userAttempt = userAttemptsMap.get(exam.id);
+
+      if (userAttempt && (userAttempt.status === 'submitted' || userAttempt.status === 'terminated')) {
+        virtualStatus = 'completed';
+      } else if (now < scheduled) {
+        virtualStatus = 'upcoming';
+      } else if (now >= scheduled && now <= endsAt) {
+        virtualStatus = 'live';
+      } else if (now > endsAt) {
+        virtualStatus = 'missed';
+      }
+
+      // If completed, attach score info if available
+      let score = undefined;
+      // Note: Full score might require another query or joining, but frontend expects score and maxScore
+      // The attempt might not hold score directly, but we at least mark it completed.
+
+      return { ...exam, status: virtualStatus, originalStatus: 'published' };
+    });
+
+    return { ...result, data: enrichedData };
   }
 
   async updateExam(id: string, data: any) {
@@ -73,6 +120,14 @@ export class ExamService {
     return examRepository.grantBatchAccess(examId, batchId, grantedBy);
   }
 
+  async listBatchAccess(examId: string) {
+    return examRepository.listBatchAccess(examId);
+  }
+
+  async revokeBatchAccess(examId: string, batchId: string) {
+    return examRepository.revokeBatchAccess(examId, batchId);
+  }
+
   // --- QUESTION BANK ---
   async createQuestion(creatorId: string, data: any) {
     return examQuestionRepository.create({ ...data, pg_created_by: creatorId });
@@ -83,67 +138,91 @@ export class ExamService {
   }
 
   // --- ATTEMPT FLOW ---
-  async startAttempt(studentId: string, examId: string, meta: { ipAddress?: string; deviceFingerprint?: string }) {
-    // 1. Check if exam exists
-    const exam = await examRepository.findById(examId);
-    if (!exam) throw new NotFoundError('Exam not found');
+  async startAttempt(studentId: string, examId: string, meta: { ipAddress?: string; deviceFingerprint?: string } = {}) {
+    logger.info('Starting exam attempt', { studentId, examId });
+    
+    try {
+      // 1. Check if exam exists
+      const exam = await examRepository.findById(examId);
+      if (!exam) throw new NotFoundError('Exam not found');
 
-    // 2. Compute attempt number
-    const count = await examAttemptRepository.getAttemptCount(studentId, examId);
-    const attemptNumber = Number(count) + 1;
+      // 2. Compute attempt number
+      const countStr = await examAttemptRepository.getAttemptCount(studentId, examId);
+      const attemptNumber = Number(countStr || 0) + 1;
 
-    // 3. Create PG Attempt (status: in_progress)
-    const attempt = await examAttemptRepository.createAttempt({
-      examId,
-      studentId,
-      attemptNumber,
-      ipAddress: meta.ipAddress,
-      deviceFingerprint: meta.deviceFingerprint,
-      status: 'in_progress'
-    });
+      logger.debug('Creating attempt entry', { examId, studentId, attemptNumber });
 
-    // 4. Create Mongo Response Shell
-    await examResponseRepository.create({
-      pg_attempt_id: attempt.id,
-      pg_student_id: studentId,
-      pg_exam_id: examId,
-    });
-
-    // 5. Fetch questions from definition
-    const def = await examDefinitionRepository.findByPgExamId(examId);
-    let questionsList: any[] = [];
-    if (def && def.sections) {
-      const qIds: string[] = [];
-      def.sections.forEach((s: any) => {
-        if (s.question_sequence) {
-          qIds.push(...s.question_sequence);
-        }
+      // 3. Create PG Attempt (status: in_progress)
+      const attempt = await examAttemptRepository.createAttempt({
+        examId,
+        studentId,
+        attemptNumber,
+        ipAddress: meta.ipAddress,
+        deviceFingerprint: meta.deviceFingerprint,
+        status: 'in_progress'
       });
-      if (qIds.length > 0) {
-        // dynamic import or use existing model
-        const { ExamQuestionBankModel } = require('../../db/mongo/models/exam');
-        const rawQs = await ExamQuestionBankModel.find({ _id: { $in: qIds } }).lean();
-        
-        // Ensure ordering matches the sequence (optional but good)
-        questionsList = qIds.map(qid => {
-          const q: any = rawQs.find((rq: any) => rq._id.toString() === qid.toString());
-          if (!q) return null;
-          return {
-            id: q._id.toString(),
-            text: q.stem || '',
-            options: q.options ? q.options.map((o: any) => o.text || o) : [],
-            marks: q.marks || 1
-          };
-        }).filter(Boolean);
-      }
-    }
 
-    return {
-      attemptId: attempt.id,
-      questions: questionsList,
-      durationSeconds: (exam.durationMinutes || 60) * 60,
-      examTitle: exam.title
-    };
+      if (!attempt) {
+        throw new AppError('Database failed to return the new attempt record', 500);
+      }
+
+      // 4. Create Mongo Response Shell
+      try {
+        await examResponseRepository.create({
+          pg_attempt_id: attempt.id,
+          pg_student_id: studentId,
+          pg_exam_id: examId,
+        });
+      } catch (mongoErr: any) {
+        logger.error('Failed to create Mongo response shell', { error: mongoErr.message, attemptId: attempt.id });
+        // We might want to rollback PG attempt here if atomic consistency is required
+        throw new AppError(`Exam initialization failed (Storage Error): ${mongoErr.message}`, 500);
+      }
+
+      // 5. Fetch questions from definition
+      const def = await examDefinitionRepository.findByPgExamId(examId);
+      let questionsList: any[] = [];
+      if (def && def.sections) {
+        const qIds: string[] = [];
+        def.sections.forEach((s: any) => {
+          if (s.question_sequence) {
+            qIds.push(...s.question_sequence);
+          }
+        });
+        
+        if (qIds.length > 0) {
+          try {
+            const { ExamQuestionBankModel } = require('../../db/mongo/models/exam');
+            const rawQs = await ExamQuestionBankModel.find({ _id: { $in: qIds } }).lean();
+            
+            // Ensure ordering matches the sequence
+            questionsList = qIds.map(qid => {
+              const q: any = rawQs.find((rq: any) => rq._id.toString() === qid.toString());
+              if (!q) return null;
+              return {
+                id: q._id.toString(),
+                text: q.stem || '',
+                options: q.options ? q.options.map((o: any) => o.text || o) : [],
+                marks: q.marks || 1
+              };
+            }).filter(Boolean);
+          } catch (qErr: any) {
+            logger.warn('Failed to fetch questions from bank', { error: qErr.message, examId });
+          }
+        }
+      }
+
+      return {
+        attemptId: attempt.id,
+        questions: questionsList,
+        durationSeconds: (Number(exam.durationMinutes) || 60) * 60,
+        examTitle: exam.title
+      };
+    } catch (error: any) {
+      logger.error('startAttempt failed', { error: error.message, stack: error.stack, studentId, examId });
+      if (error instanceof AppError || error instanceof NotFoundError) throw error;
+      throw new AppError(`Internal server error during exam start: ${error.message}`, 500);
+    }
   }
 
   async saveIncrementalResponse(studentId: string, attemptId: string, data: any) {
