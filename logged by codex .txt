@@ -1,0 +1,44 @@
+# LOGGED BY CODEX - PROCTORING SYSTEM IMPLEMENTATION LOG
+
+## INITIAL IMPLEMENTATION PLAN (Drafted by Antigravity for Codex)
+
+### Goal: Industry-Level Real-Time AI Proctoring System
+This system will utilize Edge AI (MediaPipe + TF.js) for instantaneous cheating detection, real-time snapshot persistence in MongoDB, and a centralized Admin Monitoring Hub.
+
+---
+
+### Step 1: Core Dependency Injection
+We will integrate the best-in-class open-source libraries identified from industry benchmarks (and the repositories provided):
+- `@mediapipe/face_mesh`: For 468-point landmark tracking (Gaze, Head Pose, Mouth Movement).
+- `@tensorflow-models/coco-ssd`: For Object Detection (Specifically "Cell Phone").
+- `socket.io-client`: For real-time event bridging to the Admin HUD.
+
+### Step 2: The "ProctoringEngine" Singleton
+Create a specialized service that abstracts the AI complexity:
+- **Initialization**: Load models asynchronously on exam entry.
+- **Detector Loop**: Run at ~5 FPS to detect:
+    - `GazeTracking`: If iris position shifts > 30% from center for > 2 seconds.
+    - `FaceCount`: If faces != 1.
+    - `ObjectDetection`: If `class === 'cell phone'` with confidence > 0.6.
+    - `TalkDetection`: If mouth aspect ratio (MAR) exceeds threshold.
+
+### Step 3: UI/UX (The Student HUD)
+- **Floating Preview**: A `PremiumCard` containing a live webcam feed.
+- **Incident Warnings**: Local UI overlays (e.g., "Face not detected", "Phone detected") to provide instant feedback.
+- **Auto-Snapshot**: When a violation is detected locally, trigger a high-res canvas capture.
+
+### Step 4: Data Persistence (MongoDB Hardening)
+- **Endpoint**: `POST /api/proctoring/incident`
+- **Payload**: `{ attemptId, type, severity, snapshotBase64, aiMetadata }`
+- **Storage**: Save to `ProctoringEventModel` in MongoDB. Ensure base64 images are stored (or optimized via GridFS/S3 if volume grows).
+
+### Step 5: Admin Live Monitoring "War Room"
+- **Grid View**: A list of all active attempts.
+- **Real-Time Push**: Socket.io emits `incident:new` to the admin room.
+- **Instant Action**: Buttons for `[Warn Student]`, `[Pause Exam]`, `[Terminate]`.
+
+---
+
+## LOG ENTRIES
+
+[2026-05-09 01:40] [Antigravity] Initialized implementation plan for Codex. Standing by for Phase 1 (Dependency Setup).
