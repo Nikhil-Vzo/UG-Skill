@@ -61,6 +61,24 @@ export const createSectionSchema = z.object({
   })
 });
 
+export const replaceSectionsSchema = z.object({
+  params: z.object({
+    id: z.string().uuid()
+  }),
+  body: z.object({
+    sections: z.array(z.object({
+      name: z.string().min(1),
+      sectionOrder: z.number().int().optional(),
+      timeLimitMinutes: z.number().int().optional(),
+      maxMarks: z.number().optional(),
+      negativeMarking: z.number().optional(),
+      isLocked: z.boolean().optional(),
+      navigationMode: z.enum(['free', 'sequential', 'locked_after_submit']).optional(),
+      mongoPoolConfig: z.any().optional()
+    })).min(1)
+  })
+});
+
 export const grantBatchAccessSchema = z.object({
   params: z.object({
     id: z.string().uuid()
@@ -192,6 +210,7 @@ export const examProctoringEventQuerySchema = z.object({
 export type CreateExamInput = z.infer<typeof createExamSchema>['body'];
 export type UpdateExamInput = z.infer<typeof updateExamSchema>['body'];
 export type CreateSectionInput = z.infer<typeof createSectionSchema>['body'];
+export type ReplaceSectionsInput = z.infer<typeof replaceSectionsSchema>['body'];
 export type GrantBatchAccessInput = z.infer<typeof grantBatchAccessSchema>['body'];
 export type CreateQuestionInput = z.infer<typeof createQuestionSchema>['body'];
 export type UpdateQuestionInput = z.infer<typeof updateQuestionSchema>['body'];
