@@ -4,21 +4,24 @@ import { logger } from './logger';
 
 const redis = env.REDIS_URL
   ? new Redis(env.REDIS_URL)
-  : new Redis({ host: '127.0.0.1', port: 6379 });
+  : null;
 
-redis.on('error', (err) => {
-  logger.error('Redis Cache Error', err);
-});
+if (redis) {
+  redis.on('error', (err) => {
+    logger.error('Redis Cache Error', err);
+  });
 
-redis.on('connect', () => {
-  logger.info('Connected to Redis Cache');
-});
+  redis.on('connect', () => {
+    logger.info('Connected to Redis Cache');
+  });
+}
 
 /**
  * Basic Cache Helpers
  */
 export const cache = {
   async get<T>(key: string): Promise<T | null> {
+    if (!redis) return null;
     try {
       const data = await redis.get(key);
       if (!data) return null;
@@ -30,6 +33,7 @@ export const cache = {
   },
 
   async set(key: string, value: any, ttlSeconds: number = 3600): Promise<void> {
+    if (!redis) return;
     try {
       const stringValue = JSON.stringify(value);
       await redis.set(key, stringValue, 'EX', ttlSeconds);
@@ -39,6 +43,7 @@ export const cache = {
   },
 
   async del(key: string): Promise<void> {
+    if (!redis) return;
     try {
       await redis.del(key);
     } catch (error) {
@@ -47,6 +52,7 @@ export const cache = {
   },
 
   async delPattern(pattern: string): Promise<void> {
+    if (!redis) return;
     try {
       const keys = await redis.keys(pattern);
       if (keys.length > 0) {

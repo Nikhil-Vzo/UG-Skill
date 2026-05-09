@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -164,10 +164,12 @@ const Step: React.FC<{ active: boolean; completed: boolean; label: string; numbe
 export const ExamBuilder: React.FC = () => {
   const { examId } = useParams<{ examId?: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const qc = useQueryClient();
   const isEdit = Boolean(examId);
 
-  const [tab, setTab] = useState<Tab>('Basic Details');
+  const initialTabIdx = Number(searchParams.get('tab')) || 0;
+  const [tab, setTab] = useState<Tab>(TABS[initialTabIdx] || 'Basic Details');
   const [savedExamId, setSavedExamId] = useState<string | null>(examId ?? null);
   const [sections, setSections] = useState<Section[]>([
     { name: 'Section 1', sectionOrder: 1, questions: [emptyQuestion()] },
@@ -210,11 +212,32 @@ export const ExamBuilder: React.FC = () => {
     mutationFn: async () => {
       const payload: any = { ...form };
       // Clean up empty optional fields so validation passes cleanly
-      if (!payload.description) delete payload.description;
+      if (!payload.description || payload.description.trim() === '') delete payload.description;
+      
       if (!payload.windowStart) delete payload.windowStart;
       else payload.windowStart = new Date(payload.windowStart).toISOString();
+      
       if (!payload.windowEnd) delete payload.windowEnd;
       else payload.windowEnd = new Date(payload.windowEnd).toISOString();
+      
+      // Ensure numeric fields are valid numbers
+      payload.durationMinutes = Number(payload.durationMinutes) || 60;
+      
+      if (payload.totalMarks === "" || payload.totalMarks === null || payload.totalMarks === undefined) delete payload.totalMarks;
+      else payload.totalMarks = Number(payload.totalMarks);
+
+      if (payload.passPercent === "" || payload.passPercent === null || payload.passPercent === undefined) delete payload.passPercent;
+      else payload.passPercent = Number(payload.passPercent);
+
+      if (payload.negativeMarking === "" || payload.negativeMarking === null || payload.negativeMarking === undefined) delete payload.negativeMarking;
+      else payload.negativeMarking = Number(payload.negativeMarking);
+
+      // Cleanup optional string fields
+      if (payload.category === '') delete payload.category;
+      if (payload.difficulty === '') delete payload.difficulty;
+      if (payload.examType === '') delete payload.examType;
+      if (payload.instructions === '') delete payload.instructions;
+      if (payload.passwordHash === '') delete payload.passwordHash;
 
       if (savedExamId) {
         const r = await api.patch(`/exams/${savedExamId}`, payload);
@@ -510,9 +533,17 @@ export const ExamBuilder: React.FC = () => {
               boxShadow: '0 4px 24px rgba(0,0,0,0.04)', border: `1px solid ${ANTHRO.gray}`
             }}>
               {saveExamMutation.isError && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: ANTHRO.error, fontSize: '0.875rem', padding: '0.75rem 1rem', background: `${ANTHRO.error}10`, borderRadius: '10px' }}>
-                  <AlertCircle size={16} />
-                  <span>Failed to save. Check all required fields and try again.</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', color: ANTHRO.error, fontSize: '0.875rem', padding: '0.75rem 1rem', background: `${ANTHRO.error}10`, borderRadius: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
+                    <AlertCircle size={16} />
+                    <span>Failed to save exam</span>
+                  </div>
+                  <div style={{ opacity: 0.8, marginLeft: '1.5rem' }}>
+                    {(saveExamMutation.error as any)?.response?.data?.message || 
+                     (saveExamMutation.error as any)?.response?.data?.error || 
+                     saveExamMutation.error.message || 
+                     'Check all required fields and try again.'}
+                  </div>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

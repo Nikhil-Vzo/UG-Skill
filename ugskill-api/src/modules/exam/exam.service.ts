@@ -4,10 +4,14 @@ import { examQuestionRepository } from './exam-question.repository';
 import { examAttemptRepository } from './exam-attempt.repository';
 import { examResponseRepository } from './exam-response.repository';
 import { ExamProctoringEventModel } from '../../db/mongo/models/exam';
+import { ProctoringEventModel } from '../proctoring/proctoring.model';
 import { proctoringService } from '../proctoring/proctoring.service';
 import { AppError, NotFoundError, ValidationError } from '../../lib/errors';
 import { db } from '../../config/postgres';
+import { and, count, desc, eq, gte, inArray } from 'drizzle-orm';
+import { examAttempts, exams } from '../../db/pg/schema/exam';
 import { logger } from '../../lib/logger';
+import mongoose from 'mongoose';
 
 export class ExamService {
   // --- EXAM CRUD ---
@@ -41,10 +45,13 @@ export class ExamService {
   }
 
   async listExams(filters: any) {
+    logger.info(`ExamService.listExams called with filters: ${JSON.stringify(filters)}`);
     const result = await examRepository.findMany(filters);
+    logger.info(`Repository returned ${result.data.length} exams`);
     
     // Fetch user attempts if studentId is provided
     let userAttemptsMap = new Map<string, any>();
+
     if (filters.studentId) {
       const attempts = await examAttemptRepository.findManyAttempts({ studentId: filters.studentId, limit: 1000 });
       attempts.data.forEach(a => {
@@ -55,27 +62,42 @@ export class ExamService {
           userAttemptsMap.set(a.examId, a);
         }
       });
+    } else {
+      // Admin view: attempt counts fetched below
     }
 
     // Inject virtual statuses for student consumption
-    const enrichedData = result.data.map((exam: any) => {
-      if (exam.status !== 'published') return exam;
-
+    const enrichedData = await Promise.all(result.data.map(async (exam: any) => {
+      // For admins, attach attempt count
+      if (!filters.studentId) {
+        try {
+          const res = await db.select({ value: count() }).from(examAttempts).where(eq(examAttempts.examId, exam.id));
+          exam.attemptCount = res[0]?.value || 0;
+        } catch (err) {
+          console.error("Attempt count error:", err);
+          exam.attemptCount = 0;
+        }
+      }
       const now = new Date();
-      const scheduled = new Date(exam.scheduledAt);
-      const duration = Number(exam.durationMinutes) || 60;
-      const endsAt = new Date(scheduled.getTime() + duration * 60000);
+      const startsAt = this.resolveExamWindowStart(exam);
+      const endsAt = this.resolveExamWindowEnd(exam, startsAt);
 
-      let virtualStatus = 'published';
+      let virtualStatus = exam.status;
       const userAttempt = userAttemptsMap.get(exam.id);
 
       if (userAttempt && (userAttempt.status === 'submitted' || userAttempt.status === 'terminated')) {
         virtualStatus = 'completed';
-      } else if (now < scheduled) {
-        virtualStatus = 'upcoming';
-      } else if (now >= scheduled && now <= endsAt) {
+      } else if (exam.status !== 'published') {
+        virtualStatus = exam.status;
+      } else if (!startsAt && exam.mode === 'anytime') {
         virtualStatus = 'live';
-      } else if (now > endsAt) {
+      } else if (!startsAt) {
+        virtualStatus = 'published';
+      } else if (now < startsAt) {
+        virtualStatus = 'upcoming';
+      } else if (endsAt && now <= endsAt) {
+        virtualStatus = 'live';
+      } else {
         virtualStatus = 'missed';
       }
 
@@ -84,10 +106,29 @@ export class ExamService {
       // Note: Full score might require another query or joining, but frontend expects score and maxScore
       // The attempt might not hold score directly, but we at least mark it completed.
 
-      return { ...exam, status: virtualStatus, originalStatus: 'published' };
-    });
+      return { ...exam, status: virtualStatus, originalStatus: exam.status, scheduledAt: startsAt?.toISOString?.() };
+    }));
 
     return { ...result, data: enrichedData };
+  }
+
+  private resolveExamWindowStart(exam: any): Date | null {
+    const value = exam.windowStart ?? exam.scheduledAt;
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private resolveExamWindowEnd(exam: any, startsAt: Date | null): Date | null {
+    const value = exam.windowEnd;
+    if (value) {
+      const date = value instanceof Date ? value : new Date(value);
+      if (!Number.isNaN(date.getTime())) return date;
+    }
+
+    if (!startsAt) return null;
+    const duration = Number(exam.durationMinutes) || 60;
+    return new Date(startsAt.getTime() + duration * 60000);
   }
 
   async updateExam(id: string, data: any) {
@@ -109,6 +150,103 @@ export class ExamService {
     }
 
     return updatedParams;
+  }
+
+  async deleteExam(id: string) {
+    const exam = await examRepository.findById(id);
+    if (!exam) throw new NotFoundError('Exam not found');
+    const attemptRows = await db
+      .select({ id: examAttempts.id })
+      .from(examAttempts)
+      .where(eq(examAttempts.examId, id));
+    const attemptIds = attemptRows.map((attempt) => attempt.id);
+
+    await Promise.all([
+      examDefinitionRepository.deleteByPgExamId(id),
+      examResponseRepository.deleteByExamId(id),
+      ProctoringEventModel.deleteMany({ examId: id }),
+      attemptIds.length
+        ? ExamProctoringEventModel.deleteMany({ session_id: { $in: attemptIds } })
+        : Promise.resolve(),
+      mongoose.connection.db
+        ? mongoose.connection.db.collection('activity_events').deleteMany({
+          $or: [
+            { examId: id },
+            { exam_id: id },
+            { entity_id: id },
+            { 'metadata.examId': id },
+            { 'metadata.exam_id': id },
+          ],
+        })
+        : Promise.resolve(),
+    ]);
+
+    await examRepository.delete(id);
+    return true;
+  }
+
+  async listLiveExams() {
+    const since = new Date(Date.now() - 4 * 60 * 60 * 1000);
+
+    const liveAttempts = await db
+      .select({
+        id: examAttempts.id,
+        examId: examAttempts.examId,
+        examName: exams.title,
+        studentId: examAttempts.studentId,
+        status: examAttempts.status,
+        startedAt: examAttempts.startedAt,
+        violationCount: examAttempts.violationCount,
+        proctoringVerdict: examAttempts.proctoringVerdict,
+      })
+      .from(examAttempts)
+      .leftJoin(exams, eq(examAttempts.examId, exams.id))
+      .where(and(eq(examAttempts.status, 'in_progress'), gte(examAttempts.startedAt, since)))
+      .orderBy(desc(examAttempts.startedAt))
+      .limit(100);
+
+    const byExam = new Map<string, any>();
+    for (const attempt of liveAttempts) {
+      const current = byExam.get(attempt.examId) ?? {
+        id: attempt.examId,
+        examId: attempt.examId,
+        name: attempt.examName || `Exam ${attempt.examId.slice(0, 8)}`,
+        activeUsers: 0,
+        totalWarnings: 0,
+        status: 'live',
+        attempts: [],
+      };
+      current.activeUsers += 1;
+      current.totalWarnings += Number(attempt.violationCount ?? 0);
+      current.attempts.push(attempt);
+      byExam.set(attempt.examId, current);
+    }
+
+    return Array.from(byExam.values());
+  }
+
+  async listRecentIncidents(limit = 50) {
+    const events = await proctoringService.getRecentIncidents(limit);
+    const examIds = Array.from(new Set(events.map((event: any) => event.examId).filter(Boolean)));
+    const examRows = examIds.length
+      ? await db.select({ id: exams.id, title: exams.title }).from(exams).where(inArray(exams.id, examIds))
+      : [];
+    const examNames = new Map(examRows.map((exam) => [exam.id, exam.title]));
+
+    return events.map((event: any) => ({
+      id: String(event._id),
+      attemptId: event.attemptId,
+      userId: event.studentId,
+      userLabel: event.studentId ? `Student ${String(event.studentId).slice(0, 8)}` : 'Unknown student',
+      examId: event.examId,
+      examName: examNames.get(event.examId) || `Exam ${String(event.examId || '').slice(0, 8)}`,
+      type: event.type,
+      occurredAt: event.frameTimestamp || event.createdAt,
+      severity: String(event.severity || 'LOW').toLowerCase(),
+      riskScore: event.riskScoreAtEvent,
+      aiConfidence: event.aiConfidence,
+      hasEvidence: Boolean(event.snapshotBase64 || event.evidenceUrl),
+    }));
   }
 
   // --- SECTIONS & BATCH ACCESS ---
@@ -398,6 +536,30 @@ export class ExamService {
     });
 
     return updated;
+  }
+
+  async adminFlagAttempt(attemptId: string, adminId: string, reason = 'Admin manual flag') {
+    const attempt = await examAttemptRepository.findAttemptById(attemptId);
+    if (!attempt) throw new NotFoundError('Attempt not found');
+
+    const updated = await examAttemptRepository.updateAttempt(attemptId, {
+      proctoringVerdict: 'flagged',
+    });
+
+    await proctoringService.ingestEvent({
+      attemptId,
+      examId: attempt.examId,
+      studentId: attempt.studentId,
+      type: 'admin_flag',
+      severity: 'HIGH',
+      metadata: { flaggedBy: adminId, reason },
+    });
+
+    return updated;
+  }
+
+  async getProctoringReport(examId: string) {
+    return proctoringService.getProctoringReport(examId);
   }
 
   // --- PROCTORING EVENTS ---

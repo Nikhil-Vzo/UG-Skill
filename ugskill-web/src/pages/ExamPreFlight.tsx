@@ -3,7 +3,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
 import { Camera, Mic, AlertTriangle, CheckCircle2, XCircle, Sun } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 import { Skeleton } from '../components/loaders/Skeleton';
@@ -14,6 +14,8 @@ type FaceCheckStatus = 'idle' | 'checking' | 'detected' | 'no-face' | 'poor-ligh
 export const ExamPreFlight: React.FC = () => {
   const { examId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isAdmin = searchParams.get('admin') === 'true';
   const [agreed, setAgreed] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [micActive, setMicActive] = useState(false);
@@ -104,6 +106,10 @@ export const ExamPreFlight: React.FC = () => {
   };
 
   const handleStartExam = () => {
+    if (isAdmin) {
+      navigate(`/app/exams/${examId}?admin=true`);
+      return;
+    }
     if (agreed && cameraActive && micActive && faceStatus === 'detected') {
       navigate(`/app/exams/${examId}`);
     }
@@ -231,14 +237,19 @@ export const ExamPreFlight: React.FC = () => {
 
         <Button
           size="lg"
-          disabled={!agreed || !cameraActive || !micActive || faceStatus !== 'detected'}
+          disabled={!isAdmin && (!agreed || !cameraActive || !micActive || faceStatus !== 'detected')}
           onClick={handleStartExam}
           leftIcon={<CheckCircle2 size={20} />}
           style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
         >
-          Begin Examination
+          {isAdmin ? 'Begin Admin Preview' : 'Begin Examination'}
         </Button>
-        {cameraActive && faceStatus !== 'detected' && faceStatus !== 'idle' && faceStatus !== 'checking' && (
+        {isAdmin && (
+           <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', margin: 0 }}>
+            Admin Bypass Active: Hardware checks skipped.
+          </p>
+        )}
+        {!isAdmin && cameraActive && faceStatus !== 'detected' && faceStatus !== 'idle' && faceStatus !== 'checking' && (
           <p style={{ color: 'var(--error)', fontSize: '0.8125rem', margin: 0 }}>
             Face verification required before starting.
           </p>

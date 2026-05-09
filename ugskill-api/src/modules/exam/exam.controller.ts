@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { examService } from './exam.service';
+import { logger } from '../../lib/logger';
 
 // --- EXAM CRUD ---
 
@@ -25,9 +26,38 @@ export const getExam = async (req: Request, res: Response, next: NextFunction) =
 
 export const listExams = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const filters = { ...req.query, studentId: req.user?.userId };
+    const roles = req.user?.roles || [];
+    const isStudent = roles.includes('student') && !roles.some((r: string) => ['admin', 'super_admin', 'creator', 'hr'].includes(r));
+    
+    const filters: any = { ...req.query };
+    
+    if (isStudent) {
+      filters.studentId = req.user?.userId;
+    }
+
+    logger.info(`Listing exams for user ${req.user?.userId} with roles ${roles}. isStudent: ${isStudent}`);
     const exams = await examService.listExams(filters);
+    logger.info(`Found ${exams.data.length} exams. Total: ${exams.pagination?.total ?? exams.data.length}`);
     res.json({ success: true, ...exams });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listLiveExams = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const liveExams = await examService.listLiveExams();
+    res.json({ success: true, data: liveExams });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listRecentIncidents = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const incidents = await examService.listRecentIncidents(Number.isFinite(limit) ? limit : 50);
+    res.json({ success: true, data: incidents });
   } catch (error) {
     next(error);
   }
@@ -38,6 +68,16 @@ export const updateExam = async (req: Request, res: Response, next: NextFunction
     const id = req.params.id as string;
     const updated = await examService.updateExam(id, req.body);
     res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteExam = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id as string;
+    await examService.deleteExam(id);
+    res.json({ success: true, message: 'Exam deleted successfully' });
   } catch (error) {
     next(error);
   }
@@ -152,10 +192,31 @@ export const getResult = async (req: Request, res: Response, next: NextFunction)
 
 export const adminTerminateAttempt = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const attemptId = req.params.attemptId as string;
+    const attemptId = (req.params.attemptId || req.params.id) as string;
     const adminId = req.user!.userId;
     const attempt = await examService.adminTerminateAttempt(attemptId, adminId);
     res.json({ success: true, data: attempt });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const adminFlagAttempt = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const attemptId = (req.params.attemptId || req.params.id) as string;
+    const adminId = req.user!.userId;
+    const attempt = await examService.adminFlagAttempt(attemptId, adminId, req.body?.reason);
+    res.json({ success: true, data: attempt });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProctoringReport = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const examId = (req.params.examId || req.params.id) as string;
+    const report = await examService.getProctoringReport(examId);
+    res.json({ success: true, data: report });
   } catch (error) {
     next(error);
   }

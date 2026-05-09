@@ -48,6 +48,7 @@ import { ExamOps } from './pages/admin/ExamOps';
 import { ProctoringReport } from './pages/admin/ProctoringReport';
 import { DriveConfig } from './pages/admin/DriveConfig';
 import { ExamBuilder } from './pages/admin/ExamBuilder';
+import { AdminExams } from './pages/admin/AdminExams';
 
 const PageFallback = () => (
   <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -113,7 +114,8 @@ function App() {
                 <Route path="batches" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><BatchManagement /></ProtectedRoute>} />
                 <Route path="placements" element={<PlacementsConfig />} />
                 <Route path="placements/:driveId" element={<DriveConfig />} />
-                <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />
+                <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><AdminExams /></ProtectedRoute>} />
+                <Route path="exams/ops" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />
                 <Route path="exams/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><ExamBuilder /></ProtectedRoute>} />
                 <Route path="exams/:examId/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><ExamBuilder /></ProtectedRoute>} />
                 <Route path="proctoring-report/:examId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ProctoringReport /></ProtectedRoute>} />
