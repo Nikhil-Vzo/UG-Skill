@@ -15,8 +15,9 @@ import api from '../../lib/api';
 interface Batch { id: string; name: string; }
 interface Question { _id?: string; stem: string; options: { text: string; isCorrect: boolean }[]; marks: number; difficulty: 'easy' | 'medium' | 'hard' | 'very_hard'; }
 interface Section { name: string; sectionOrder: number; timeLimitMinutes?: number; maxMarks?: number; questions: Question[]; }
+type ExamType = 'practice' | 'mock' | 'live' | 'assessment' | 'competitive' | '';
 interface ExamForm {
-  title: string; description: string; durationMinutes: number; totalMarks: number; passPercent: number;
+  title: string; description: string; examType: ExamType; durationMinutes: number; totalMarks: number; passPercent: number;
   isProctored: boolean; shuffleQuestions: boolean; shuffleOptions: boolean;
   windowStart: string; windowEnd: string; status: 'draft' | 'published';
 }
@@ -194,7 +195,7 @@ export const ExamBuilder: React.FC = () => {
     { name: 'Section 1', sectionOrder: 1, questions: [emptyQuestion()] },
   ]);
   const [form, setForm] = useState<ExamForm>({
-    title: '', description: '', durationMinutes: 60, totalMarks: 100, passPercent: 40,
+    title: '', description: '', examType: '', durationMinutes: 60, totalMarks: 100, passPercent: 40,
     isProctored: true, shuffleQuestions: false, shuffleOptions: false,
     windowStart: '', windowEnd: '', status: 'draft',
   });
@@ -211,6 +212,7 @@ export const ExamBuilder: React.FC = () => {
     const e = existingExam;
     setForm({
       title: e.title ?? '', description: e.description ?? '',
+      examType: (e.examType ?? '') as ExamType,
       durationMinutes: e.durationMinutes ?? 60, totalMarks: e.totalMarks ?? 100,
       passPercent: e.passPercent ?? 40, isProctored: e.isProctored ?? true,
       shuffleQuestions: e.shuffleQuestions ?? false, shuffleOptions: e.shuffleOptions ?? false,
@@ -482,7 +484,23 @@ export const ExamBuilder: React.FC = () => {
                 </div>
 
                 <div>
-                  <label style={labelStyle}>Description & Instructions <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span></label>
+                  <label style={labelStyle}>Exam Type <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span></label>
+                  <select
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                    value={form.examType}
+                    onChange={e => setForm(f => ({ ...f, examType: e.target.value as ExamType }))}
+                  >
+                    <option value="">— Select type —</option>
+                    <option value="practice">Practice</option>
+                    <option value="mock">Mock Test</option>
+                    <option value="live">Live Exam</option>
+                    <option value="assessment">Assessment</option>
+                    <option value="competitive">Competitive</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Description &amp; Instructions <span style={{ color: ANTHRO.mid, fontWeight: 400 }}>(optional)</span></label>
                   <textarea
                     style={{ ...inputStyle, minHeight: 120, resize: 'vertical' }}
                     placeholder="Provide candidate instructions, syllabus covered, and any specific guidelines..."
@@ -604,10 +622,16 @@ export const ExamBuilder: React.FC = () => {
                     <span>Failed to save exam</span>
                   </div>
                   <div style={{ opacity: 0.8, marginLeft: '1.5rem' }}>
-                    {(saveExamMutation.error as any)?.response?.data?.message || 
-                     (saveExamMutation.error as any)?.response?.data?.error || 
-                     saveExamMutation.error.message || 
-                     'Check all required fields and try again.'}
+                    {(() => {
+                      const err = saveExamMutation.error as any;
+                      const raw = err?.response?.data?.message
+                        ?? err?.response?.data?.error
+                        ?? err?.message;
+                      if (!raw) return 'Check all required fields and try again.';
+                      if (typeof raw === 'string') return raw;
+                      if (typeof raw === 'object') return raw.message ?? raw.code ?? JSON.stringify(raw);
+                      return String(raw);
+                    })()}
                   </div>
                 </div>
               )}
@@ -770,7 +794,14 @@ export const ExamBuilder: React.FC = () => {
             {(saveSectionsMutation.isError || questionCount === 0 || invalidQuestionCount > 0) && (
               <div style={{ padding: '1rem 1.25rem', borderRadius: '14px', background: `${ANTHRO.error}10`, border: `1px solid ${ANTHRO.error}30`, color: ANTHRO.error, fontSize: '0.875rem' }}>
                 {saveSectionsMutation.isError
-                  ? (saveSectionsMutation.error as Error).message
+                  ? (() => {
+                      const err = saveSectionsMutation.error as any;
+                      const raw = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message;
+                      if (!raw) return 'Save failed. Ensure all fields are valid.';
+                      if (typeof raw === 'string') return raw;
+                      if (typeof raw === 'object') return raw.message ?? raw.code ?? JSON.stringify(raw);
+                      return String(raw);
+                    })()
                   : questionCount === 0
                     ? 'Add at least one question before deploying this exam.'
                     : `${invalidQuestionCount} question${invalidQuestionCount > 1 ? 's need' : ' needs'} a prompt, two options, and one correct answer.`}
@@ -861,7 +892,14 @@ export const ExamBuilder: React.FC = () => {
                       {(questionCount === 0 || invalidQuestionCount > 0 || accessCount === 0 || publishMutation.isError) && (
                         <div style={{ margin: '1rem auto 0', maxWidth: 460, textAlign: 'left', padding: '1rem', borderRadius: 12, background: `${ANTHRO.error}10`, color: ANTHRO.error, fontSize: '0.875rem' }}>
                           {publishMutation.isError
-                            ? ((publishMutation.error as any)?.response?.data?.message || (publishMutation.error as Error).message)
+                            ? (() => {
+                                const err = publishMutation.error as any;
+                                const raw = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message;
+                                if (!raw) return 'Unable to publish. Check connections.';
+                                if (typeof raw === 'string') return raw;
+                                if (typeof raw === 'object') return raw.message ?? raw.code ?? JSON.stringify(raw);
+                                return String(raw);
+                              })()
                             : questionCount === 0
                               ? 'Add and save at least one question before publishing.'
                               : invalidQuestionCount > 0

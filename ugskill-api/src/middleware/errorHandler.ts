@@ -22,8 +22,8 @@ export const errorHandler = (
 
   if (err instanceof AppError) {
     // Expected operational errors
-    if (!err.isOperational) {
-      logger.error('Unexpected AppError:', { error: err.message, stack: err.stack });
+    if (!err.isOperational || err.statusCode === 500) {
+      logger.error('AppError (500 or not operational):', { error: err.message, stack: err.stack, details: err.details });
     }
     
     return res.status(err.statusCode).json({

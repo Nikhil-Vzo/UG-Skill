@@ -5,7 +5,7 @@ export const createExamSchema = z.object({
   body: z.object({
     title: z.string().min(3),
     description: z.string().optional(),
-    examType: z.string().optional(),
+    examType: z.enum(['practice', 'mock', 'live', 'assessment', 'competitive']).nullable().optional(),
     mode: z.enum(['scheduled', 'anytime']).optional(),
     status: z.enum(['draft', 'published', 'archived']).optional(),
     totalMarks: z.number().optional(),
