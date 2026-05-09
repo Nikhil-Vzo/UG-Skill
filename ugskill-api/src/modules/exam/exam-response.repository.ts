@@ -101,6 +101,15 @@ export class ExamResponseRepository {
       throw new AppError(`Failed to finalize exam response: ${error.message}`, 500);
     }
   }
+
+  async deleteByExamId(pg_exam_id: string) {
+    try {
+      await ExamResponseModel.deleteMany({ pg_exam_id });
+      return true;
+    } catch (error: any) {
+      throw new AppError(`Failed to delete exam responses: ${error.message}`, 500);
+    }
+  }
 }
 
 export const examResponseRepository = new ExamResponseRepository();

@@ -24,6 +24,8 @@ services:
       PORT: 4000
       MONGO_URI: mongodb://mongo:27017/ugskill
       REDIS_URL: redis://redis:6379
+      AI_API_URL: ${AI_API_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
     depends_on:
       mongo:
         condition: service_healthy

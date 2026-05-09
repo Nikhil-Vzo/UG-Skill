@@ -279,8 +279,10 @@ export class ProctoringService {
       const avgConfidence = studentEvents.length > 0
         ? studentEvents.reduce((s, e) => s + (e.aiConfidence || 0), 0) / studentEvents.length
         : 0;
+      const latestEvent = studentEvents[studentEvents.length - 1];
 
       return {
+        attemptId: latestEvent?.attemptId,
         studentId,
         violationCount,
         riskScore,

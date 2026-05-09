@@ -1,6 +1,6 @@
 import { db } from '../../config/postgres';
 import { eq, and, desc, sql, count } from 'drizzle-orm';
-import { exams, examSections, examBatchAccess, examAttempts, examScores } from '../../db/pg/schema';
+import { exams, examSections, examBatchAccess, examAttempts, examScores, examRankings, certificates } from '../../db/pg/schema';
 import { AppError } from '../../lib/errors';
 
 export class ExamRepository {
@@ -15,6 +15,7 @@ export class ExamRepository {
 
   async findMany(filters: any = {}) {
     try {
+      console.log('ExamRepository.findMany filters:', filters);
       const { status, creatorId, studentId, page = 1, limit = 10 } = filters;
       const offset = (page - 1) * limit;
 
@@ -75,7 +76,15 @@ export class ExamRepository {
 
   async delete(id: string) {
     try {
-      await db.delete(exams).where(eq(exams.id, id));
+      await db.transaction(async (tx) => {
+        await tx.delete(certificates).where(and(eq(certificates.certType, 'exam'), eq(certificates.referenceId, id)));
+        await tx.delete(examScores).where(eq(examScores.examId, id));
+        await tx.delete(examRankings).where(eq(examRankings.examId, id));
+        await tx.delete(examAttempts).where(eq(examAttempts.examId, id));
+        await tx.delete(examBatchAccess).where(eq(examBatchAccess.examId, id));
+        await tx.delete(examSections).where(eq(examSections.examId, id));
+        await tx.delete(exams).where(eq(exams.id, id));
+      });
       return true;
     } catch (error: any) {
       throw new AppError(`Failed to delete exam: ${error.message}`, 500);

@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed:admin": "tsx src/db/seed-admin.ts",
-    "seed:dev": "tsx src/db/seed-dev.ts"
+    "seed:dev": "tsx src/db/seed-dev.ts",
+    "seed:courses": "tsx src/db/seed-courses.ts"
   },
   "keywords": [],
   "author": "",
