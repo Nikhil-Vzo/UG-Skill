@@ -25,6 +25,15 @@ export class ExamQuestionRepository {
     }
   }
 
+  async findByIds(ids: string[]) {
+    try {
+      if (ids.length === 0) return [];
+      return await ExamQuestionBankModel.find({ _id: { $in: ids } }).lean();
+    } catch (error: any) {
+      throw new AppError(`Failed to fetch exam questions: ${error.message}`, 500);
+    }
+  }
+
   async findMany(filters: { type?: string; difficulty?: string; status?: string; subject?: string; topic?: string; tags?: string; page?: number; limit?: number }) {
     try {
       const page = Math.max(1, Number(filters.page) || 1);

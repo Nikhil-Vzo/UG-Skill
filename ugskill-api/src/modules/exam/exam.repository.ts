@@ -101,6 +101,31 @@ export class ExamRepository {
     }
   }
 
+  async replaceSections(examId: string, sections: any[]) {
+    try {
+      return await db.transaction(async (tx) => {
+        await tx.delete(examSections).where(eq(examSections.examId, examId));
+        if (sections.length === 0) return [];
+
+        const rows = sections.map((section, index) => ({
+          examId,
+          name: section.name,
+          sectionOrder: section.sectionOrder ?? index + 1,
+          timeLimitMinutes: section.timeLimitMinutes,
+          maxMarks: section.maxMarks,
+          negativeMarking: section.negativeMarking,
+          isLocked: section.isLocked,
+          navigationMode: section.navigationMode,
+          mongoPoolConfig: section.mongoPoolConfig,
+        }));
+
+        return await tx.insert(examSections).values(rows).returning();
+      });
+    } catch (error: any) {
+      throw new AppError(`Failed to replace sections: ${error.message}`, 500);
+    }
+  }
+
   async findSectionsByExamId(examId: string) {
     try {
       return await db.select().from(examSections).where(eq(examSections.examId, examId)).orderBy(examSections.sectionOrder);

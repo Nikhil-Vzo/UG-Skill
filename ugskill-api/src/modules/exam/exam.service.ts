@@ -18,6 +18,14 @@ export class ExamService {
   async createExam(creatorId: string, data: any) {
     // Extract mongo specific definition data
     const { mongoDefinition, ...pgData } = data;
+    if (pgData.status === 'published') {
+      const questionCount = mongoDefinition?.sections?.reduce((sum: number, section: any) => {
+        return sum + (section.question_sequence?.length ?? section.questions?.length ?? 0);
+      }, 0) ?? 0;
+      if (questionCount === 0) {
+        throw new ValidationError('Add at least one question before publishing this exam.');
+      }
+    }
     
     // 1. Create PG Exam
     const exam = await examRepository.create({
@@ -40,8 +48,37 @@ export class ExamService {
     if (!exam) throw new NotFoundError('Exam not found');
 
     const definition = await examDefinitionRepository.findByPgExamId(id);
+    const hydratedDefinition = await this.hydrateDefinitionQuestions(definition);
 
-    return { ...exam, definition };
+    return { ...exam, definition: hydratedDefinition };
+  }
+
+  private async hydrateDefinitionQuestions(definition: any) {
+    if (!definition?.sections?.length) return definition;
+
+    const questionIds = definition.sections.flatMap((section: any) => section.question_sequence ?? []);
+    const uniqueQuestionIds = Array.from(new Set(questionIds.map((id: any) => String(id)))) as string[];
+    if (uniqueQuestionIds.length === 0) return definition;
+
+    const questions = await examQuestionRepository.findByIds(uniqueQuestionIds);
+    const questionMap = new Map(questions.map((question: any) => [question._id.toString(), question]));
+
+    return {
+      ...definition,
+      sections: definition.sections.map((section: any) => ({
+        ...section,
+        questions: (section.question_sequence ?? [])
+          .map((id: any) => questionMap.get(String(id)))
+          .filter(Boolean)
+          .map((question: any) => ({
+            _id: question._id.toString(),
+            stem: question.stem ?? '',
+            options: question.options ?? [],
+            marks: Number(question.marks ?? 1),
+            difficulty: question.difficulty ?? 'easy',
+          })),
+      })),
+    };
   }
 
   async listExams(filters: any) {
@@ -133,6 +170,9 @@ export class ExamService {
 
   async updateExam(id: string, data: any) {
     const { mongoDefinition, ...pgData } = data;
+    if (pgData.status === 'published') {
+      await this.ensureExamReadyToPublish(id, mongoDefinition);
+    }
 
     let updatedParams: any = {};
 
@@ -150,6 +190,17 @@ export class ExamService {
     }
 
     return updatedParams;
+  }
+
+  private async ensureExamReadyToPublish(examId: string, incomingDefinition?: any) {
+    const definition = incomingDefinition ?? await examDefinitionRepository.findByPgExamId(examId);
+    const questionCount = definition?.sections?.reduce((sum: number, section: any) => {
+      return sum + (section.question_sequence?.length ?? section.questions?.length ?? 0);
+    }, 0) ?? 0;
+
+    if (questionCount === 0) {
+      throw new ValidationError('Add at least one question before publishing this exam.');
+    }
   }
 
   async deleteExam(id: string) {
@@ -254,6 +305,12 @@ export class ExamService {
     return examRepository.createSection({ ...data, examId });
   }
 
+  async replaceSections(examId: string, sections: any[]) {
+    const exam = await examRepository.findById(examId);
+    if (!exam) throw new NotFoundError('Exam not found');
+    return examRepository.replaceSections(examId, sections);
+  }
+
   async grantBatchAccess(examId: string, batchId: string, grantedBy?: string) {
     return examRepository.grantBatchAccess(examId, batchId, grantedBy);
   }
@@ -275,8 +332,12 @@ export class ExamService {
     return examQuestionRepository.findMany(filters);
   }
 
+  async updateQuestion(id: string, data: any) {
+    return examQuestionRepository.update(id, data);
+  }
+
   // --- ATTEMPT FLOW ---
-  async startAttempt(studentId: string, examId: string, meta: { ipAddress?: string; deviceFingerprint?: string } = {}) {
+  async startAttempt(studentId: string, examId: string, meta: { ipAddress?: string; deviceFingerprint?: string; isAdminPreview?: boolean } = {}) {
     logger.info('Starting exam attempt', { studentId, examId });
     
     try {
@@ -284,13 +345,21 @@ export class ExamService {
       const exam = await examRepository.findById(examId);
       if (!exam) throw new NotFoundError('Exam not found');
 
+      if (!meta.isAdminPreview) {
+        this.ensureExamWindowAllowsStart(exam);
+      }
+
+      const questionsList = await this.getAttemptQuestions(examId);
+      if (questionsList.length === 0) {
+        throw new ValidationError('This exam has no published questions yet. Please contact your administrator.');
+      }
+
       const existingAttempt = await examAttemptRepository.findLatestAttempt(studentId, examId);
       if (existingAttempt?.status === 'submitted' || existingAttempt?.status === 'terminated') {
         throw new ValidationError('You have already completed this exam. Only one attempt is allowed.');
       }
 
       if (existingAttempt?.status === 'in_progress') {
-        const questionsList = await this.getAttemptQuestions(examId);
         return {
           attemptId: existingAttempt.id,
           questions: questionsList,
@@ -334,8 +403,6 @@ export class ExamService {
         throw new AppError(`Exam initialization failed (Storage Error): ${mongoErr.message}`, 500);
       }
 
-      const questionsList = await this.getAttemptQuestions(examId);
-
       return {
         attemptId: attempt.id,
         questions: questionsList,
@@ -346,6 +413,24 @@ export class ExamService {
       logger.error('startAttempt failed', { error: error.message, stack: error.stack, studentId, examId });
       if (error instanceof AppError || error instanceof NotFoundError) throw error;
       throw new AppError(`Internal server error during exam start: ${error.message}`, 500);
+    }
+  }
+
+  private ensureExamWindowAllowsStart(exam: any) {
+    if (exam.status !== 'published') {
+      throw new ValidationError('This exam is not published yet.');
+    }
+
+    const startsAt = this.resolveExamWindowStart(exam);
+    const endsAt = this.resolveExamWindowEnd(exam, startsAt);
+    const now = new Date();
+
+    if (startsAt && now < startsAt) {
+      throw new ValidationError('This exam has not started yet.');
+    }
+
+    if (endsAt && now > endsAt) {
+      throw new ValidationError('This exam window has ended.');
     }
   }
 
