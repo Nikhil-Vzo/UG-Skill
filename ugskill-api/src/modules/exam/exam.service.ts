@@ -26,11 +26,23 @@ export class ExamService {
         throw new ValidationError('Add at least one question before publishing this exam.');
       }
     }
-    
+
+    // Strip examType if not one of the DB-allowed values to prevent check constraint failures
+    const VALID_EXAM_TYPES = ['practice', 'mock', 'live', 'assessment', 'competitive'];
+    if (pgData.examType !== undefined && pgData.examType !== null) {
+      if (!VALID_EXAM_TYPES.includes(pgData.examType)) {
+        pgData.examType = null;
+      }
+    }
+
+    // Convert date strings to Date objects for Drizzle
+    if (pgData.windowStart) pgData.windowStart = new Date(pgData.windowStart);
+    if (pgData.windowEnd) pgData.windowEnd = new Date(pgData.windowEnd);
+
     // 1. Create PG Exam
     const exam = await examRepository.create({
       ...pgData,
-      creatorId
+      creatorId,
     });
 
     // 2. Create Mongo Definition
@@ -173,6 +185,18 @@ export class ExamService {
     if (pgData.status === 'published') {
       await this.ensureExamReadyToPublish(id, mongoDefinition);
     }
+
+    // Strip invalid examType values to prevent DB check constraint failures
+    const VALID_EXAM_TYPES = ['practice', 'mock', 'live', 'assessment', 'competitive'];
+    if (pgData.examType !== undefined && pgData.examType !== null) {
+      if (!VALID_EXAM_TYPES.includes(pgData.examType)) {
+        pgData.examType = null;
+      }
+    }
+
+    // Convert date strings to Date objects for Drizzle
+    if (pgData.windowStart) pgData.windowStart = new Date(pgData.windowStart);
+    if (pgData.windowEnd) pgData.windowEnd = new Date(pgData.windowEnd);
 
     let updatedParams: any = {};
 
