@@ -547,7 +547,6 @@ export const CourseBuilder: React.FC = () => {
             </div>
           </div>
         </Card>
-      )}
 
       {/* Curriculum */}
       {!isNew && (

@@ -7,8 +7,10 @@ import {
   updateExamSchema,
   examQuerySchema,
   createSectionSchema,
+  replaceSectionsSchema,
   grantBatchAccessSchema,
   createQuestionSchema,
+  updateQuestionSchema,
   questionQuerySchema,
   startAttemptSchema,
   saveIncrementalResponseSchema,
@@ -65,19 +67,6 @@ router.post(
   examController.adminTerminateAttempt
 );
 
-router.get(
-  '/:id',
-  requireAuth,
-  examController.getExam
-);
-
-router.get(
-  '/:id/proctoring-report',
-  requireAuth,
-  requireRole(['admin', 'super_admin', 'proctor', 'instructor', 'creator', 'faculty']),
-  examController.getProctoringReport
-);
-
 router.patch(
   '/:id',
   requireAuth,
@@ -94,6 +83,14 @@ router.delete(
 );
 
 // --- SECTIONS & BATCH ACCESS ---
+
+router.put(
+  '/:id/sections',
+  requireAuth,
+  requireRole(['admin', 'creator', 'faculty']),
+  validate(replaceSectionsSchema),
+  examController.replaceSections
+);
 
 router.post(
   '/:id/sections',
@@ -141,6 +138,14 @@ router.get(
   requireRole(['admin', 'creator', 'faculty']),
   validate(questionQuerySchema),
   examController.listQuestions
+);
+
+router.patch(
+  '/questions/:questionId',
+  requireAuth,
+  requireRole(['admin', 'creator', 'faculty']),
+  validate(updateQuestionSchema),
+  examController.updateQuestion
 );
 
 // --- ATTEMPTS ---
@@ -197,6 +202,19 @@ router.get(
   requireRole(['admin', 'proctor']),
   validate(examProctoringEventQuerySchema),
   examController.listProctoringEvents
+);
+
+router.get(
+  '/:id/proctoring-report',
+  requireAuth,
+  requireRole(['admin', 'super_admin', 'proctor', 'instructor', 'creator', 'faculty']),
+  examController.getProctoringReport
+);
+
+router.get(
+  '/:id',
+  requireAuth,
+  examController.getExam
 );
 
 export default router;

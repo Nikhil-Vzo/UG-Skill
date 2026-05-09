@@ -30,6 +30,25 @@ const extractExamId = (data: any): string | undefined => {
 const TABS = ['Basic Details', 'Sections & Questions', 'Batch Access & Publish'] as const;
 type Tab = typeof TABS[number];
 
+const normalizeQuestion = (question: any): Question => ({
+  _id: question?._id ?? question?.id,
+  stem: question?.stem ?? '',
+  marks: Number(question?.marks ?? 1),
+  difficulty: question?.difficulty ?? 'easy',
+  options: Array.isArray(question?.options) && question.options.length > 0
+    ? question.options.map((option: any, index: number) => ({
+      text: typeof option === 'string' ? option : option?.text ?? '',
+      isCorrect: Boolean(typeof option === 'string' ? index === 0 : option?.isCorrect),
+    }))
+    : emptyQuestion().options,
+});
+
+const isQuestionReady = (question: Question) => {
+  const filledOptions = question.options.filter(option => option.text.trim()).length;
+  const correctOption = question.options.find(option => option.isCorrect);
+  return question.stem.trim().length > 0 && filledOptions >= 2 && Boolean(correctOption?.text.trim());
+};
+
 /* ─────────────── Anthropic Brand Palette ─────────────── */
 const ANTHRO = {
   bg: '#faf9f5',
@@ -199,6 +218,19 @@ export const ExamBuilder: React.FC = () => {
       windowEnd: e.windowEnd ? e.windowEnd.slice(0, 16) : '',
       status: e.status ?? 'draft',
     });
+
+    const definitionSections = e.definition?.sections;
+    if (Array.isArray(definitionSections) && definitionSections.length > 0) {
+      setSections(definitionSections.map((section: any, index: number) => ({
+        name: section.name ?? `Section ${index + 1}`,
+        sectionOrder: section.sectionOrder ?? index + 1,
+        timeLimitMinutes: section.timeLimitMinutes,
+        maxMarks: section.maxMarks,
+        questions: Array.isArray(section.questions) && section.questions.length > 0
+          ? section.questions.map(normalizeQuestion)
+          : [emptyQuestion()],
+      })));
+    }
   }, [existingExam]);
 
   /* Fetch batches for access tab */
@@ -260,31 +292,56 @@ export const ExamBuilder: React.FC = () => {
   const saveSectionsMutation = useMutation({
     mutationFn: async () => {
       if (!savedExamId) throw new Error('Save exam first');
+      const invalidQuestion = sections.flatMap(sec => sec.questions).find(question => question.stem.trim() && !isQuestionReady(question));
+      if (invalidQuestion) throw new Error('Every saved question needs a prompt, at least two answer options, and a marked correct answer.');
+
       const allSectionsMongo: { name: string; question_sequence: string[] }[] = [];
+      const updatedSections: Section[] = [];
+
       for (const [i, sec] of sections.entries()) {
-        const sr = await api.post(`/exams/${savedExamId}/sections`, {
-          name: sec.name,
-          sectionOrder: i + 1,
-          timeLimitMinutes: sec.timeLimitMinutes,
-          maxMarks: sec.maxMarks,
-        });
         const questionIds: string[] = [];
+        const updatedQuestions: Question[] = [];
+
         for (const q of sec.questions) {
           if (!q.stem.trim()) continue;
-          if (q._id) { questionIds.push(q._id); continue; }
-          const qr = await api.post('/exams/questions', {
-            type: 'mcq', stem: q.stem, marks: q.marks, difficulty: q.difficulty, options: q.options, status: 'published',
-          });
-          const qId = qr.data?.data?._id ?? qr.data?._id ?? qr.data?.data?.id ?? qr.data?.id;
+          const payload = {
+            type: 'mcq',
+            stem: q.stem,
+            marks: q.marks,
+            difficulty: q.difficulty,
+            options: q.options,
+            status: 'published',
+          };
+          const qr = q._id
+            ? await api.patch(`/exams/questions/${q._id}`, payload)
+            : await api.post('/exams/questions', payload);
+          const savedQuestion = qr.data?.data ?? qr.data;
+          const qId = savedQuestion?._id ?? savedQuestion?.id ?? q._id;
           if (qId) questionIds.push(qId);
+          updatedQuestions.push({ ...q, _id: qId });
         }
+
         allSectionsMongo.push({ name: sec.name, question_sequence: questionIds });
+        updatedSections.push({ ...sec, sectionOrder: i + 1, questions: updatedQuestions.length > 0 ? updatedQuestions : [emptyQuestion()] });
       }
+
+      const sectionRows = sections.map((sec, i) => ({
+        name: sec.name.trim() || `Section ${i + 1}`,
+        sectionOrder: i + 1,
+        timeLimitMinutes: sec.timeLimitMinutes,
+        maxMarks: sec.maxMarks,
+      }));
+      await api.put(`/exams/${savedExamId}/sections`, { sections: sectionRows });
+
       if (allSectionsMongo.length > 0) {
         await api.patch(`/exams/${savedExamId}`, { mongoDefinition: { sections: allSectionsMongo } });
       }
+      return updatedSections;
     },
-    onSuccess: () => setTab('Batch Access & Publish'),
+    onSuccess: (updatedSections) => {
+      setSections(updatedSections);
+      setTab('Batch Access & Publish');
+    },
   });
 
   const { data: currentAccess = [], refetch: refetchAccess } = useQuery({
@@ -329,6 +386,14 @@ export const ExamBuilder: React.FC = () => {
       }),
     }));
   };
+
+  const questionCount = sections.reduce((sum, section) => {
+    return sum + section.questions.filter(question => question.stem.trim()).length;
+  }, 0);
+  const invalidQuestionCount = sections.reduce((sum, section) => {
+    return sum + section.questions.filter(question => question.stem.trim() && !isQuestionReady(question)).length;
+  }, 0);
+  const accessCount = currentAccess.length;
 
   return (
     <div style={{ minHeight: '100vh', background: ANTHRO.bg, padding: '3rem 1rem' }}>
@@ -702,13 +767,23 @@ export const ExamBuilder: React.FC = () => {
               <Plus size={24} /> Add New Evaluation Section
             </button>
 
+            {(saveSectionsMutation.isError || questionCount === 0 || invalidQuestionCount > 0) && (
+              <div style={{ padding: '1rem 1.25rem', borderRadius: '14px', background: `${ANTHRO.error}10`, border: `1px solid ${ANTHRO.error}30`, color: ANTHRO.error, fontSize: '0.875rem' }}>
+                {saveSectionsMutation.isError
+                  ? (saveSectionsMutation.error as Error).message
+                  : questionCount === 0
+                    ? 'Add at least one question before deploying this exam.'
+                    : `${invalidQuestionCount} question${invalidQuestionCount > 1 ? 's need' : ' needs'} a prompt, two options, and one correct answer.`}
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
               <Button variant="ghost" onClick={() => setTab('Basic Details')} style={{ color: ANTHRO.mid }}>Back to Structure</Button>
               <Button 
                 variant="primary" 
                 leftIcon={<Rocket size={20} />} 
                 onClick={() => saveSectionsMutation.mutate()} 
-                disabled={!savedExamId || saveSectionsMutation.isPending}
+                disabled={!savedExamId || questionCount === 0 || invalidQuestionCount > 0 || saveSectionsMutation.isPending}
                 style={{ background: ANTHRO.text, color: ANTHRO.white, borderRadius: '12px', padding: '1rem 2rem' }}
               >
                 {saveSectionsMutation.isPending ? 'Syncing Questions…' : 'Finalize Content & Deploy'}
@@ -783,12 +858,23 @@ export const ExamBuilder: React.FC = () => {
                     <div>
                       <h3 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>Ready for Deployment?</h3>
                       <p style={{ color: ANTHRO.mid, maxWidth: '450px' }}>This will officially release the assessment to the selected student batches. Ensure all content and time limits are final.</p>
+                      {(questionCount === 0 || invalidQuestionCount > 0 || accessCount === 0 || publishMutation.isError) && (
+                        <div style={{ margin: '1rem auto 0', maxWidth: 460, textAlign: 'left', padding: '1rem', borderRadius: 12, background: `${ANTHRO.error}10`, color: ANTHRO.error, fontSize: '0.875rem' }}>
+                          {publishMutation.isError
+                            ? ((publishMutation.error as any)?.response?.data?.message || (publishMutation.error as Error).message)
+                            : questionCount === 0
+                              ? 'Add and save at least one question before publishing.'
+                              : invalidQuestionCount > 0
+                                ? 'Fix incomplete questions before publishing.'
+                                : 'Grant access to at least one batch so students can see this exam.'}
+                        </div>
+                      )}
                     </div>
                     <Button 
                       variant="primary" 
                       leftIcon={<Rocket size={20} />} 
                       onClick={() => publishMutation.mutate()} 
-                      disabled={!savedExamId || publishMutation.isPending}
+                      disabled={!savedExamId || questionCount === 0 || invalidQuestionCount > 0 || accessCount === 0 || publishMutation.isPending}
                       style={{ background: ANTHRO.accent, color: ANTHRO.white, borderRadius: '16px', padding: '1.25rem 3rem', fontSize: '1.125rem', fontWeight: 700 }}
                     >
                       {publishMutation.isPending ? 'Deploying…' : 'Confirm & Publish Live'}

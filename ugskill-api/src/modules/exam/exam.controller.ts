@@ -95,6 +95,16 @@ export const addSection = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+export const replaceSections = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const examId = req.params.id as string;
+    const sections = await examService.replaceSections(examId, req.body.sections);
+    res.json({ success: true, data: sections });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const grantBatchAccess = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const examId = req.params.id as string;
@@ -148,12 +158,24 @@ export const listQuestions = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const updateQuestion = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const questionId = req.params.questionId as string;
+    const question = await examService.updateQuestion(questionId, req.body);
+    res.json({ success: true, data: question });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // --- ATTEMPTS ---
 
 export const startAttempt = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const examId = req.params.id as string;
-    const attempt = await examService.startAttempt(req.user!.userId, examId, req.body);
+    const roles = req.user?.roles || [];
+    const isAdminPreview = roles.some((role: string) => ['admin', 'super_admin', 'creator', 'faculty'].includes(role));
+    const attempt = await examService.startAttempt(req.user!.userId, examId, { ...req.body, isAdminPreview });
     res.status(201).json({ success: true, data: attempt });
   } catch (error) {
     next(error);
