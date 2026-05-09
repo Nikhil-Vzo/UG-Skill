@@ -14,6 +14,7 @@ interface Exam {
   status: string;
   durationMinutes: number;
   isProctored: boolean;
+  examType?: string;
   scheduledAt: string;
   attemptCount?: number;
 }
@@ -65,6 +66,15 @@ export const AdminExams: React.FC = () => {
           <div style={{ fontSize: '0.75rem', color: 'var(--text-low)' }}>
             {e.isProctored ? 'Proctored' : 'Unproctored'} • {e.durationMinutes} mins
           </div>
+        </div>
+      ),
+    },
+    {
+      key: 'examType',
+      header: 'Type',
+      render: (e: Exam) => (
+        <div style={{ textTransform: 'capitalize', color: 'var(--text-medium)', fontSize: '0.875rem', fontWeight: 500 }}>
+          {e.examType || 'Standard'}
         </div>
       ),
     },
