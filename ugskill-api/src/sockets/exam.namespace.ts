@@ -10,17 +10,20 @@ const timerKey = (attemptId: string) => `timer:${attemptId}`;
 
 /** Seconds remaining stored in Redis. Returns null when no timer set. */
 async function getRemaining(attemptId: string): Promise<number | null> {
+  if (!redis) return null;
   const val = await redis.get(timerKey(attemptId));
   return val !== null ? parseInt(val, 10) : null;
 }
 
 /** Persist remaining seconds back to Redis with a 1-hour safety TTL */
 async function setRemaining(attemptId: string, secs: number): Promise<void> {
+  if (!redis) return;
   await redis.set(timerKey(attemptId), secs.toString(), 'EX', 3600);
 }
 
 /** Remove the timer key once the attempt ends */
 async function clearTimer(attemptId: string): Promise<void> {
+  if (!redis) return;
   await redis.del(timerKey(attemptId));
 }
 

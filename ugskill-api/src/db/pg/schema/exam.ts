@@ -51,7 +51,7 @@ export const exams = pgTable('exams', {
 
 // --- EXAM BATCH ACCESS ---
 export const examBatchAccess = pgTable('exam_batch_access', {
-  examId: uuid('exam_id').notNull().references(() => exams.id),
+  examId: uuid('exam_id').notNull().references(() => exams.id, { onDelete: 'cascade' }),
   batchId: uuid('batch_id').notNull().references(() => batches.id),
   grantedBy: uuid('granted_by').references(() => users.id),
   grantedAt: timestamp('granted_at', { withTimezone: true }).defaultNow(),
@@ -79,7 +79,7 @@ export const examSections = pgTable('exam_sections', {
 // --- EXAM ATTEMPTS ---
 export const examAttempts = pgTable('exam_attempts', {
   id: uuid('id').primaryKey().defaultRandom(),
-  examId: uuid('exam_id').notNull().references(() => exams.id),
+  examId: uuid('exam_id').notNull().references(() => exams.id, { onDelete: 'cascade' }),
   studentId: uuid('student_id').notNull().references(() => users.id),
   attemptNumber: integer('attempt_number').default(1).notNull(),
   status: text('status').default('in_progress'),
@@ -97,9 +97,9 @@ export const examAttempts = pgTable('exam_attempts', {
 // --- EXAM SCORES ---
 export const examScores = pgTable('exam_scores', {
   id: uuid('id').primaryKey().defaultRandom(),
-  attemptId: uuid('attempt_id').notNull().references(() => examAttempts.id),
+  attemptId: uuid('attempt_id').notNull().references(() => examAttempts.id, { onDelete: 'cascade' }),
   studentId: uuid('student_id').notNull().references(() => users.id),
-  examId: uuid('exam_id').notNull().references(() => exams.id),
+  examId: uuid('exam_id').notNull().references(() => exams.id, { onDelete: 'cascade' }),
   totalScore: numeric('total_score', { precision: 8, scale: 2 }).notNull(),
   maxScore: numeric('max_score', { precision: 8, scale: 2 }).notNull(),
   percentage: numeric('percentage', { precision: 5, scale: 2 }),
@@ -113,7 +113,7 @@ export const examScores = pgTable('exam_scores', {
 // --- EXAM RANKINGS ---
 export const examRankings = pgTable('exam_rankings', {
   id: uuid('id').primaryKey().defaultRandom(),
-  examId: uuid('exam_id').notNull().references(() => exams.id),
+  examId: uuid('exam_id').notNull().references(() => exams.id, { onDelete: 'cascade' }),
   batchId: uuid('batch_id').references(() => batches.id),
   studentId: uuid('student_id').notNull().references(() => users.id),
   rank: integer('rank').notNull(),

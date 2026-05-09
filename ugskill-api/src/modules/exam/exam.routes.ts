@@ -38,9 +38,44 @@ router.get(
 );
 
 router.get(
+  '/live',
+  requireAuth,
+  requireRole(['admin', 'super_admin', 'proctor', 'instructor', 'creator', 'faculty']),
+  examController.listLiveExams
+);
+
+router.get(
+  '/incidents/recent',
+  requireAuth,
+  requireRole(['admin', 'super_admin', 'proctor', 'instructor', 'creator', 'faculty']),
+  examController.listRecentIncidents
+);
+
+router.post(
+  '/attempts/:attemptId/flag',
+  requireAuth,
+  requireRole(['admin', 'super_admin', 'proctor', 'instructor']),
+  examController.adminFlagAttempt
+);
+
+router.post(
+  '/attempts/:attemptId/terminate',
+  requireAuth,
+  requireRole(['admin', 'super_admin', 'proctor', 'instructor']),
+  examController.adminTerminateAttempt
+);
+
+router.get(
   '/:id',
   requireAuth,
   examController.getExam
+);
+
+router.get(
+  '/:id/proctoring-report',
+  requireAuth,
+  requireRole(['admin', 'super_admin', 'proctor', 'instructor', 'creator', 'faculty']),
+  examController.getProctoringReport
 );
 
 router.patch(
@@ -49,6 +84,13 @@ router.patch(
   requireRole(['admin', 'creator', 'faculty']),
   validate(updateExamSchema),
   examController.updateExam
+);
+
+router.delete(
+  '/:id',
+  requireAuth,
+  requireRole(['admin', 'creator', 'faculty']),
+  examController.deleteExam
 );
 
 // --- SECTIONS & BATCH ACCESS ---
@@ -106,7 +148,7 @@ router.get(
 router.post(
   '/:id/attempts/start',
   requireAuth,
-  requireRole(['student']),
+  requireRole(['student', 'admin', 'super_admin', 'creator']),
   validate(startAttemptSchema),
   examController.startAttempt
 );
@@ -114,7 +156,7 @@ router.post(
 router.patch(
   '/:id/attempts/:attemptId/answers',
   requireAuth,
-  requireRole(['student']),
+  requireRole(['student', 'admin', 'super_admin', 'creator']),
   validate(saveIncrementalResponseSchema),
   examController.saveIncrementalResponse
 );
@@ -122,7 +164,7 @@ router.patch(
 router.post(
   '/:id/attempts/:attemptId/submit',
   requireAuth,
-  requireRole(['student']),
+  requireRole(['student', 'admin', 'super_admin', 'creator']),
   validate(submitAttemptSchema),
   examController.submitAttempt
 );
@@ -136,7 +178,7 @@ router.get(
 router.post(
   '/:id/attempts/:attemptId/terminate',
   requireAuth,
-  requireRole(['admin', 'proctor', 'instructor']),
+  requireRole(['admin', 'super_admin', 'proctor', 'instructor']),
   examController.adminTerminateAttempt
 );
 

@@ -377,8 +377,7 @@ export const CourseBuilder: React.FC = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await saveCurriculum({ courseId: courseId!, sections: localSections });
-      await api.put(`/lms/courses/${courseId}`, {
+      const payload = {
         title,
         description,
         category,
@@ -387,7 +386,19 @@ export const CourseBuilder: React.FC = () => {
         isFree,
         price,
         thumbnailUrl,
-      });
+      };
+
+      if (isNew) {
+        const { data } = await api.post('/lms/courses', payload);
+        const newId = data.data?._id || data.data?.id;
+        if (newId) {
+          navigate(`/app/admin/courses/${newId}/builder`, { replace: true });
+        }
+        return data.data;
+      } else {
+        await saveCurriculum({ courseId: courseId!, sections: localSections });
+        await api.put(`/lms/courses/${courseId}`, payload);
+      }
     },
     onSuccess: () => { setSaveOk(true); setTimeout(() => setSaveOk(false), 2000); },
   });
@@ -445,32 +456,22 @@ export const CourseBuilder: React.FC = () => {
           <p className="cb-subheading">{localSections.length} module(s) · {totalLectures} lesson(s)</p>
         </div>
         <div className="cb-header-actions">
-          <Button variant="outline" leftIcon={<Settings size={18} />}>Settings</Button>
+          <Button variant="outline" leftIcon={<Settings size={18} />} onClick={() => navigate('/app/admin/courses')}>Back to Courses</Button>
+          <Button variant="outline"
+            leftIcon={saveOk ? <Check size={18} color="#22c55e" /> : <Save size={18} />}
+            onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !title.trim()}>
+            {saveMutation.isPending ? 'Saving…' : saveOk ? 'Saved!' : isNew ? 'Create Course' : 'Save'}
+          </Button>
           {!isNew && (
-            <>
-              <Button variant="outline"
-                leftIcon={saveOk ? <Check size={18} color="#22c55e" /> : <Save size={18} />}
-                onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? 'Saving…' : saveOk ? 'Saved!' : 'Save'}
-              </Button>
-              <Button variant="primary" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
-                {publishMutation.isPending ? 'Publishing…' : 'Publish Course'}
-              </Button>
-            </>
+            <Button variant="primary" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
+              {publishMutation.isPending ? 'Publishing…' : 'Publish Course'}
+            </Button>
           )}
         </div>
       </header>
 
-      {isNew && (
-        <Card>
-          <p className="cb-empty-hint">To build a curriculum, first create the course from the Courses dashboard.</p>
-          <Button onClick={() => navigate('/app/admin/courses')}>Go to Courses</Button>
-        </Card>
-      )}
-
       {/* Course Information */}
-      {!isNew && (
-        <Card className="cb-info-card">
+      <Card className="cb-info-card">
           <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 600 }}>
             Course Settings & Metadata
           </h3>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { DataTable } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
@@ -78,7 +78,7 @@ const fetchProctoringReport = async (examId: string): Promise<StudentProctor[]> 
 };
 
 const terminateAttempt = async (attemptId: string) => {
-  const { data } = await api.post(`/exams/dummy/attempts/${attemptId}/terminate`);
+  const { data } = await api.post(`/admin/exams/attempts/${attemptId}/terminate`);
   return data;
 };
 
@@ -106,7 +106,8 @@ const riskBadge = (score: number) => {
 export const ExamOps: React.FC = () => {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const [selectedExamId, setSelectedExamId] = useState<string | null>(searchParams.get('examId'));
   const [selectedStudent, setSelectedStudent] = useState<StudentProctor | null>(null);
   const [liveAlerts, setLiveAlerts] = useState<AlertToast[]>([]);
 

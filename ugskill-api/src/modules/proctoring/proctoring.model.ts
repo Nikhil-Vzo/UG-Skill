@@ -4,7 +4,7 @@ export interface IProctoringEvent extends Document {
   attemptId: string;
   examId: string;
   studentId: string;
-  type: 'gaze_away' | 'talking' | 'no_face' | 'multiple_faces' | 'phone_detected' | 'eyes_closed' | 'tab_switch' | 'copy_paste' | 'fullscreen_exit' | 'admin_terminate';
+  type: 'gaze_away' | 'talking' | 'no_face' | 'multiple_faces' | 'phone_detected' | 'eyes_closed' | 'tab_switch' | 'copy_paste' | 'fullscreen_exit' | 'admin_flag' | 'admin_terminate';
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   aiConfidence: number;          // 0–1, from AI API
   gazeDirection?: string;         // 'left' | 'right' | 'down' | 'up'
@@ -24,7 +24,7 @@ const ProctoringEventSchema = new Schema({
   type: { 
     type: String, 
     required: true,
-    enum: ['gaze_away', 'talking', 'no_face', 'multiple_faces', 'phone_detected', 'eyes_closed', 'tab_switch', 'copy_paste', 'fullscreen_exit', 'admin_terminate']
+    enum: ['gaze_away', 'talking', 'no_face', 'multiple_faces', 'phone_detected', 'eyes_closed', 'tab_switch', 'copy_paste', 'fullscreen_exit', 'admin_flag', 'admin_terminate']
   },
   severity: { 
     type: String, 

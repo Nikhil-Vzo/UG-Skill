@@ -36,14 +36,14 @@ const envSchema = z.object({
   SUPABASE_STORAGE_BUCKET: z.string().default('ugskill-storage'),
   
   // External AI team endpoint
-  AI_EXTERNAL_URL: z.string().url().optional(),
+  AI_EXTERNAL_URL: z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional()),
 
   // AI Proctoring Vision API
-  AI_API_URL: z.string().url().optional(),
-  AI_API_KEY: z.string().min(1).optional(),
+  AI_API_URL: z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional()),
+  AI_API_KEY: z.preprocess((value) => value === '' ? undefined : value, z.string().min(1).optional()),
 
   // Sentry
-  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_DSN: z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional()),
 });
 
 const parseEnv = () => {

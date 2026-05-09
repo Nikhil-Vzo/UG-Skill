@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, PenTool, Trash2, BookOpen, Users, Globe, Lock,
   AlertTriangle, X, Search, Filter, MoreVertical, Eye,
-  Layers, GraduationCap, BarChart2,
+  Layers, GraduationCap, BarChart2, RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -172,8 +172,24 @@ export const AdminCourses: React.FC = () => {
   const { data: courses = [], isLoading } = useQuery<CatalogCourse[]>({
     queryKey: ['admin-courses'],
     queryFn: async () => {
-      const res = await api.get('/lms/courses?limit=100');
-      return res.data.data?.courses ?? res.data.data ?? res.data ?? [];
+      try {
+        console.log('Fetching courses for admin...');
+        const res = await api.get('/lms/courses?limit=100');
+        console.log('Admin Courses API Response:', {
+          status: res.status,
+          data: res.data,
+          dataType: typeof res.data.data,
+          isArray: Array.isArray(res.data.data)
+        });
+        const raw = res.data.data;
+        if (Array.isArray(raw)) return raw;
+        if (raw && typeof raw === 'object' && Array.isArray(raw.courses)) return raw.courses;
+        if (raw && typeof raw === 'object' && Array.isArray(raw.data)) return raw.data;
+        return [];
+      } catch (err) {
+        console.error('Failed to fetch courses:', err);
+        throw err;
+      }
     }
   });
 
@@ -225,13 +241,22 @@ export const AdminCourses: React.FC = () => {
           </h1>
           <p className="ac-subheading">Create, edit, and publish your course catalog</p>
         </div>
-        <Button
-          variant="primary"
-          leftIcon={<Plus size={18} />}
-          onClick={() => setIsCreateOpen(true)}
-        >
-          Create Course
-        </Button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Button
+            variant="outline"
+            leftIcon={<RefreshCw size={18} className={isLoading ? 'cb-spin' : ''} />}
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-courses'] })}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="primary"
+            leftIcon={<Plus size={18} />}
+            onClick={() => setIsCreateOpen(true)}
+          >
+            Create Course
+          </Button>
+        </div>
       </header>
 
       {/* Stats Row */}

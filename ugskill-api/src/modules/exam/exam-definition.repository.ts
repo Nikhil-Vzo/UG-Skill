@@ -45,6 +45,15 @@ export class ExamDefinitionRepository {
       throw new AppError(`Failed to update exam definition: ${error.message}`, 500);
     }
   }
+
+  async deleteByPgExamId(pg_exam_id: string) {
+    try {
+      await ExamDefinitionModel.deleteMany({ pg_exam_id });
+      return true;
+    } catch (error: any) {
+      throw new AppError(`Failed to delete exam definition: ${error.message}`, 500);
+    }
+  }
 }
 
 export const examDefinitionRepository = new ExamDefinitionRepository();

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from '../store/auth.store';
 import { Clock, FileText, Lock, ChevronRight, BarChart2, Calendar, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -112,7 +113,9 @@ const ExamSkeleton: React.FC = () => (
 /* ─────────── Main Page ─────────── */
 export const Exams: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'all' | ExamStatus>('all');
+  const isAdmin = user?.roles?.some(r => ['admin', 'super_admin', 'creator'].includes(r));
 
   const { data: exams = [], isLoading, isError } = useQuery<Exam[]>({
     queryKey: ['exams', 'mine'],
@@ -134,9 +137,9 @@ export const Exams: React.FC = () => {
 
   const handleEnter = (exam: Exam) => {
     const finalId = exam.id || exam._id;
-    // Proctored exams go through pre-flight, others enter directly
-    if (exam.isProctored && exam.status === 'live') {
-      navigate(`/app/exams/${finalId}/pre-flight`);
+    // Admins can always enter/preview
+    if (exam.isProctored && (exam.status === 'live' || isAdmin)) {
+      navigate(`/app/exams/${finalId}/pre-flight?admin=${isAdmin}`);
     } else {
       navigate(`/app/exams/${finalId}`);
     }
