@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎓 UGSkill
+# 🎓 UGSkil
 
 > **Current Build Focus: 🔴 P9-P — AI-Powered Proctoring Engine**
 > Phase 8.5 (Stub Migration & API Parity) is complete. Proctoring foundation (Backend, Risk Engine, DB Schema) is live. Wiring AI Vision next.
