@@ -149,6 +149,20 @@ export function registerTrackingNamespace(io: SocketServer): Namespace {
       }
     );
 
+    // ── Student emits proctoring heartbeat ───────────────────────────────
+    socket.on('proctoring:heartbeat', async ({ attemptId }: { attemptId: string }) => {
+      if (!attemptId) return;
+      try {
+        const { default: redis } = await import('../lib/cache');
+        if (redis) {
+          // Grant a 45 second heartbeat buffer
+          await redis.set(`heartbeat:${attemptId}`, 'active', 'EX', 45);
+        }
+      } catch (err) {
+        logger.error(`[/tracking] Failed to process heartbeat for ${attemptId}`, err);
+      }
+    });
+
     // ── Admin manually terminates an attempt ─────────────────────────────
     socket.on(
       'admin:terminate',

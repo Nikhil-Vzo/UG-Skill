@@ -5,6 +5,9 @@ import redis from '../lib/cache';
 import { examAttemptRepository } from '../modules/exam/exam-attempt.repository';
 import { examResponseRepository } from '../modules/exam/exam-response.repository';
 
+import { examRepository } from '../modules/exam/exam.repository';
+import { proctoringService } from '../modules/proctoring/proctoring.service';
+
 // Redis key helpers
 const timerKey = (attemptId: string) => `timer:${attemptId}`;
 
@@ -91,8 +94,37 @@ export function registerExamNamespace(io: SocketServer): Namespace {
 
         // ── Start tick interval (only once per attempt, not per socket) ──
         if (!activeIntervals.has(attemptId)) {
+          const exam = await examRepository.findById(attempt.examId);
+          const isProctored = exam?.isProctored;
+          let tickCount = 0;
+
+          if (isProctored && redis) {
+            await redis.set(`heartbeat:${attemptId}`, 'active', 'EX', 60);
+          }
+
           const interval = setInterval(async () => {
             try {
+              tickCount++;
+
+              if (isProctored && tickCount % 10 === 0 && redis) {
+                const hb = await redis.get(`heartbeat:${attemptId}`);
+                if (!hb) {
+                  logger.warn(`[/exam] Missed proctoring heartbeat for ${attemptId}`);
+                  await proctoringService.ingestEvent({
+                    attemptId,
+                    examId: attempt.examId,
+                    studentId: attempt.studentId,
+                    type: 'heartbeat_missed',
+                    severity: 'CRITICAL',
+                    metadata: { source: 'server-monitor', reason: 'Client AI bypass detected' }
+                  });
+                  clearInterval(interval);
+                  activeIntervals.delete(attemptId);
+                  examNS.to(room).emit('timer:expired');
+                  return;
+                }
+              }
+
               let secs = await getRemaining(attemptId);
               if (secs === null) {
                 clearInterval(interval);

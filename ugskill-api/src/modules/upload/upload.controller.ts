@@ -90,3 +90,24 @@ export const generateUploadUrl = async (req: Request, res: Response, next: NextF
     next(error);
   }
 };
+
+/**
+ * @desc    Generate a short-lived signed URL for a storage path
+ */
+export const signUrl = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { path } = req.query;
+    if (!path || typeof path !== 'string') {
+      throw new ValidationError('Storage path is required');
+    }
+
+    const { signedUrl } = await storage.getDownloadUrl(path);
+
+    res.status(200).json({
+      success: true,
+      data: { signedUrl },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
