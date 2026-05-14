@@ -5,7 +5,8 @@ import {
   ChevronLeft, ChevronRight, Play, CheckCircle, Bookmark, BookmarkCheck,
   MessageSquare, FileText, Lightbulb, Volume2, Maximize, Minimize, Settings,
   Loader2, Send, BookOpen, ExternalLink, Download, AlignLeft, Link as LinkIcon,
-  Keyboard, Clock, MoreVertical, X, RotateCcw, FastForward, Rewind, AlertCircle
+  Keyboard, Clock, MoreVertical, X, RotateCcw, FastForward, Rewind, AlertCircle,
+  FileVideo, Globe
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -97,13 +98,6 @@ export const VideoPlayer: React.FC = () => {
       const res = await api.get(`/lms/courses/${courseId}`);
       const raw = res.data.data ?? res.data;
 
-      /* ── Support Supabase Storage Paths ── */
-      const resolveStorageUrl = (path?: string) => {
-        if (!path) return '';
-        if (path.startsWith('http')) return path;
-        return `https://oemnltyocalaqeccagkk.supabase.co/storage/v1/object/public/ugskill-storage/${path}`;
-      };
-
       // Normalize MongoDB snake_case sections → curriculum with camelCase lecture fields
       const sections: any[] = raw.sections ?? raw.curriculum ?? [];
       const curriculum: Section[] = sections.map((s: any) => ({
@@ -114,12 +108,13 @@ export const VideoPlayer: React.FC = () => {
           _id: l._id?.toString() || l.id || String(Math.random()),
           title: l.title ?? 'Untitled Lecture',
           completed: l.completed ?? false,
-          isFree: l.is_free ?? l.is_free_preview ?? l.isFree ?? false,
-          type: l.type ?? 'video',
-          videoUrl: resolveStorageUrl(l.video_url ?? l.videoUrl),
-          video_url: resolveStorageUrl(l.video_url ?? l.videoUrl),
-          document_url: resolveStorageUrl(l.document_url ?? l.documentUrl),
-          external_url: l.external_url ?? l.externalUrl,
+          isFree: l.is_free_preview ?? l.is_preview ?? l.is_free ?? l.isFree ?? false,
+          type: l.content_type ?? l.type ?? 'video',
+          videoUrl: l.video_url ?? l.videoUrl ?? l.content_url,
+          video_url: l.video_url ?? l.videoUrl ?? l.content_url,
+          document_url: l.document_url ?? l.documentUrl ?? l.content_url,
+          external_url: l.external_url ?? l.externalUrl ?? l.content_url,
+          content: l.content,
         })),
       }));
 
@@ -129,7 +124,28 @@ export const VideoPlayer: React.FC = () => {
     staleTime: 120_000,
   });
 
-  const allLectures = flattenLectures(course?.curriculum ?? []);
+  /* ── Fetch progress (summary + completed lecture IDs) ── */
+  const { data: progressPayload } = useQuery<{ completedLectureIds?: string[]; progressPercent?: number } | null>({
+    queryKey: ['progress', courseId],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`/lms/courses/${courseId}/progress`);
+        return res.data.data ?? res.data ?? null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!courseId,
+    staleTime: 30_000,
+  });
+
+  const completedIds: string[] = progressPayload?.completedLectureIds ?? [];
+
+  // Merge Postgres-sourced completed state into lectures
+  const allLectures = flattenLectures(course?.curriculum ?? []).map(l => ({
+    ...l,
+    completed: l.completed || completedIds.includes(l._id),
+  }));
   const activeLectureId = lectureId ?? allLectures[0]?._id;
   const currentIndex = allLectures.findIndex(l => l._id === activeLectureId);
   const activeLecture = allLectures[currentIndex] ?? null;
@@ -145,8 +161,21 @@ export const VideoPlayer: React.FC = () => {
     mutationFn: () => api.post(`/lms/courses/${courseId}/lectures/${activeLectureId}/complete`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+      queryClient.invalidateQueries({ queryKey: ['progress', courseId] });
     },
   });
+
+  /* ── Auto-complete non-video lectures after 5 seconds of viewing ── */
+  useEffect(() => {
+    if (!activeLecture || activeLecture.completed || completeMut.isPending) return;
+    const type = activeLecture.type ?? 'video';
+    if (type === 'video') return; // video auto-completes on onEnded
+    const timer = setTimeout(() => {
+      completeMut.mutate();
+    }, 5000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLectureId]); // Re-trigger whenever lecture changes
 
   /* ── Q&A ── */
   const { data: qaPosts = [] } = useQuery<QAPost[]>({
@@ -417,44 +446,69 @@ export const VideoPlayer: React.FC = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                     {lectureLoading
                       ? <Loader2 size={36} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary-glow)' }} />
-                      : <>
-                          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(99,102,241,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(99,102,241,0.5)' }}>
-                            <Play size={28} color="white" fill="white" />
-                          </div>
-                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>{activeTitle || 'Select a lecture'}</span>
-                        </>
+                      : activeLecture
+                        ? <>
+                            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(239,68,68,0.2)', border: '2px solid rgba(239,68,68,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <FileVideo size={28} color="rgba(239,68,68,0.8)" />
+                            </div>
+                            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: 600 }}>Video not yet uploaded</span>
+                            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>The instructor hasn't uploaded the video for this lecture yet.</span>
+                          </>
+                        : <>
+                            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(99,102,241,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(99,102,241,0.5)' }}>
+                              <Play size={28} color="white" fill="white" />
+                            </div>
+                            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.875rem' }}>Select a lecture to begin</span>
+                          </>
                     }
                   </div>
                 );
               }
 
-              /* ── DOCUMENT ── */
-              if (type === 'document') {
+              /* ── DOCUMENT / ARTICLE / PDF ── */
+              if (type === 'document' || type === 'pdf' || type === 'article') {
                 const docUrl = lecture?.document_url;
-                return docUrl ? (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#1a1a2e' }}>
-                    <iframe
-                      src={`${docUrl}#toolbar=0`}
-                      style={{ flex: 1, border: 'none', width: '100%', height: '100%' }}
-                      title={activeTitle}
-                    />
-                    <div style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'flex-end' }}>
-                      <a href={docUrl} download target="_blank" rel="noopener noreferrer"
-                        style={{ color: 'var(--primary-glow)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', textDecoration: 'none' }}>
-                        <Download size={14} /> Download
-                      </a>
+                if (!docUrl && (type === 'article' || type === 'text') && lecture?.content) {
+                  return (
+                    <div style={{ width: '100%', height: '100%', overflow: 'auto', background: '#1a1a2e', padding: '2rem', color: 'white' }}>
+                      <div dangerouslySetInnerHTML={{ __html: lecture.content }} />
                     </div>
-                  </div>
-                ) : (
+                  );
+                }
+
+                if (docUrl) {
+                  const isOfficeDoc = docUrl.match(/\.(pptx?|docx?|xlsx?)$/i);
+                  const iframeSrc = isOfficeDoc 
+                    ? `https://docs.google.com/viewer?url=${encodeURIComponent(docUrl)}&embedded=true`
+                    : `${docUrl}#toolbar=0`;
+
+                  return (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#1a1a2e' }}>
+                      <iframe
+                        src={iframeSrc}
+                        style={{ flex: 1, border: 'none', width: '100%', height: '100%', background: 'white' }}
+                        title={activeTitle}
+                      />
+                      <div style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'flex-end' }}>
+                        <a href={docUrl} download target="_blank" rel="noopener noreferrer"
+                          style={{ color: 'var(--primary-glow)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem', textDecoration: 'none' }}>
+                          <Download size={14} /> Download
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
                     <FileText size={40} />
-                    <span style={{ fontSize: '0.875rem' }}>Document not yet uploaded</span>
+                    <span style={{ fontSize: '0.875rem' }}>Content not yet uploaded</span>
                   </div>
                 );
               }
 
-              /* ── EXTERNAL LINK ── */
-              if (type === 'external_link') {
+              /* ── EXTERNAL LINK / YOUTUBE ── */
+              if (type === 'external_link' || type === 'youtube') {
                 const extUrl = lecture?.external_url;
                 if (!extUrl) return (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
@@ -730,9 +784,13 @@ export const VideoPlayer: React.FC = () => {
                             <CheckCircle size={18} color="var(--success)" />
                           ) : activeLectureId === lec._id ? (
                             <Play size={16} color="var(--primary-glow)" fill="var(--primary-glow)" />
-                          ) : (
-                            <span style={{ width: 18, height: 18, border: '2px solid var(--surface-highest)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', color: 'var(--text-lowest)', fontWeight: 700 }}>{i + 1}</span>
-                          )}
+                          ) : (() => {
+                            const t = lec.type ?? 'video';
+                            if (t === 'document' || t === 'pdf') return <FileText size={15} color="var(--text-lowest)" />;
+                            if (t === 'external_link' || t === 'youtube') return <Globe size={15} color="var(--text-lowest)" />;
+                            if (t === 'text' || t === 'article') return <AlignLeft size={15} color="var(--text-lowest)" />;
+                            return <span style={{ width: 18, height: 18, border: '2px solid var(--surface-highest)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', color: 'var(--text-lowest)', fontWeight: 700 }}>{i + 1}</span>;
+                          })()}
                         </div>
                         <div style={{ flex: 1, overflow: 'hidden' }}>
                           <p style={{ color: activeLectureId === lec._id ? 'var(--primary-glow)' : lec.completed ? 'var(--text-medium)' : 'var(--text-low)', fontSize: '0.8125rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>

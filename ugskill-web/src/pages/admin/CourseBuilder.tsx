@@ -330,6 +330,7 @@ export const CourseBuilder: React.FC = () => {
 
   const [localSections, setLocalSections] = useState<Section[]>([]);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [category, setCategory] = useState<string>('Engineering');
@@ -355,25 +356,46 @@ export const CourseBuilder: React.FC = () => {
       const sections = (courseData.sections ?? []).map((s: any) => ({
         ...s,
         id: s._id ?? s.id,
-        lectures: (s.lectures ?? []).map((l: any) => ({
-          ...l,
-          id: l._id ?? l.id,
-          resources: l.resources ?? [],
-          is_free_preview: l.is_free_preview ?? false,
-          type: l.type ?? 'video',
-        })),
+        lectures: (s.lectures ?? []).map((l: any) => {
+          let mappedType = l.type ?? l.content_type ?? 'video';
+          if (mappedType === 'youtube') mappedType = 'external_link';
+          if (mappedType === 'pdf') mappedType = 'document';
+          if (mappedType === 'article') mappedType = 'text';
+
+          return {
+            id: l._id ?? l.id,
+            title: l.title ?? 'Untitled',
+            type: mappedType,
+            is_free_preview: l.is_free_preview ?? l.is_preview ?? false,
+            duration_secs: l.duration_secs,
+            video_url: l.video_url,
+            hls_manifest_url: l.hls_manifest_url,
+            transcript_url: l.transcript_url,
+            document_url: l.document_url,
+            external_url: l.external_url,
+            content: l.content,
+            resources: l.resources ?? [],
+            ai_summary: l.ai_summary,
+            key_takeaways: l.key_takeaways,
+            topic_tags: l.topic_tags,
+          };
+        }),
       }));
       setLocalSections(sections);
-      setThumbnailUrl(courseData.thumbnail_url);
+      const thumb = courseData.thumbnail_url ?? courseData.thumbnailUrl;
+      setThumbnailUrl(thumb);
+      setThumbnailPreview(thumb);
       setTitle(courseData.title ?? '');
       setDescription(courseData.description ?? '');
       setCategory(courseData.category ?? 'Engineering');
       setDifficulty(courseData.difficulty ?? 'beginner');
       setLanguage(courseData.language ?? 'english');
       setPrice(courseData.price ?? 0);
-      setIsFree(courseData.is_free ?? false);
+      setIsFree(courseData.is_free ?? courseData.isFree ?? false);
     }
   }, [courseData]);
+
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -400,7 +422,12 @@ export const CourseBuilder: React.FC = () => {
         await api.put(`/lms/courses/${courseId}`, payload);
       }
     },
-    onSuccess: () => { setSaveOk(true); setTimeout(() => setSaveOk(false), 2000); },
+    onSuccess: () => { setSaveOk(true); setSaveError(null); setTimeout(() => setSaveOk(false), 2000); },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.error?.message || err?.message || 'Save failed — check console for details';
+      setSaveError(msg);
+      console.error('[CourseBuilder] save failed:', err?.response?.data ?? err);
+    },
   });
   const publishMutation = useMutation({
     mutationFn: () => publishCourse(courseId!),
@@ -470,6 +497,13 @@ export const CourseBuilder: React.FC = () => {
         </div>
       </header>
 
+      {/* Save error banner */}
+      {saveError && (
+        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', padding: '0.625rem 1.25rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <AlertCircle size={15} /> {saveError}
+        </div>
+      )}
+
       {/* Course Information */}
       <Card className="cb-info-card">
           <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 600 }}>
@@ -533,15 +567,27 @@ export const CourseBuilder: React.FC = () => {
             <div className="cb-info-thumbnail">
               <div className="cb-section-label-row">
                 <label className="cb-label"><Image size={15} /> Course Thumbnail</label>
-                {thumbnailUrl && <button className="cb-icon-btn danger" onClick={() => setThumbnailUrl(undefined)}><X size={14} /></button>}
+                {(thumbnailUrl || thumbnailPreview) && (
+                  <button className="cb-icon-btn danger" onClick={() => {
+                    setThumbnailUrl(undefined);
+                    setThumbnailPreview(undefined);
+                  }}>
+                    <X size={14} />
+                  </button>
+                )}
               </div>
               
               <div style={{ marginTop: '0.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                {thumbnailUrl ? (
-                  <div className="cb-thumbnail-preview" style={{ maxWidth: '100%' }}><img src={thumbnailUrl} alt="Thumbnail" /></div>
+                {thumbnailPreview || thumbnailUrl ? (
+                  <div className="cb-thumbnail-preview" style={{ maxWidth: '100%' }}>
+                    <img src={thumbnailPreview || thumbnailUrl} alt="Thumbnail" />
+                  </div>
                 ) : (
                   <FileUpload category="course_content" acceptedTypes="image/png,image/jpeg,image/webp"
-                    maxSizeMB={5} onUploadComplete={(p) => setThumbnailUrl(p)} />
+                    maxSizeMB={5} onUploadComplete={(p, file) => {
+                      setThumbnailUrl(p);
+                      if (file) setThumbnailPreview(URL.createObjectURL(file));
+                    }} />
                 )}
               </div>
             </div>

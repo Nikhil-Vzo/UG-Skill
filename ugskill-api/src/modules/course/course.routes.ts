@@ -11,10 +11,15 @@ const router = Router();
 // ── Public / Read-only ──────────────────────────────────────────
 router.get('/', courseController.searchCourses);
 router.get('/search', courseController.searchCourses);
+
+// Specific sub-resource routes MUST come before the /:id wildcard
 router.get('/:courseId/lectures/:lectureId', requireAuth, courseController.getLecture);
 router.post('/:courseId/lectures/:lectureId/complete', requireAuth, progressController.completeLecture.bind(progressController));
+router.get('/:courseId/progress', requireAuth, progressController.getSummary.bind(progressController));
 router.get('/:courseId/reviews', validate(getReviewsSchema), reviewController.getReviews.bind(reviewController));
 router.post('/:courseId/reviews', requireAuth, validate(createReviewSchema), reviewController.addReview.bind(reviewController));
+
+// Wildcard /:id MUST be last in the public block — it would swallow all of the above if placed earlier
 router.get('/:id', courseController.getCourse); // Allow students to view course details
 
 // ── Protected modification routes ───────────────────────────────

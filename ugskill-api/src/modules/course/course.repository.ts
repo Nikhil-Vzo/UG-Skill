@@ -12,7 +12,7 @@ export class CourseRepository {
   }
 
   async updateCourse(id: string, data: Partial<ICourse>): Promise<ICourse | null> {
-    return await CourseModel.findByIdAndUpdate(id, data, { new: true });
+    return await CourseModel.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: false });
   }
 
   async deleteCourse(id: string): Promise<ICourse | null> {
@@ -49,9 +49,13 @@ export class CourseRepository {
   async searchCourses(query?: string, filters?: { status?: string; category?: string }): Promise<ICourse[]> {
     const match: any = {};
 
-    // Default to published for student-facing queries
+    // Default to published for student-facing queries unless 'all' is explicitly requested
     if (filters?.status) {
-      match.status = filters.status;
+      if (filters.status !== 'all') {
+        match.status = filters.status;
+      }
+    } else {
+      match.status = 'published';
     }
     if (filters?.category) {
       match.category = filters.category;

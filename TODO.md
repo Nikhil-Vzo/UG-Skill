@@ -801,8 +801,8 @@ Each of the following pages has its data hardcoded at the top as a `const`. Repl
 | **Phase 8 — I6: Admin API** | ✅ Done | All admin pages wired |
 | **Phase 8 — I7: Creator API** | ✅ Done | CourseBuilder + QuizBuilder real API |
 | **Phase 8 — I8: Socket.io Client** | ✅ Done | All 5 namespaces hooked up |
-| **Phase 8 — I9: Live Interview Room** | ✅ Done | Built + Socket.io wired |
-| **Phase 10: QA & Deploy** | 🔄 Pending | Moved to after Phase 9-P (Proctoring) |
+| **Phase 9-P: AI Proctoring** | ✅ Done | AI gaze, tab detection, risk scoring |
+| **Phase 10: QA & Deploy** | 🔄 Pending | CI/CD, E2E, mobile audit |
 
 ---
 
@@ -868,8 +868,8 @@ These backend APIs are fully tested and ready, but the frontend has no buttons o
 | Memory Key | Value |
 |---|---|
 | `project.name` | UGSkill — LMS + Placement + Exam hybrid platform |
-| `project.status` | Phase 8 complete (API integration). Phase 9 starting with Proctoring. |
-| `project.focus` | AI-powered proctoring engine is the #1 priority |
+| `project.status` | Phase 9-P complete (Proctoring). Phase 10 starting. |
+| `project.focus` | Phase 10 — QA, Testing & Deployment |
 | `project.ai_api` | External AI API available for gaze tracking, eye movement, tab detection, face presence |
 | `project.db.pg` | Supabase PostgreSQL — 30+ tables, RLS enabled, Drizzle ORM |
 | `project.db.mongo` | MongoDB local — 18 collections, Mongoose ODM |

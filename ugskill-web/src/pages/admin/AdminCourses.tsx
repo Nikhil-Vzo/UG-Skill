@@ -174,7 +174,7 @@ export const AdminCourses: React.FC = () => {
     queryFn: async () => {
       try {
         console.log('Fetching courses for admin...');
-        const res = await api.get('/lms/courses?limit=100');
+        const res = await api.get('/lms/courses?limit=100&status=all');
         console.log('Admin Courses API Response:', {
           status: res.status,
           data: res.data,

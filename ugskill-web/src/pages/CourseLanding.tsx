@@ -210,7 +210,7 @@ export const CourseLanding: React.FC = () => {
       _id: l._id?.toString() || String(Math.random()),
       title: l.title,
       duration: l.duration,
-      isFree: l.is_free ?? l.isFree ?? false,
+      isFree: l.is_free_preview ?? l.is_preview ?? l.is_free ?? l.isFree ?? false,
     })),
   })) ?? course.curriculum ?? [];
 

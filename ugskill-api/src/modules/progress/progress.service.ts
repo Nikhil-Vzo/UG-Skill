@@ -44,8 +44,10 @@ export class ProgressService {
 
   async getProgressSummary(studentId: string, courseId: string) {
     const summary = await progressRepository.getProgressSummary(studentId, courseId);
+    const completedLectureIds = await progressRepository.getCompletedLectureIds(studentId, courseId);
+
     if (!summary) {
-      return { courseId, lecturesCompleted: 0, totalLectures: 0, progressPercent: 0 };
+      return { courseId, lecturesCompleted: 0, totalLectures: 0, progressPercent: 0, completedLectureIds };
     }
 
     const percent = (summary.totalLectures && summary.totalLectures > 0 && summary.lecturesCompleted)
@@ -54,7 +56,8 @@ export class ProgressService {
 
     return {
       ...summary,
-      progressPercent: percent
+      progressPercent: percent,
+      completedLectureIds,
     };
   }
 
