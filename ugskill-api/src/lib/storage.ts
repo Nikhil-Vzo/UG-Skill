@@ -15,9 +15,9 @@ export const storage = {
       if (error) throw error;
 
       // Supabase's createSignedUploadUrl returns a signedUrl + token separately.
-      // The correct way to PUT is to append the token as a query param to the signedUrl.
-      // Without the token, Supabase returns 400/403 for all file types.
-      const uploadUrl = data.token
+      // In newer SDK versions, the signedUrl might already include the token.
+      // We should only append the token if it's not already present in the URL.
+      const uploadUrl = (data.token && !data.signedUrl.includes('token='))
         ? `${data.signedUrl}${data.signedUrl.includes('?') ? '&' : '?'}token=${data.token}`
         : data.signedUrl;
 

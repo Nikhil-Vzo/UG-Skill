@@ -39,10 +39,13 @@ const RowSkeleton = () => (
   </tr>
 );
 
+import { BatchMembersModal } from './BatchMembersModal';
+
 /* ---------- component ---------- */
 export const BatchManagement: React.FC = () => {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedBatchForMembers, setSelectedBatchForMembers] = useState<Batch | null>(null);
   const [form, setForm] = useState({ name: '', description: '', startDate: '' });
 
   const { data: batches, isPending, isError } = useQuery<Batch[]>({
@@ -107,7 +110,7 @@ export const BatchManagement: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.location.href = `/admin/batches/${row.id}/members`}
+            onClick={() => setSelectedBatchForMembers(row)}
           >
             Members
           </Button>
@@ -196,6 +199,14 @@ export const BatchManagement: React.FC = () => {
             </div>
           </Card>
         </div>
+      )}
+
+      {selectedBatchForMembers && (
+        <BatchMembersModal
+          batchId={selectedBatchForMembers.id}
+          batchName={selectedBatchForMembers.name}
+          onClose={() => setSelectedBatchForMembers(null)}
+        />
       )}
     </div>
   );

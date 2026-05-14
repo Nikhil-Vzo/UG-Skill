@@ -338,6 +338,7 @@ export const ExamInterface: React.FC = () => {
 
     let cancelled = false;
     let stream: MediaStream | null = null;
+    let heartbeatInterval: NodeJS.Timeout | null = null;
 
     const startEdgeProctoring = async () => {
       try {
@@ -362,7 +363,18 @@ export const ExamInterface: React.FC = () => {
         });
         proctoringEngineRef.current = engine;
         await engine.initialize();
-        if (!cancelled) engine.start();
+        if (!cancelled) {
+          engine.start();
+
+          const trackingSocket = connectSocket('/tracking');
+          trackingSocket.emit('proctoring:heartbeat', { attemptId });
+          
+          heartbeatInterval = setInterval(() => {
+            if (aiMonitoringRef.current && proctoringEngineRef.current) {
+              trackingSocket.emit('proctoring:heartbeat', { attemptId });
+            }
+          }, 30000);
+        }
       } catch {
         aiMonitoringRef.current = false;
         setProctoringStatus({
@@ -379,6 +391,7 @@ export const ExamInterface: React.FC = () => {
 
     return () => {
       cancelled = true;
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
       proctoringEngineRef.current?.stop();
       proctoringEngineRef.current = null;
       stream?.getTracks().forEach((t) => t.stop());

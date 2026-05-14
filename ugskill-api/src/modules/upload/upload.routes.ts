@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { generateUploadUrl } from './upload.controller';
+import * as uploadController from './upload.controller';
 import { requireAuth } from '../../middleware/auth';
 import { uploadLimiter } from '../../middleware/rateLimiter';
 
@@ -14,6 +14,7 @@ router.use(uploadLimiter);
  * @desc    Generate a presigned URL to securely upload a file to Supabase Storage
  * @access  Private (Role and category dependent)
  */
-router.post('/presigned', generateUploadUrl);
+router.post('/presigned', uploadController.generateUploadUrl);
+router.get('/sign', uploadController.signUrl);
 
 export default router;

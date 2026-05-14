@@ -100,7 +100,32 @@ export const addSection = async (req: Request, res: Response, next: NextFunction
 
 export const replaceSections = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const course = await courseService.replaceSections(req.params.id as string, req.body.sections);
+    const rawSections = req.body.sections || [];
+    
+    // Normalise lecture fields from CourseBuilder into expected DB format
+    const normalisedSections = rawSections.map((section: any) => ({
+      ...section,
+      lectures: (section.lectures || []).map((lecture: any) => {
+        // Map frontend "type" to database "content_type"
+        let contentType = lecture.content_type || lecture.type || 'video';
+        
+        // Ensure "content_url" serves as primary, but keep specific URLs
+        let contentUrl = lecture.content_url || lecture.video_url || lecture.document_url || lecture.external_url;
+        
+        return {
+          ...lecture,
+          content_type: contentType,
+          type: contentType,
+          content_url: contentUrl,
+          video_url: lecture.video_url,
+          document_url: lecture.document_url,
+          external_url: lecture.external_url,
+          content: lecture.content
+        };
+      })
+    }));
+
+    const course = await courseService.replaceSections(req.params.id as string, normalisedSections);
     res.status(200).json(successResponse(course));
   } catch (error) {
     next(error);

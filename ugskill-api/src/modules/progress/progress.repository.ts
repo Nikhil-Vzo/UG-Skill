@@ -84,6 +84,19 @@ export class ProgressRepository {
     return summary[0] || null;
   }
 
+  async getCompletedLectureIds(studentId: string, courseId: string): Promise<string[]> {
+    const rows = await db
+      .select({ lectureId: lectureCompletions.lectureId })
+      .from(lectureCompletions)
+      .where(
+        and(
+          eq(lectureCompletions.studentId, studentId),
+          eq(lectureCompletions.courseId, courseId)
+        )
+      );
+    return rows.map(r => r.lectureId);
+  }
+
   async upsertStudentStreak(studentId: string, activeDate: Date) {
     // Simple naive UPSERT to initialize or update lastActiveDate. 
     // Actual streak computation happens in service layer.

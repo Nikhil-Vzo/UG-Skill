@@ -8,7 +8,7 @@ interface FileUploadProps {
   category: 'placement_drive' | 'course_content' | 'user_profile' | 'assignment_submission';
   acceptedTypes?: string; // e.g., "application/pdf,image/png"
   maxSizeMB?: number;
-  onUploadComplete: (path: string) => void;
+  onUploadComplete: (path: string, file?: File) => void;
   onError?: (error: string) => void;
 }
 
@@ -103,7 +103,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       // 3. Complete — call back with the storage path so parent can save it
       setIsUploading(false);
-      onUploadComplete(path);
+      onUploadComplete(path, file);
 
     } catch (err: any) {
       setIsUploading(false);

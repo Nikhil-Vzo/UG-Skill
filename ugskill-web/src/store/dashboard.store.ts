@@ -54,31 +54,39 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       const courseEnrollments = (Array.isArray(enrollments) ? enrollments : [])
         .filter((enrollment: any) => enrollment.enrollableType === 'course');
 
-      const courses = await Promise.all(courseEnrollments.map(async (enrollment: any) => {
-        const courseId = enrollment.enrollableId;
-        const [courseRes, progressRes] = await Promise.allSettled([
-          api.get(`/lms/courses/${courseId}`),
-          api.get(`/progress/summary/${courseId}`),
-        ]);
+      const courseResults = await Promise.allSettled(
+        courseEnrollments.map(async (enrollment: any) => {
+          const courseId = enrollment.enrollableId;
+          const [courseRes, progressRes] = await Promise.allSettled([
+            api.get(`/lms/courses/${courseId}`),
+            api.get(`/lms/courses/${courseId}/progress`),
+          ]);
 
-        const course = courseRes.status === 'fulfilled'
-          ? courseRes.value.data.data ?? courseRes.value.data
-          : {};
-        const progressPayload = progressRes.status === 'fulfilled'
-          ? progressRes.value.data.data ?? progressRes.value.data.meta ?? {}
-          : {};
+          // Skip orphaned enrollments (course was deleted)
+          if (courseRes.status === 'rejected') return null;
 
-        return {
-          id: course._id ?? course.id ?? courseId,
-          title: course.title ?? 'Untitled Course',
-          progress: progressPayload.progressPercent ?? course.progress ?? 0,
-          instructor: typeof course.instructor === 'string'
-            ? course.instructor
-            : course.instructor?.fullName ?? 'UGSkill Faculty',
-          thumbnail: course.thumbnail_url ?? course.thumbnailUrl,
-          lastAccessed: progressPayload.lastAccessedAt ?? enrollment.updatedAt ?? enrollment.enrolledAt ?? new Date().toISOString(),
-        };
-      }));
+          const course = courseRes.value.data.data ?? courseRes.value.data;
+          const progressPayload = progressRes.status === 'fulfilled'
+            ? progressRes.value.data.data ?? progressRes.value.data ?? {}
+            : {};
+
+          return {
+            id: course._id ?? course.id ?? courseId,
+            title: course.title ?? 'Untitled Course',
+            progress: progressPayload.progressPercent ?? 0,
+            instructor: typeof course.instructor === 'string'
+              ? course.instructor
+              : course.instructor?.fullName ?? 'UGSkill Faculty',
+            thumbnail: course.thumbnail_url ?? course.thumbnailUrl,
+            lastAccessed: progressPayload.lastAccessedAt ?? enrollment.updatedAt ?? enrollment.enrolledAt ?? new Date().toISOString(),
+          };
+        })
+      );
+
+      // Filter out null (orphaned) and rejected results
+      const courses = courseResults
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
+        .map(r => r.value);
 
       set({
         courses,
@@ -88,7 +96,6 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         error: null,
       });
     } catch (error: any) {
-      console.error('Failed to fetch dashboard data:', error);
       // Don't block the dashboard — just show empty state
       set({ 
         courses: [],

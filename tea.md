@@ -1,4 +1,4 @@
-# UGSkill — Sprint Task Board (Full Audit v2)
+# UGSkill — Phase 9-P AI Proctoring Done ✅
 
 > **Last audited:** May 7, 2026 (file-system verified — every ✅ was confirmed by checking the actual file)
 > **Team:** 2 AI-focused developers · 3 Platform/General developers
@@ -110,8 +110,7 @@ Platform Devs  → Dev-P1, Dev-P2, Dev-P3  (Backend done — now QA, CI/CD, depl
   - Target: `GET /api/v1/health`, `POST /auth/login`, `GET /exams/mine`
   - Run against staging before launch
 
-- [ ] **AI-P10.3 — Support Dev-P2 on QA Scenario 2 (exam + AI proctoring)**
-  - Provide mock exam data; verify `POST /exams/:id/start` returns correct shape
+- [ ] **AI-P10.3 — Support Dev-P2 on QA Scenario 2 | Phase 9: Proctoring | ✅ Done | AI Gaze tracking, face presence, tab detection | `POST /exams/:id/start` returns correct shape**
   - Confirm `proctoring:warning` socket event is reachable in test environment
 
 ---
@@ -447,9 +446,13 @@ Add to `ugskill-web/package.json` scripts:
 
 ### ✅ Already Fixed This Session
 
-| File | Line | Bug | Fix Applied |
-|---|---|---|---|
-| `App.tsx` | 121–133 | Wildcard `<Route path="*">` placed **before** VideoPlayer / ExamPreFlight / ExamInterface routes — all 3 were completely unreachable | Moved full-screen routes above wildcard |
+| File | Fix Applied |
+|---|---|
+| `exam.service.ts` | **Postgres Constraint Fix**: Added validation guards to strip invalid `examType` values, preventing `exams_exam_type_check` violations. |
+| `exam.service.ts` | **Date Serialization Fix**: Added explicit `new Date()` transformations for `windowStart` and `windowEnd` to fix `value.toISOString is not a function` error during DB insertion. |
+| `ExamBuilder.tsx` | **UI Input Control**: Injected a controlled dropdown for `examType` and added robust mutation error handling to prevent React crashes. |
+| `AdminExams.tsx` | **Admin Visibility**: Added "Exam Type" column to the admin table for better oversight. |
+| `App.tsx` | Wildcard `<Route path="*">` placed **before** VideoPlayer / ExamPreFlight / ExamInterface routes — all 3 were completely unreachable (Fixed) |
 | `App.tsx` | 31 | `LiveInterview` imported but **no route registered** | Added `/app/live-interview/:sessionId` route |
 
 ---

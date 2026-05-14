@@ -7,7 +7,7 @@ export const createCourseSchema = z.object({
   subCategory: z.string().optional(),
   difficulty: z.string().optional(),
   language: z.string().default('english'),
-  thumbnailUrl: z.string().url().optional(),
+  thumbnailUrl: z.string().optional(), // accepts both storage paths and full signed URLs
   isFree: z.boolean().default(false),
   price: z.number().min(0).default(0),
   tags: z.array(z.string()).optional(),
@@ -25,8 +25,13 @@ export const createSectionSchema = z.object({
 export const createLectureSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().max(1000).optional(),
-  content_type: z.enum(['video', 'article', 'pdf', 'quiz']),
+  content_type: z.enum(['video', 'article', 'pdf', 'quiz', 'document', 'external_link', 'text', 'youtube']),
+  type: z.enum(['video', 'article', 'pdf', 'quiz', 'document', 'external_link', 'text', 'youtube']).optional(),
   content_url: z.string().url().optional(),
+  video_url: z.string().url().optional(),
+  document_url: z.string().url().optional(),
+  external_url: z.string().url().optional(),
+  content: z.string().optional(),
   duration_secs: z.number().min(0).optional(),
   is_preview: z.boolean().default(false),
 });
