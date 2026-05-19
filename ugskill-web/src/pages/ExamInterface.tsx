@@ -338,7 +338,7 @@ export const ExamInterface: React.FC = () => {
 
     let cancelled = false;
     let stream: MediaStream | null = null;
-    let heartbeatInterval: NodeJS.Timeout | null = null;
+    let heartbeatInterval: any = null;
 
     const startEdgeProctoring = async () => {
       try {

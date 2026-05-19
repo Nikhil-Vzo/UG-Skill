@@ -52,16 +52,21 @@ interface Section {
 interface CourseDetails {
   id: string;
   title: string;
+  subtitle?: string;
   description?: string;
   category?: string;
   sub_category?: string;
   difficulty?: string;
   language?: string;
   thumbnail_url?: string;
+  thumbnailUrl?: string;
   is_free?: boolean;
+  isFree?: boolean;
   price?: number;
   tags?: string[];
   sections: Section[];
+  whatYouLearn?: string[] | string;
+  durationWeeks?: number;
 }
 
 /* ─── Helpers ────────────────────────────────────────────────── */
@@ -332,10 +337,13 @@ export const CourseBuilder: React.FC = () => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [thumbnailPreview, setThumbnailPreview] = useState<string | undefined>();
   const [title, setTitle] = useState<string>('');
+  const [subtitle, setSubtitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [whatYouLearn, setWhatYouLearn] = useState<string>('');
   const [category, setCategory] = useState<string>('Engineering');
   const [difficulty, setDifficulty] = useState<string>('beginner');
   const [language, setLanguage] = useState<string>('english');
+  const [durationWeeks, setDurationWeeks] = useState<number>(4);
   const [price, setPrice] = useState<number>(0);
   const [isFree, setIsFree] = useState<boolean>(false);
 
@@ -386,10 +394,13 @@ export const CourseBuilder: React.FC = () => {
       setThumbnailUrl(thumb);
       setThumbnailPreview(thumb);
       setTitle(courseData.title ?? '');
+      setSubtitle(courseData.subtitle ?? '');
       setDescription(courseData.description ?? '');
+      setWhatYouLearn(Array.isArray(courseData.whatYouLearn) ? courseData.whatYouLearn.join(', ') : (courseData.whatYouLearn ?? ''));
       setCategory(courseData.category ?? 'Engineering');
       setDifficulty(courseData.difficulty ?? 'beginner');
       setLanguage(courseData.language ?? 'english');
+      setDurationWeeks(courseData.durationWeeks ?? 4);
       setPrice(courseData.price ?? 0);
       setIsFree(courseData.is_free ?? courseData.isFree ?? false);
     }
@@ -401,7 +412,10 @@ export const CourseBuilder: React.FC = () => {
     mutationFn: async () => {
       const payload = {
         title,
+        subtitle,
         description,
+        whatYouLearn: whatYouLearn.split(',').map((s: string) => s.trim()).filter(Boolean),
+        durationWeeks,
         category,
         difficulty,
         language,
@@ -518,8 +532,18 @@ export const CourseBuilder: React.FC = () => {
               </div>
 
               <div className="cb-panel-row" style={{ marginBottom: '1rem' }}>
+                <label className="cb-label">Course Subtitle</label>
+                <input className="cb-input" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="Provide a brief, catchy subtitle..." />
+              </div>
+
+              <div className="cb-panel-row" style={{ marginBottom: '1rem' }}>
                 <label className="cb-label">Description</label>
                 <textarea className="cb-input cb-textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Provide a compelling overview..." />
+              </div>
+
+              <div className="cb-panel-row" style={{ marginBottom: '1rem' }}>
+                <label className="cb-label">What You'll Learn (comma separated list)</label>
+                <input className="cb-input" value={whatYouLearn} onChange={(e) => setWhatYouLearn(e.target.value)} placeholder="e.g. React hooks, TypeScript basics, API integration" />
               </div>
 
               <div className="cb-info-row-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
@@ -541,6 +565,11 @@ export const CourseBuilder: React.FC = () => {
                     <option value="intermediate">Intermediate</option>
                     <option value="advanced">Advanced</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="cb-label">Duration (Weeks)</label>
+                  <input type="number" className="cb-input" value={durationWeeks} onChange={(e) => setDurationWeeks(Number(e.target.value))} min={1} />
                 </div>
 
                 <div>
