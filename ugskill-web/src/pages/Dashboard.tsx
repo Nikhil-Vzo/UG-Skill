@@ -7,10 +7,11 @@ import { Skeleton } from '../components/loaders/Skeleton';
 import { CourseCard } from '../components/features/course/CourseCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { 
-  Flame, Clock, Calendar, AlertTriangle, TrendingUp, BookOpen,
+import {
+  Flame, Clock, Calendar, AlertTriangle, BookOpen,
   Award, Zap, Target, ArrowRight, PlayCircle, ChevronRight, Sparkles,
-  BarChart3, Trophy, Star, Activity
+  BarChart3, Trophy, Star, Activity, Shield, Swords, Crown, Gem,
+  TrendingUp, CheckCircle2, Circle, Lock
 } from 'lucide-react';
 import api from '../lib/api';
 import './Dashboard.css';
@@ -25,292 +26,478 @@ function deadlineLabel(dateStr: string): string {
   const d = daysUntil(dateStr);
   if (d < 0) return `OVERDUE ${Math.abs(d)}d`;
   if (d === 0) return 'DUE TODAY';
-  return `T-MINUS ${d} DAY${d === 1 ? '' : 'S'}`;
+  return `T-${d}d`;
 }
+
+/** Calculate XP from courses and streak */
+function calcXP(courses: any[], streakDays: number, examCount: number): number {
+  const lectureXP = courses.reduce((acc, c) => acc + (c.lecturesCompleted ?? 0) * 100, 0);
+  const examXP = examCount * 500;
+  const streakXP = streakDays * 150;
+  return lectureXP + examXP + streakXP;
+}
+
+/** Level from XP (1000 XP per level) */
+function calcLevel(xp: number): { level: number; progress: number; nextLevelXP: number } {
+  const level = Math.floor(xp / 1000) + 1;
+  const currentLevelXP = (level - 1) * 1000;
+  const nextLevelXP = level * 1000;
+  const progress = Math.round(((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100);
+  return { level, progress, nextLevelXP };
+}
+
+const LEVEL_TITLES: Record<number, string> = {
+  1: 'Novice', 2: 'Apprentice', 3: 'Scholar', 4: 'Adept', 5: 'Expert',
+  6: 'Master', 7: 'Elite', 8: 'Legend', 9: 'Grandmaster', 10: 'Sage',
+};
+
+const LEVEL_COLORS: Record<number, string> = {
+  1: '#94a3b8', 2: '#6ea8fe', 3: '#34d399', 4: '#f59e0b',
+  5: '#f97316', 6: '#ef4444', 7: '#a855f7', 8: '#ec4899',
+  9: '#06b6d4', 10: '#fbbf24',
+};
+
+function getLevelTitle(level: number): string {
+  return LEVEL_TITLES[Math.min(level, 10)] ?? 'Sage';
+}
+
+function getLevelColor(level: number): string {
+  return LEVEL_COLORS[Math.min(level, 10)] ?? '#fbbf24';
+}
+
+const RANK_ICONS = [
+  <Crown key={0} size={18} color="#fbbf24" />,
+  <Trophy key={1} size={18} color="#94a3b8" />,
+  <Award key={2} size={18} color="#cd7f32" />,
+];
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { courses, assessments, isLoading, error, fetchDashboardData } = useDashboardStore();
+  const { courses, assessments, topLeaders, examCount, isLoading, fetchDashboardData } = useDashboardStore();
   const { user } = useAuthStore();
 
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // Fetch streak from real API — falls back to empty array while loading/error
-  const { data: streakData } = useQuery<boolean[]>({
+  // Fetch streak from API
+  const { data: streakData } = useQuery<{ currentStreak: number; bestStreak: number; freezeCredits: number; lastActiveDate?: string }>({
     queryKey: ['streak'],
     queryFn: async () => {
       const res = await api.get('/lms/streaks/me');
       const payload = res.data.data ?? res.data;
-      if (Array.isArray(payload)) return payload;
-      const activeCount = Math.min(Math.max(Number(payload?.currentStreak ?? 0), 0), 7);
-      return Array.from({ length: 7 }, (_, index) => index >= 7 - activeCount);
+      if (typeof payload === 'object' && 'currentStreak' in payload) return payload;
+      return { currentStreak: 0, bestStreak: 0, freezeCredits: 0 };
     },
-    // Silently fail — streaks are non-critical
     retry: false,
   });
 
-  // 7-slot streak array: use API result or fallback to all-false
-  const streakDays: boolean[] = streakData?.length === 7
-    ? streakData
-    : [false, false, false, false, false, false, false];
+  const currentStreak = streakData?.currentStreak ?? 0;
+  const bestStreak = streakData?.bestStreak ?? 0;
+  const freezeCredits = streakData?.freezeCredits ?? 0;
+  const lastActiveDate = streakData?.lastActiveDate;
+
+  // Compute which days of current week are active
+  const streakDays = useMemo<boolean[]>(() => {
+    // Get the Monday of this week
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monday.setHours(0, 0, 0, 0);
+
+    if (!lastActiveDate || currentStreak === 0) {
+      return [false, false, false, false, false, false, false];
+    }
+
+    const lastActive = new Date(lastActiveDate);
+    lastActive.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const dayDate = new Date(monday);
+      dayDate.setDate(monday.getDate() + i);
+      if (dayDate > today) return false;
+
+      // Mark active if within the streak window going back from lastActiveDate
+      const diffMs = lastActive.getTime() - dayDate.getTime();
+      const diffDays = Math.round(diffMs / 86400000);
+      return diffDays >= 0 && diffDays < currentStreak;
+    });
+  }, [currentStreak, lastActiveDate]);
 
   const activeDays = streakDays.filter(Boolean).length;
 
-  // Calculate overall progress stats
+  // XP & Level
+  const totalXP = useMemo(() => calcXP(courses, currentStreak, examCount), [courses, currentStreak, examCount]);
+  const { level, progress: levelProgress, nextLevelXP } = useMemo(() => calcLevel(totalXP), [totalXP]);
+  const levelColor = getLevelColor(level);
+  const levelTitle = getLevelTitle(level);
+
+  // Stats
   const overallProgress = useMemo(() => {
     if (!courses.length) return 0;
     return Math.round(courses.reduce((acc, c) => acc + (c.progress || 0), 0) / courses.length);
   }, [courses]);
 
-  const completedCourses = useMemo(() => 
+  const completedCourses = useMemo(() =>
     courses.filter(c => (c.progress || 0) === 100).length,
     [courses]
   );
 
-  const upcomingDeadlines = useMemo(() => 
+  const upcomingDeadlines = useMemo(() =>
     assessments.filter(a => a.closingDate && daysUntil(a.closingDate) <= 7).length,
     [assessments]
   );
 
+  // Achievements
+  const achievements = useMemo(() => [
+    { id: 'novice', label: 'Enrolled', icon: <BookOpen size={18} />, unlocked: courses.length > 0, color: '#34d399', desc: 'Joined a course' },
+    { id: 'scholar', label: 'Scholar', icon: <Star size={18} />, unlocked: overallProgress > 50, color: '#f59e0b', desc: '>50% avg progress' },
+    { id: 'consistent', label: 'Consistent', icon: <Flame size={18} />, unlocked: currentStreak >= 3, color: '#ef4444', desc: '3-day streak' },
+    { id: 'performer', label: 'Performer', icon: <Trophy size={18} />, unlocked: examCount > 0, color: '#a855f7', desc: 'Attempted an exam' },
+    { id: 'completionist', label: 'Completionist', icon: <CheckCircle2 size={18} />, unlocked: completedCourses > 0, color: '#06b6d4', desc: 'Completed a course' },
+    { id: 'legend', label: 'Legend', icon: <Crown size={18} />, unlocked: level >= 5, color: '#fbbf24', desc: 'Reached Level 5' },
+  ], [courses.length, overallProgress, currentStreak, examCount, completedCourses, level]);
+
+  // Quests
+  const isActiveToday = useMemo(() => {
+    if (!lastActiveDate) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return lastActiveDate === today;
+  }, [lastActiveDate]);
+
+  const quests = useMemo(() => [
+    {
+      id: 'daily-dev',
+      label: 'Daily Dev',
+      desc: 'Stay active today',
+      icon: <Zap size={16} />,
+      progress: isActiveToday ? 1 : 0,
+      total: 1,
+      xp: 150,
+      color: '#f59e0b',
+    },
+    {
+      id: 'knowledge-seeker',
+      label: 'Knowledge Seeker',
+      desc: 'Complete a lecture',
+      icon: <BookOpen size={16} />,
+      progress: Math.min(courses.reduce((a, c) => a + (c.lecturesCompleted ?? 0), 0), 1),
+      total: 1,
+      xp: 100,
+      color: '#34d399',
+    },
+    {
+      id: 'unstoppable',
+      label: 'Unstoppable',
+      desc: 'Reach a 3-day streak',
+      icon: <Flame size={16} />,
+      progress: Math.min(currentStreak, 3),
+      total: 3,
+      xp: 300,
+      color: '#ef4444',
+    },
+  ], [isActiveToday, courses, currentStreak]);
+
   return (
-    <div className="dashboard-content flex flex-col gap-8" style={{ padding: '2rem' }}>
-      {error && (
-        <div style={{ backgroundColor: 'var(--error-container)', color: 'var(--on-error-container)', padding: '1rem', borderRadius: '0px', marginBottom: '1rem', borderLeft: '4px solid var(--error)' }}>
-          <strong>System Alert: </strong>{error}
-        </div>
-      )}
-      <header className="dashboard-header">
-        <div className="welcome-section">
-          <div className="welcome-badge">
-            <Sparkles size={14} /> Student Dashboard
+    <div className="dashboard-content" style={{ padding: '2rem' }}>
+
+      {/* ── Header ──────────────────────────────────────────── */}
+      <header className="db-header">
+        <div className="db-welcome">
+          <div className="db-badge">
+            <Sparkles size={13} /> Student Dashboard
           </div>
-          <h1 className="welcome-title">
-            Welcome back, {user?.fullName?.split(' ')[0] || 'Initiate'}
-            <span className="welcome-emoji">👋</span>
+          <h1 className="db-title">
+            Welcome back, <span className="db-name">{user?.fullName?.split(' ')[0] || 'Initiate'}</span>
+            <span className="db-wave">👋</span>
           </h1>
-          <p className="welcome-subtitle">
-            Track your progress, stay on top of deadlines, and keep learning.
+          <p className="db-subtitle">
+            Level <strong style={{ color: levelColor }}>{level} {levelTitle}</strong> · {totalXP.toLocaleString()} XP total
           </p>
         </div>
-        <div className="quick-actions">
-          <Button 
-            variant="primary" 
-            size="sm" 
-            leftIcon={<PlayCircle size={16} />}
-            onClick={() => navigate('/app/discover')}
-          >
+        <div className="db-header-actions">
+          <Button variant="primary" size="sm" leftIcon={<PlayCircle size={16} />} onClick={() => navigate('/app/discover')}>
             Explore Courses
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            leftIcon={<Target size={16} />}
-            onClick={() => navigate('/app/placements')}
-          >
-            View Placements
+          <Button variant="outline" size="sm" leftIcon={<Target size={16} />} onClick={() => navigate('/app/placements')}>
+            Placements
           </Button>
         </div>
       </header>
 
-      {/* Stats Overview */}
-      <section className="stats-overview">
-        <div className="stat-mini-card progress-card">
-          <div className="stat-mini-icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)' }}>
-            <BarChart3 size={20} />
+      {/* ── XP Level Bar ───────────────────────────────────── */}
+      <div className="db-xp-bar-wrapper">
+        <div className="db-xp-left">
+          <div className="db-level-badge" style={{ background: `${levelColor}22`, borderColor: `${levelColor}55`, color: levelColor }}>
+            <Shield size={14} />
+            <span>Lvl {level}</span>
           </div>
-          <div className="stat-mini-content">
-            <span className="stat-mini-value" style={{ color: 'var(--success)' }}>{overallProgress}%</span>
-            <span className="stat-mini-label">Avg Progress</span>
-          </div>
+          <span className="db-xp-label">{levelTitle}</span>
         </div>
-        
-        <div className="stat-mini-card courses-card">
-          <div className="stat-mini-icon" style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)' }}>
-            <BookOpen size={20} />
-          </div>
-          <div className="stat-mini-content">
-            <span className="stat-mini-value" style={{ color: 'var(--primary)' }}>{completedCourses}/{courses.length}</span>
-            <span className="stat-mini-label">Completed</span>
-          </div>
+        <div className="db-xp-track">
+          <div className="db-xp-fill" style={{ width: `${levelProgress}%`, background: `linear-gradient(90deg, ${levelColor}aa, ${levelColor})`, boxShadow: `0 0 12px ${levelColor}66` }} />
         </div>
-        
-        <div className="stat-mini-card deadline-card">
-          <div className="stat-mini-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)' }}>
-            <AlertTriangle size={20} />
-          </div>
-          <div className="stat-mini-content">
-            <span className="stat-mini-value" style={{ color: 'var(--warning)' }}>{upcomingDeadlines}</span>
-            <span className="stat-mini-label">Due Soon</span>
-          </div>
+        <div className="db-xp-right">
+          <span className="db-xp-label">{totalXP % 1000}<span style={{ color: '#737373' }}>/{1000} XP</span></span>
         </div>
-        
-        <div className="stat-mini-card streak-card">
-          <div className="stat-mini-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-            <Flame size={20} />
+      </div>
+
+      {/* ── Stat Cards ─────────────────────────────────────── */}
+      <section className="db-stats">
+        {[
+          { icon: <BarChart3 size={20} />, value: `${overallProgress}%`, label: 'Avg Progress', color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
+          { icon: <BookOpen size={20} />, value: `${completedCourses}/${courses.length}`, label: 'Completed', color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
+          { icon: <AlertTriangle size={20} />, value: upcomingDeadlines, label: 'Due Soon', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+          { icon: <Flame size={20} />, value: currentStreak, label: 'Day Streak', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+          { icon: <Gem size={20} />, value: `${totalXP.toLocaleString()}`, label: 'Total XP', color: levelColor, bg: `${levelColor}18` },
+        ].map((s, i) => (
+          <div key={i} className="db-stat-card">
+            <div className="db-stat-icon" style={{ background: s.bg, color: s.color }}>{s.icon}</div>
+            <div>
+              <div className="db-stat-value" style={{ color: s.color }}>{s.value}</div>
+              <div className="db-stat-label">{s.label}</div>
+            </div>
           </div>
-          <div className="stat-mini-content">
-            <span className="stat-mini-value" style={{ color: '#ef4444' }}>{activeDays}</span>
-            <span className="stat-mini-label">Day Streak</span>
-          </div>
-        </div>
+        ))}
       </section>
 
-      {/* Widgets Top Row */}
-      <section className="dashboard-widgets">
-        
-        {/* Enhanced Streak Calendar Widget */}
-        <div className="glass-panel streak-widget">
-          <div className="widget-header">
-            <div className="widget-title">
-              <Flame color="#ef4444" size={20} />
-              <span>Activity Streak</span>
-            </div>
-            <Badge variant={activeDays >= 5 ? 'success' : 'default'} size="sm">
-              {activeDays >= 5 ? '🔥 On Fire!' : `${activeDays} days active`}
+      {/* ── Main Widgets Grid ──────────────────────────────── */}
+      <section className="db-grid">
+
+        {/* Streak Calendar */}
+        <div className="db-panel db-streak-panel">
+          <div className="db-panel-header">
+            <div className="db-panel-title"><Flame size={18} color="#ef4444" /> Activity Streak</div>
+            <Badge variant={currentStreak >= 7 ? 'success' : currentStreak >= 3 ? 'warning' : 'default'} size="sm">
+              {currentStreak >= 7 ? '🔥 Perfect Week!' : currentStreak >= 3 ? `${currentStreak} day streak` : `${currentStreak} days`}
             </Badge>
           </div>
-          <div className="streak-calendar">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => (
-              <div key={i} className={`streak-day ${streakDays[i] ? 'active' : ''}`}>
-                <div className="streak-bar" />
-                <span className="streak-label">{d.slice(0, 1)}</span>
+          <div className="db-streak-calendar">
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+              <div key={i} className={`db-streak-day ${streakDays[i] ? 'active' : ''}`}>
+                <div className="db-streak-bar">
+                  {streakDays[i] && <div className="db-streak-glow" />}
+                </div>
+                <span className="db-streak-lbl">{d}</span>
               </div>
             ))}
           </div>
-          <div className="streak-message">
-            {activeDays === 0 ? 'Start your streak today! 💪' :
-             activeDays < 3 ? 'Good start! Keep going!' :
-             activeDays < 5 ? 'You\'re building momentum!' :
-             activeDays < 7 ? 'Incredible consistency!' : 'Perfect week! 🎉'}
+          <div className="db-streak-meta">
+            <div className="db-streak-meta-item">
+              <Flame size={14} color="#ef4444" />
+              <span>Current: <strong style={{ color: '#ef4444' }}>{currentStreak}</strong></span>
+            </div>
+            <div className="db-streak-meta-item">
+              <Star size={14} color="#f59e0b" />
+              <span>Best: <strong style={{ color: '#f59e0b' }}>{bestStreak}</strong></span>
+            </div>
+            <div className="db-streak-meta-item">
+              <Shield size={14} color="#6366f1" />
+              <span>Freezes: <strong style={{ color: '#6366f1' }}>{freezeCredits}</strong></span>
+            </div>
+          </div>
+          <div className="db-streak-msg">
+            {currentStreak === 0 ? '🚀 Start your streak today!' :
+             currentStreak < 3 ? '💪 Good start! Keep going!' :
+             currentStreak < 7 ? '🔥 You\'re on fire! Don\'t stop!' : '🏆 Perfect week! Legendary!'}
           </div>
         </div>
 
-        {/* Enhanced Active Course Widget */}
-        <div className="glass-panel active-course-widget">
-          <div className="widget-header">
-            <div className="widget-title">
-              <Zap color="var(--warning)" size={20} />
-              <span>Continue Learning</span>
-            </div>
+        {/* Quest Log */}
+        <div className="db-panel db-quests-panel">
+          <div className="db-panel-header">
+            <div className="db-panel-title"><Swords size={18} color="#a855f7" /> Daily Quests</div>
+            <Badge variant="default" size="sm">+XP</Badge>
           </div>
-          <div className="active-course-content">
+          <div className="db-quest-list">
+            {quests.map(q => {
+              const done = q.progress >= q.total;
+              const pct = Math.round((q.progress / q.total) * 100);
+              return (
+                <div key={q.id} className={`db-quest-item ${done ? 'done' : ''}`}>
+                  <div className="db-quest-icon" style={{ color: q.color, background: `${q.color}18` }}>
+                    {done ? <CheckCircle2 size={16} /> : q.icon}
+                  </div>
+                  <div className="db-quest-body">
+                    <div className="db-quest-header">
+                      <span className="db-quest-label">{q.label}</span>
+                      <span className="db-quest-xp" style={{ color: q.color }}>+{q.xp} XP</span>
+                    </div>
+                    <div className="db-quest-desc">{q.desc}</div>
+                    <div className="db-quest-bar-track">
+                      <div className="db-quest-bar-fill" style={{ width: `${pct}%`, background: q.color, boxShadow: done ? `0 0 8px ${q.color}88` : 'none' }} />
+                    </div>
+                  </div>
+                  <div className="db-quest-count">{q.progress}/{q.total}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Continue Learning */}
+        <div className="db-panel db-continue-panel">
+          <div className="db-panel-header">
+            <div className="db-panel-title"><Zap size={18} color="#f59e0b" /> Continue Learning</div>
+          </div>
+          <div className="db-continue-body">
             {isLoading ? (
-               <Skeleton variant="rectangular" height={120} />
+              <Skeleton variant="rectangular" height={120} />
             ) : courses.length > 0 ? (
-               <>
-                 <div className="active-course-info">
-                   <h4 className="active-course-title">{courses[0].title}</h4>
-                   <p className="active-course-instructor">by {courses[0].instructor}</p>
-                 </div>
-                 <div className="progress-section">
-                   <div className="progress-header">
-                     <span className="progress-text">{courses[0].progress ?? 0}% Complete</span>
-                     <span className="progress-modules">{Math.round((courses[0].progress || 0) / 100 * 12)}/12 modules</span>
-                   </div>
-                   <div className="progress-bar-container">
-                     <div className="progress-bar" style={{ width: `${courses[0].progress ?? 0}%` }} />
-                   </div>
-                 </div>
-                 <Button
-                   variant="primary"
-                   size="sm"
-                   className="resume-btn"
-                   rightIcon={<ArrowRight size={14} />}
-                   onClick={() => navigate(`/app/courses/${courses[0].id}/player`)}
-                 >
-                   Resume Course
-                 </Button>
-               </>
+              <>
+                <div className="db-course-resume-thumb">
+                  {courses[0].thumbnail
+                    ? <img src={courses[0].thumbnail} alt={courses[0].title} className="db-course-thumb-img" />
+                    : <div className="db-course-thumb-placeholder"><BookOpen size={32} color="#6366f1" /></div>
+                  }
+                </div>
+                <div className="db-course-resume-info">
+                  <h4 className="db-course-title">{courses[0].title}</h4>
+                  <p className="db-course-instructor">by {courses[0].instructor}</p>
+                  <div className="db-progress-row">
+                    <span className="db-progress-pct">{courses[0].progress ?? 0}%</span>
+                    <span className="db-progress-modules">{courses[0].lecturesCompleted ?? 0}/{courses[0].totalLectures ?? '?'} lectures</span>
+                  </div>
+                  <div className="db-progress-track">
+                    <div className="db-progress-fill" style={{ width: `${courses[0].progress ?? 0}%` }} />
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="db-resume-btn"
+                    rightIcon={<ArrowRight size={14} />}
+                    onClick={() => navigate(`/app/courses/${courses[0].id}/player`)}
+                  >
+                    Resume
+                  </Button>
+                </div>
+              </>
             ) : (
-               <div className="empty-state">
-                 <BookOpen size={32} color="var(--text-low)" />
-                 <span>No active courses</span>
-                 <Button variant="outline" size="sm" onClick={() => navigate('/app/discover')}>
-                   Browse Courses
-                 </Button>
-               </div>
+              <div className="db-empty-state">
+                <BookOpen size={36} color="#6366f155" />
+                <span>No active courses yet</span>
+                <Button variant="outline" size="sm" onClick={() => navigate('/app/discover')}>Browse Courses</Button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Enhanced Deadlines Widget */}
-        <div className="glass-panel deadlines-widget">
-          <div className="widget-header">
-            <div className="widget-title">
-              <AlertTriangle color="var(--warning)" size={20} />
-              <span>Upcoming Deadlines</span>
-            </div>
-            {upcomingDeadlines > 0 && (
-              <Badge variant="warning" size="sm">{upcomingDeadlines} due soon</Badge>
+        {/* Deadlines */}
+        <div className="db-panel db-deadlines-panel">
+          <div className="db-panel-header">
+            <div className="db-panel-title"><AlertTriangle size={18} color="#f59e0b" /> Upcoming Exams</div>
+            {upcomingDeadlines > 0 && <Badge variant="warning" size="sm">{upcomingDeadlines} due soon</Badge>}
+          </div>
+          <div className="db-deadlines-list">
+            {isLoading ? (
+              <Skeleton variant="rectangular" height={100} />
+            ) : assessments.length === 0 ? (
+              <div className="db-empty-state">
+                <Trophy size={32} color="#34d39955" />
+                <span>All caught up! 🎉</span>
+                <p style={{ color: '#737373', fontSize: '0.8rem', margin: 0 }}>No upcoming exams</p>
+              </div>
+            ) : (
+              assessments.slice(0, 4).map(assm => {
+                const days = assm.closingDate ? daysUntil(assm.closingDate) : null;
+                const urgent = days !== null && days <= 2;
+                return (
+                  <div key={assm.id} className={`db-deadline-item ${days !== null && days < 0 ? 'overdue' : ''} ${urgent ? 'urgent' : ''}`}>
+                    <div className="db-deadline-icon">
+                      <Calendar size={14} />
+                    </div>
+                    <div className="db-deadline-info">
+                      <span className="db-deadline-title">{assm.title}</span>
+                      <span className={`db-deadline-date ${urgent ? 'urgent' : ''}`}>
+                        {assm.closingDate ? deadlineLabel(assm.closingDate) : 'No date'}
+                      </span>
+                    </div>
+                    <ChevronRight size={14} className="db-deadline-arrow" />
+                  </div>
+                );
+              })
             )}
           </div>
-          <div className="deadlines-list">
-             {isLoading ? (
-               <Skeleton variant="rectangular" height={100} />
-             ) : assessments.length === 0 ? (
-               <div className="empty-deadlines">
-                 <Trophy size={32} color="var(--success)" />
-                 <span>All caught up! 🎉</span>
-                 <p>No pending assignments or exams</p>
-               </div>
-             ) : (
-               assessments.slice(0, 3).map(assm => (
-                 <div key={assm.id} className={`deadline-item ${assm.closingDate && daysUntil(assm.closingDate) < 0 ? 'overdue' : ''}`}>
-                   <div className="deadline-icon">
-                     <Calendar size={16} />
-                   </div>
-                   <div className="deadline-info">
-                     <span className="deadline-title">{assm.title}</span>
-                     <span className={`deadline-date ${assm.closingDate && daysUntil(assm.closingDate) <= 2 ? 'urgent' : ''}`}>
-                       {assm.closingDate ? deadlineLabel(assm.closingDate) : 'No deadline'}
-                     </span>
-                   </div>
-                   <ChevronRight size={16} className="deadline-arrow" />
-                 </div>
-               ))
-             )}
-          </div>
-          {assessments.length > 3 && (
-            <button className="view-all-btn" onClick={() => navigate('/app/exams')}>
-              View all {assessments.length} assessments <ArrowRight size={14} />
+          {assessments.length > 4 && (
+            <button className="db-view-all" onClick={() => navigate('/app/exams')}>
+              View all {assessments.length} exams <ArrowRight size={13} />
             </button>
           )}
         </div>
+
+        {/* Mini Leaderboard */}
+        <div className="db-panel db-leaderboard-panel">
+          <div className="db-panel-header">
+            <div className="db-panel-title"><Crown size={18} color="#fbbf24" /> Top Performers</div>
+            <button className="db-link-btn" onClick={() => navigate('/app/leaderboards')}>
+              See all <ChevronRight size={13} />
+            </button>
+          </div>
+          <div className="db-leaders-list">
+            {topLeaders.length === 0 ? (
+              <div className="db-empty-state" style={{ padding: '1rem' }}>
+                <Trophy size={28} color="#fbbf2444" />
+                <span style={{ fontSize: '0.85rem', color: '#737373' }}>No rankings yet</span>
+              </div>
+            ) : topLeaders.map((leader, i) => (
+              <div key={leader.studentId} className={`db-leader-item rank-${i + 1}`}>
+                <div className="db-leader-rank">{RANK_ICONS[i]}</div>
+                <div className="db-leader-info">
+                  <span className="db-leader-name">{leader.name}</span>
+                  <span className="db-leader-score">{leader.score.toLocaleString()} pts</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Achievements */}
+        <div className="db-panel db-achievements-panel">
+          <div className="db-panel-header">
+            <div className="db-panel-title"><Award size={18} color="#f59e0b" /> Achievements</div>
+            <span className="db-ach-count">{achievements.filter(a => a.unlocked).length}/{achievements.length}</span>
+          </div>
+          <div className="db-achievements-grid">
+            {achievements.map(ach => (
+              <div key={ach.id} className={`db-achievement ${ach.unlocked ? 'unlocked' : 'locked'}`} title={ach.desc} style={ach.unlocked ? { '--ach-color': ach.color } as any : {}}>
+                <div className="db-ach-icon" style={ach.unlocked ? { background: `${ach.color}22`, color: ach.color, boxShadow: `0 0 14px ${ach.color}44` } : {}}>
+                  {ach.unlocked ? ach.icon : <Lock size={16} />}
+                </div>
+                <span className="db-ach-label">{ach.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </section>
 
-      {/* My Courses Section */}
-      <section className="my-courses-section">
-        <div className="section-header">
-          <h2 className="section-title">
-            <Activity size={20} />
-            My Learning Journey
+      {/* ── My Courses ─────────────────────────────────────── */}
+      <section className="db-courses-section">
+        <div className="db-section-header">
+          <h2 className="db-section-title">
+            <Activity size={20} color="#6366f1" /> My Learning Journey
           </h2>
-          <button className="view-all-link" onClick={() => navigate('/app/courses')}>
-            View all courses <ArrowRight size={14} />
+          <button className="db-link-btn" onClick={() => navigate('/app/courses')}>
+            All courses <ArrowRight size={14} />
           </button>
         </div>
-        <div className="courses-grid">
+        <div className="db-courses-grid">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="course-card-skeleton">
+              <div key={i} className="db-course-skeleton">
                 <Skeleton variant="rectangular" height={140} />
-                <Skeleton variant="text" width="80%" height="24px" className="mt-3" />
+                <Skeleton variant="text" width="80%" height="22px" className="mt-3" />
                 <Skeleton variant="rounded" height="8px" className="mt-2" />
                 <Skeleton variant="text" width="40%" className="mt-2" />
               </div>
             ))
           ) : courses.length === 0 ? (
-            <div className="empty-courses">
-              <div className="empty-courses-icon">
-                <BookOpen size={48} />
-              </div>
+            <div className="db-empty-courses">
+              <div className="db-empty-courses-icon"><BookOpen size={48} color="#6366f133" /></div>
               <h3>Start Your Learning Journey</h3>
               <p>Explore our catalog and enroll in courses to begin</p>
-              <Button variant="primary" onClick={() => navigate('/app/discover')}>
-                Discover Courses
-              </Button>
+              <Button variant="primary" onClick={() => navigate('/app/discover')}>Discover Courses</Button>
             </div>
           ) : (
             courses.map(course => (
@@ -323,6 +510,7 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
       </section>
+
     </div>
   );
 };

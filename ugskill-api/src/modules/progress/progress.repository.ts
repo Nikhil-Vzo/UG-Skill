@@ -131,15 +131,25 @@ export class ProgressRepository {
     return streak || null;
   }
 
-  async updateStudentStreak(studentId: string, currentStreak: number, bestStreak: number, lastActiveDate: string) {
+  async updateStudentStreak(
+    studentId: string,
+    currentStreak: number,
+    bestStreak: number,
+    lastActiveDate: string,
+    freezeCredits?: number
+  ) {
+    const updateObj: any = {
+      currentStreak,
+      bestStreak,
+      lastActiveDate,
+      updatedAt: new Date(),
+    };
+    if (freezeCredits !== undefined) {
+      updateObj.freezeCredits = freezeCredits;
+    }
     const [updated] = await db
       .update(studentStreaks)
-      .set({
-        currentStreak,
-        bestStreak,
-        lastActiveDate,
-        updatedAt: new Date(),
-      })
+      .set(updateObj)
       .where(eq(studentStreaks.studentId, studentId))
       .returning();
     return updated;

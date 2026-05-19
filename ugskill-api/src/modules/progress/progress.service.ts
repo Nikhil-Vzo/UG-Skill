@@ -64,7 +64,48 @@ export class ProgressService {
   async getStudentStreak(studentId: string) {
     const streak = await progressRepository.getStudentStreak(studentId);
     if (!streak) {
-      return { currentStreak: 0, bestStreak: 0 };
+      return { currentStreak: 0, bestStreak: 0, freezeCredits: 0 };
+    }
+
+    if (streak.lastActiveDate) {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const lastActive = streak.lastActiveDate;
+
+      if (lastActive !== todayStr) {
+        const todayDate = new Date(todayStr);
+        const lastActiveDateObj = new Date(lastActive);
+        const diffTime = Math.abs(todayDate.getTime() - lastActiveDateObj.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 1) {
+          const missedDays = diffDays - 1;
+          if (streak.freezeCredits >= missedDays) {
+            // Apply streak freeze!
+            const newFreezeCredits = streak.freezeCredits - missedDays;
+            const yesterdayDate = new Date(todayDate.getTime() - 24 * 60 * 60 * 1000);
+            const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+
+            const updated = await progressRepository.updateStudentStreak(
+              studentId,
+              streak.currentStreak,
+              streak.bestStreak,
+              yesterdayStr,
+              newFreezeCredits
+            );
+            return updated;
+          } else {
+            // Streak is broken!
+            const updated = await progressRepository.updateStudentStreak(
+              studentId,
+              0,
+              streak.bestStreak,
+              lastActive
+            );
+            return updated;
+          }
+        }
+      }
     }
     return streak;
   }
@@ -101,19 +142,26 @@ export class ProgressService {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     let newCurrentStreak = streak.currentStreak || 0;
+    let newFreezeCredits = streak.freezeCredits;
     if (diffDays === 1) {
       // Direct consecutive day
       newCurrentStreak += 1;
     } else if (diffDays > 1) {
-      // Streak broken
-      newCurrentStreak = 1;
-      // Handle freezes here eventually 
+      const missedDays = diffDays - 1;
+      if (streak.freezeCredits >= missedDays) {
+        // Freeze saved the streak!
+        newFreezeCredits -= missedDays;
+        newCurrentStreak += 1;
+      } else {
+        // Streak broken
+        newCurrentStreak = 1;
+      }
     }
 
     const newBestStreak = Math.max(newCurrentStreak, streak.bestStreak || 0);
 
-    await progressRepository.updateStudentStreak(studentId, newCurrentStreak, newBestStreak, todayStr);
-    logger.info(`Streak updated for ${studentId}: current ${newCurrentStreak}, best ${newBestStreak}`);
+    await progressRepository.updateStudentStreak(studentId, newCurrentStreak, newBestStreak, todayStr, newFreezeCredits);
+    logger.info(`Streak updated for ${studentId}: current ${newCurrentStreak}, best ${newBestStreak}, freeze ${newFreezeCredits}`);
   }
 }
 
