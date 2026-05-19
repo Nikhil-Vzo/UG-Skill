@@ -32,7 +32,7 @@ interface Lecture {
   duration?: string;
   completed: boolean;
   isFree?: boolean;
-  type?: 'video' | 'document' | 'external_link' | 'text';
+  type?: 'video' | 'document' | 'external_link' | 'text' | 'pdf' | 'article' | 'youtube';
   videoUrl?: string;
   video_url?: string;
   document_url?: string;
@@ -468,7 +468,7 @@ export const VideoPlayer: React.FC = () => {
               /* ── DOCUMENT / ARTICLE / PDF ── */
               if (type === 'document' || type === 'pdf' || type === 'article') {
                 const docUrl = lecture?.document_url;
-                if (!docUrl && (type === 'article' || type === 'text') && lecture?.content) {
+                if (!docUrl && (type === 'article' || (type as string) === 'text') && lecture?.content) {
                   return (
                     <div style={{ width: '100%', height: '100%', overflow: 'auto', background: '#1a1a2e', padding: '2rem', color: 'white' }}>
                       <div dangerouslySetInnerHTML={{ __html: lecture.content }} />

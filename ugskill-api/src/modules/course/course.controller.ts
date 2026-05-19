@@ -13,6 +13,8 @@ export const createCourse = async (req: Request, res: Response, next: NextFuncti
     if ('subCategory' in data) { mappedData.sub_category = data.subCategory; delete mappedData.subCategory; }
     if ('thumbnailUrl' in data) { mappedData.thumbnail_url = data.thumbnailUrl; delete mappedData.thumbnailUrl; }
     if ('isFree' in data) { mappedData.is_free = data.isFree; delete mappedData.isFree; }
+    if ('whatYouLearn' in data) { mappedData.what_you_learn = data.whatYouLearn; delete mappedData.whatYouLearn; }
+    if ('durationWeeks' in data) { mappedData.duration_weeks = data.durationWeeks; delete mappedData.durationWeeks; }
 
     const course = await courseService.createCourse(mappedData, req.user!.userId);
     res.status(201).json(successResponse(course));
@@ -71,6 +73,8 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
     if ('subCategory' in data) { mappedData.sub_category = data.subCategory; delete mappedData.subCategory; }
     if ('thumbnailUrl' in data) { mappedData.thumbnail_url = data.thumbnailUrl; delete mappedData.thumbnailUrl; }
     if ('isFree' in data) { mappedData.is_free = data.isFree; delete mappedData.isFree; }
+    if ('whatYouLearn' in data) { mappedData.what_you_learn = data.whatYouLearn; delete mappedData.whatYouLearn; }
+    if ('durationWeeks' in data) { mappedData.duration_weeks = data.durationWeeks; delete mappedData.durationWeeks; }
 
     const course = await courseService.updateCourse(req.params.id as string, mappedData);
     res.status(200).json(successResponse(course));
