@@ -4,7 +4,7 @@ import { Skeleton } from '../components/loaders/Skeleton';
 import { Button } from '../components/ui/Button';
 import { TextInput } from '../components/ui/TextInput';
 import { useAuthStore } from '../store/auth.store';
-import { User, Camera, Lock, AlertCircle, CheckCircle, Save, Loader2 } from 'lucide-react';
+import { User, Camera, Lock, AlertCircle, CheckCircle, Save, Loader2, FileText } from 'lucide-react';
 import api from '../lib/api';
 
 interface UserProfile {
@@ -17,6 +17,7 @@ interface UserProfile {
   rollNumber?: string;
   cgpa?: number;
   branch?: string;
+  resumeUrl?: string;
 }
 
 export const Profile: React.FC = () => {
@@ -32,6 +33,11 @@ export const Profile: React.FC = () => {
   const [avatarError, setAvatarError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [resumeUrl, setResumeUrl] = useState<string | undefined>(undefined);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+
   const { data: profile, isLoading } = useQuery<UserProfile>({
     queryKey: ['profile-me'],
     queryFn: async () => {
@@ -39,6 +45,7 @@ export const Profile: React.FC = () => {
       const p = res.data.data ?? res.data;
       setFormData({ fullName: p.fullName ?? '', branch: p.branch ?? '', cgpa: p.cgpa?.toString() ?? '' });
       if (p.avatarUrl) setAvatarUrl(p.avatarUrl);
+      if (p.resumeUrl) setResumeUrl(p.resumeUrl);
       return p;
     },
   });
@@ -97,6 +104,32 @@ export const Profile: React.FC = () => {
       setAvatarUploading(false);
       // Reset so the same file can be re-selected if needed
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleResumeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setResumeError('');
+    setResumeUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url: string = res.data?.data?.url ?? res.data?.url ?? res.data?.fileUrl ?? '';
+      if (!url) throw new Error('No URL returned from upload');
+      setResumeUrl(url);
+      // Persist to profile
+      await api.put('/users/me', { resumeUrl: url });
+      queryClient.invalidateQueries({ queryKey: ['profile-me'] });
+    } catch {
+      setResumeError('Failed to upload resume. Please try again.');
+    } finally {
+      setResumeUploading(false);
+      // Reset so the same file can be re-selected if needed
+      if (resumeInputRef.current) resumeInputRef.current.value = '';
     }
   };
 
@@ -237,6 +270,36 @@ export const Profile: React.FC = () => {
               <AlertCircle size={14} /> Failed to update profile.
             </p>
           )}
+
+          {/* Resume Upload */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-high)' }}>Resume</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <input
+                ref={resumeInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx"
+                style={{ display: 'none' }}
+                onChange={handleResumeChange}
+              />
+              <Button
+                variant="outline"
+                leftIcon={resumeUploading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <FileText size={16} />}
+                onClick={() => resumeInputRef.current?.click()}
+                disabled={resumeUploading}
+              >
+                {resumeUploading ? 'Uploading...' : 'Upload Resume'}
+              </Button>
+              {resumeUrl && !resumeUploading && (
+                <a href={resumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.875rem', color: 'var(--primary-glow)', textDecoration: 'none' }}>
+                  View Current Resume
+                </a>
+              )}
+            </div>
+            {resumeError && (
+              <p style={{ color: 'var(--error)', fontSize: '0.75rem', margin: 0 }}>{resumeError}</p>
+            )}
+          </div>
           {saveSuccess && tab === 'profile' && (
             <p style={{ color: 'var(--success)', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.3rem', margin: 0 }}>
               <CheckCircle size={14} /> Profile updated successfully.

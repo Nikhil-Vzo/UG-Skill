@@ -1,13 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
 import { proctoringService } from './proctoring.service';
 import { successResponse } from '../../lib/response';
+import { z } from 'zod';
+
+const ingestEventSchema = z.object({
+  attemptId: z.string(),
+  examId: z.string(),
+  type: z.string(),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  aiConfidence: z.number().optional(),
+  gazeDirection: z.string().optional(),
+  metadata: z.any().optional(),
+  evidenceUrl: z.string().optional(),
+  snapshotBase64: z.string().optional(),
+});
 
 export const proctoringController = {
   ingestEvent: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const studentId = req.user!.userId;
+      const parsedData = ingestEventSchema.parse(req.body);
       const event = await proctoringService.ingestEvent({
-        ...req.body,
+        ...parsedData,
         studentId
       });
       res.status(201).json(successResponse(event));
@@ -20,6 +34,17 @@ export const proctoringController = {
     try {
       const events = await proctoringService.getEventsByAttempt(req.params.attemptId as string);
       res.json(successResponse(events));
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  heartbeat: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { attemptId } = req.body;
+      if (!attemptId) return res.status(400).json({ success: false, message: 'attemptId required' });
+      await proctoringService.heartbeat(attemptId, req.user!.userId);
+      res.json(successResponse({ status: 'ok' }));
     } catch (error) {
       next(error);
     }

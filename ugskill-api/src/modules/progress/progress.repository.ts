@@ -154,6 +154,53 @@ export class ProgressRepository {
       .returning();
     return updated;
   }
+
+  async saveBookmarks(studentId: string, courseId: string, lectureId: string, lectureBookmarks: any[]) {
+    // We need to fetch existing bookmarks first because it's stored per course
+    const summary = await this.getProgressSummary(studentId, courseId);
+    
+    let allBookmarks: any = summary?.bookmarks;
+    if (typeof allBookmarks === 'string') {
+      try {
+        allBookmarks = JSON.parse(allBookmarks);
+      } catch (e) {
+        allBookmarks = {};
+      }
+    }
+    
+    if (!allBookmarks || Array.isArray(allBookmarks)) {
+      allBookmarks = {};
+    }
+
+    allBookmarks[lectureId] = lectureBookmarks;
+
+    // Save back
+    if (!summary) {
+      // Create if it doesn't exist
+      const [newSummary] = await db
+        .insert(progressSummary)
+        .values({
+          studentId,
+          courseId,
+          bookmarks: allBookmarks,
+        })
+        .returning();
+      return newSummary.bookmarks;
+    }
+
+    const [updated] = await db
+      .update(progressSummary)
+      .set({ bookmarks: allBookmarks })
+      .where(
+        and(
+          eq(progressSummary.studentId, studentId),
+          eq(progressSummary.courseId, courseId)
+        )
+      )
+      .returning();
+
+    return updated.bookmarks;
+  }
 }
 
 export const progressRepository = new ProgressRepository();

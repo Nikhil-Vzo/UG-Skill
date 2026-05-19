@@ -73,11 +73,11 @@ const ExamDefinitionSchema = new Schema({
   sections: [Schema.Types.Mixed],
   template_notes: { type: String },
   schema_version: { type: Number, default: 1 },
-}, { timestamps: true });
+}, { timestamps: true, collection: 'exam_definitions' });
 
 ExamDefinitionSchema.index({ pg_exam_id: 1 }, { unique: true });
 
-export const ExamDefinitionModel = mongoose.models.ExamDefinition || mongoose.model<IExamDefinition>('ExamDefinition', ExamDefinitionSchema);
+export const ExamDefinitionModel = mongoose.models.ExamDefinition || mongoose.model<IExamDefinition>('ExamDefinition', ExamDefinitionSchema, 'exam_definitions');
 
 
 // ── exam_responses ────────────────────────────────────────────

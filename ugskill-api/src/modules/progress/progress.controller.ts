@@ -40,6 +40,33 @@ export class ProgressController {
       next(error);
     }
   }
+
+  async getBookmarks(req: Request, res: Response, next: NextFunction) {
+    try {
+      const studentId = req.user!.userId;
+      const { courseId, lectureId } = req.params;
+
+      const bookmarks = await progressService.getBookmarks(studentId, courseId as string, lectureId as string);
+
+      res.status(200).json(successResponse(bookmarks, { message: 'Bookmarks retrieved' }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async saveBookmarks(req: Request, res: Response, next: NextFunction) {
+    try {
+      const studentId = req.user!.userId;
+      const { courseId, lectureId } = req.params;
+      const { bookmarks } = req.body;
+
+      const updated = await progressService.saveBookmarks(studentId, courseId as string, lectureId as string, bookmarks);
+
+      res.status(200).json(successResponse(updated, { message: 'Bookmarks saved' }));
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const progressController = new ProgressController();

@@ -35,12 +35,19 @@ const RANK_ICON = (rank: number) => {
 export const Leaderboards: React.FC = () => {
   const { user } = useAuthStore();
   const [scope, setScope] = useState<Scope>('global');
+  const [branchFilter, setBranchFilter] = useState<string>('');
   const qc = useQueryClient();
 
   const { data, isLoading, error } = useQuery<{ entries: Entry[]; total?: number; examId?: string }>({
-    queryKey: ['leaderboard', scope],
+    queryKey: ['leaderboard', scope, branchFilter],
     queryFn: async () => {
-      const res = await api.get(`/leaderboards?scope=${scope}&limit=50`);
+      let url = `/leaderboards?scope=${scope}&limit=50`;
+      if (scope === 'global' && branchFilter) {
+        url = `/leaderboard/global?branch=${branchFilter}`;
+      } else if (branchFilter) {
+        url += `&branch=${branchFilter}`;
+      }
+      const res = await api.get(url);
       return res.data.data ?? res.data;
     },
     staleTime: 30_000,
@@ -137,22 +144,44 @@ export const Leaderboards: React.FC = () => {
         <p style={{ margin: 0, color: 'var(--text-low)' }}>Compete with peers across cohorts and climb the ranks.</p>
       </header>
 
-      {/* Scope tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', maxWidth: 600, margin: '0 auto', width: '100%' }}>
-        {(Object.keys(SCOPE_LABELS) as Scope[]).map(s => (
-          <button key={s} onClick={() => setScope(s)}
-            style={{
-              flex: 1,
-              padding: '0.625rem',
-              background: scope === s ? 'var(--primary-low)' : 'var(--surface-well)',
-              border: scope === s ? '1px solid var(--primary-glow)' : '1px solid var(--surface-highest)',
-              color: scope === s ? 'var(--primary-glow)' : 'var(--text-low)',
-              cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
-            }}
-          >
-            {SCOPE_LABELS[s]}
-          </button>
-        ))}
+      {/* Scope tabs and Filter */}
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', maxWidth: 600, margin: '0 auto', width: '100%', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flex: 1 }}>
+          {(Object.keys(SCOPE_LABELS) as Scope[]).map(s => (
+            <button key={s} onClick={() => setScope(s)}
+              style={{
+                flex: 1,
+                padding: '0.625rem',
+                background: scope === s ? 'var(--primary-low)' : 'var(--surface-well)',
+                border: scope === s ? '1px solid var(--primary-glow)' : '1px solid var(--surface-highest)',
+                color: scope === s ? 'var(--primary-glow)' : 'var(--text-low)',
+                cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600,
+              }}
+            >
+              {SCOPE_LABELS[s]}
+            </button>
+          ))}
+        </div>
+        <select
+          value={branchFilter}
+          onChange={(e) => setBranchFilter(e.target.value)}
+          style={{
+            padding: '0.5rem 1rem',
+            background: 'var(--surface-well)',
+            border: '1px solid var(--surface-highest)',
+            color: 'var(--text-high)',
+            fontSize: '0.875rem',
+            cursor: 'pointer',
+            minWidth: '150px'
+          }}
+        >
+          <option value="">All Branches</option>
+          <option value="CS">CS</option>
+          <option value="IT">IT</option>
+          <option value="ECE">ECE</option>
+          <option value="MECH">MECH</option>
+          <option value="CIVIL">CIVIL</option>
+        </select>
       </div>
 
       {/* My Rank card */}

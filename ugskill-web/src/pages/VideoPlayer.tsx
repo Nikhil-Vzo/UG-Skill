@@ -240,6 +240,42 @@ export const VideoPlayer: React.FC = () => {
     }
   }, [debouncedNote]);
 
+  /* ── Bookmarks: load on mount / lecture change ── */
+  const { data: savedBookmarks } = useQuery<{timestamp: number; note: string}[]>({
+    queryKey: ['bookmarks', courseId, activeLectureId],
+    queryFn: async () => {
+      const res = await api.get(`/courses/${courseId}/bookmarks/${activeLectureId}`);
+      return res.data.data ?? res.data ?? [];
+    },
+    enabled: !!courseId && !!activeLectureId,
+    staleTime: 60_000,
+  });
+
+  const saveBookmarksMut = useMutation({
+    mutationFn: (newBookmarks: {timestamp: number; note: string}[]) =>
+      api.post(`/courses/${courseId}/bookmarks/${activeLectureId}`, { bookmarks: newBookmarks }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookmarks', courseId, activeLectureId] }),
+  });
+
+  useEffect(() => {
+    if (savedBookmarks) {
+      setBookmarks(savedBookmarks);
+    }
+  }, [savedBookmarks]);
+
+  const debouncedBookmarks = useDebounce(bookmarks, 1500);
+  const initialBookmarksLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!initialBookmarksLoaded.current && savedBookmarks) {
+      initialBookmarksLoaded.current = true;
+      return;
+    }
+    if (initialBookmarksLoaded.current && JSON.stringify(debouncedBookmarks) !== JSON.stringify(savedBookmarks ?? [])) {
+      saveBookmarksMut.mutate(debouncedBookmarks);
+    }
+  }, [debouncedBookmarks]);
+
   /* ── Navigation helpers ── */
   const goToLecture = useCallback((id: string) => {
     navigate(`/app/courses/${courseId}/player/${id}`);

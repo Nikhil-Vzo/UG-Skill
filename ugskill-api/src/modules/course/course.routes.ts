@@ -16,6 +16,8 @@ router.get('/search', courseController.searchCourses);
 router.get('/:courseId/lectures/:lectureId', requireAuth, courseController.getLecture);
 router.post('/:courseId/lectures/:lectureId/complete', requireAuth, progressController.completeLecture.bind(progressController));
 router.get('/:courseId/progress', requireAuth, progressController.getSummary.bind(progressController));
+router.get('/:courseId/bookmarks/:lectureId', requireAuth, progressController.getBookmarks.bind(progressController));
+router.post('/:courseId/bookmarks/:lectureId', requireAuth, progressController.saveBookmarks.bind(progressController));
 router.get('/:courseId/reviews', validate(getReviewsSchema), reviewController.getReviews.bind(reviewController));
 router.post('/:courseId/reviews', requireAuth, validate(createReviewSchema), reviewController.addReview.bind(reviewController));
 

@@ -9,12 +9,35 @@ import { analyzeFrame as callAIAnalyzeFrame } from '../../lib/aiProctoring';
 export class ProctoringService {
   private io: SocketServer | null = null;
   private trackingNS: Namespace | null = null;
+  private heartbeats = new Map<string, number>();
 
-  /** Register the Socket.io server so we can emit real-time events */
   registerSocketServer(io: SocketServer) {
     this.io = io;
     this.trackingNS = io.of('/tracking');
     logger.info('ProctoringService registered with Socket.io');
+    setInterval(() => this.checkHeartbeats(), 30000);
+  }
+
+  async heartbeat(attemptId: string, studentId: string) {
+    this.heartbeats.set(attemptId, Date.now());
+  }
+
+  private async checkHeartbeats() {
+    const now = Date.now();
+    for (const [attemptId, lastSeen] of this.heartbeats.entries()) {
+      if (now - lastSeen > 90000) { 
+        logger.warn(`Proctoring heartbeat missed for attempt ${attemptId}`);
+        const [attempt] = await db.select({ studentId: examAttempts.studentId, examId: examAttempts.examId })
+          .from(examAttempts).where(eq(examAttempts.id, attemptId));
+        if (attempt) {
+          await this.ingestEvent({
+            attemptId, examId: attempt.examId, studentId: attempt.studentId,
+            type: 'Heartbeat Lost', severity: 'HIGH', metadata: { details: 'Missed 3 heartbeats' }
+          });
+        }
+        this.heartbeats.delete(attemptId);
+      }
+    }
   }
 
   private emitToRoom(room: string, event: string, payload: unknown) {
@@ -24,9 +47,6 @@ export class ProctoringService {
     }
   }
 
-  /**
-   * Loads proctoring configuration from the exams table.
-   */
   async getProctoringConfig(examId: string) {
     const rows = await db
       .select({
