@@ -5,6 +5,7 @@ import { AppError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 import { events, APP_EVENTS } from '../../lib/events';
 import { storage } from '../../lib/storage';
+import * as userRepo from '../user/user.repository';
 
 export class CourseService {
   private sanitizeStoragePath(url: string | undefined): string | undefined {
@@ -31,7 +32,7 @@ export class CourseService {
   /**
    * Traverse course data and replace relative storage paths with signed download URLs.
    */
-  async signCourseUrls(course: any) {
+  async signCourseUrls(course: any, creatorMap?: Map<string, any>) {
     if (!course) return course;
     
     // Convert to plain object if it's a Mongoose doc
@@ -92,12 +93,83 @@ export class CourseService {
         }
       }
     }
+
+    // 3. Populate instructor details from Postgres using pg_creator_id
+    const creatorId = data.pg_creator_id;
+    if (creatorId) {
+      let creator = creatorMap ? creatorMap.get(creatorId) : null;
+      if (!creator && !creatorMap) {
+        try {
+          creator = await userRepo.findById(creatorId);
+        } catch (err) {
+          logger.warn(`Failed to fetch instructor details for ID: ${creatorId}`, err);
+        }
+      }
+      if (creator) {
+        data.instructor = {
+          _id: creator.id,
+          fullName: creator.fullName,
+          title: creator.roles?.includes('instructor') ? 'Lead Instructor' : 'Instructor',
+        };
+      } else {
+        data.instructor = 'UGSkill Faculty';
+      }
+    } else {
+      data.instructor = 'UGSkill Faculty';
+    }
+
+    // 4. Normalize Mongoose snake_case fields to what frontend UI expects
+    data.subtitle = data.subtitle ?? '';
+    data.whatYouLearn = data.what_you_learn ?? data.whatYouLearn ?? [];
+    data.durationWeeks = data.duration_weeks ?? data.durationWeeks ?? 4;
+    data.level = data.difficulty ?? data.level ?? 'beginner';
+    data.rating = data.avg_rating ?? data.rating ?? 0;
+    data.reviewsCount = data.total_ratings ?? data.reviewsCount ?? 0;
+    data.studentsCount = data.enrollment_count ?? data.studentsCount ?? 0;
+
+    if (data.updatedAt) {
+      try {
+        data.lastUpdated = new Date(data.updatedAt).toLocaleDateString('en-US', {
+          month: 'short',
+          year: 'numeric',
+        });
+      } catch {
+        data.lastUpdated = 'Recently';
+      }
+    } else {
+      data.lastUpdated = 'Recently';
+    }
     
     return data;
   }
 
   async signCoursesUrls(courses: any[]) {
-    return await Promise.all(courses.map(c => this.signCourseUrls(c)));
+    if (!courses || courses.length === 0) return [];
+
+    const creatorIds = Array.from(
+      new Set(
+        courses
+          .map(c => {
+            const data = c.toObject ? c.toObject() : c;
+            return data.pg_creator_id;
+          })
+          .filter(Boolean)
+      )
+    ) as string[];
+
+    const creatorMap = new Map<string, any>();
+    if (creatorIds.length > 0) {
+      try {
+        const users = await userRepo.findByIds(creatorIds);
+        for (const u of users) {
+          creatorMap.set(u.id, u);
+        }
+      } catch (err) {
+        logger.warn('Failed to pre-fetch creator details in batch', err);
+      }
+    }
+
+    return await Promise.all(courses.map(c => this.signCourseUrls(c, creatorMap)));
   }
 
   async createCourse(data: any, creatorId: string) {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const createCourseSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().max(2000).optional(),
+  subtitle: z.string().max(200).optional(),
   category: z.string().optional(),
   subCategory: z.string().optional(),
   difficulty: z.string().optional(),
@@ -11,6 +12,8 @@ export const createCourseSchema = z.object({
   isFree: z.boolean().default(false),
   price: z.number().min(0).default(0),
   tags: z.array(z.string()).optional(),
+  whatYouLearn: z.array(z.string()).optional(),
+  durationWeeks: z.number().int().min(1).optional(),
 });
 
 export const updateCourseSchema = createCourseSchema.partial().extend({

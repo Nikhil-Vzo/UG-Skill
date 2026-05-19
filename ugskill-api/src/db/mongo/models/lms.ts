@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 // ── courses ─────────────────────────────────────────────────
 export interface ICourse extends Document {
   title: string;
+  description?: string;
+  subtitle?: string;
   status: 'draft' | 'review' | 'published' | 'archived';
   pg_creator_id: string;
   schema_version: number;
@@ -15,6 +17,8 @@ export interface ICourse extends Document {
   price?: number;
   tags?: string[];
   sections?: any[];
+  what_you_learn?: string[];
+  duration_weeks?: number;
   avg_rating?: number;
   total_ratings?: number;
   enrollment_count?: number;
@@ -26,6 +30,8 @@ export interface ICourse extends Document {
 
 const CourseSchema = new Schema({
   title: { type: String, required: true },
+  description: { type: String },
+  subtitle: { type: String },
   status: { type: String, enum: ['draft', 'review', 'published', 'archived'], required: true },
   pg_creator_id: { type: String, required: true },
   schema_version: { type: Number, required: true, default: 1 },
@@ -38,6 +44,8 @@ const CourseSchema = new Schema({
   price: { type: Number, default: 0 },
   tags: [String],
   sections: [Schema.Types.Mixed],
+  what_you_learn: [String],
+  duration_weeks: { type: Number, default: 4 },
   avg_rating: { type: Number },
   total_ratings: { type: Number, default: 0 },
   enrollment_count: { type: Number, default: 0 },

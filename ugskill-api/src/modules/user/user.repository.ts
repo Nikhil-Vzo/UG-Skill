@@ -13,6 +13,14 @@ export const findById = async (id: string) => {
   return result[0] || null;
 };
 
+export const findByIds = async (ids: string[]) => {
+  if (ids.length === 0) return [];
+  return await db
+    .select()
+    .from(users)
+    .where(and(inArray(users.id, ids), isNull(users.deletedAt)));
+};
+
 export interface ListUsersFilters {
   role?: string;
   status?: string;

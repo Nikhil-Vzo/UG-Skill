@@ -65,7 +65,7 @@ export class CourseRepository {
     }
 
     return await CourseModel.find(match)
-      .select('title category difficulty status is_free price avg_rating enrollment_count lecture_count thumbnail_url tags pg_creator_id')
+      .select('title description subtitle category difficulty status is_free price avg_rating total_ratings enrollment_count lecture_count thumbnail_url tags pg_creator_id what_you_learn duration_weeks')
       .limit(50)
       .lean();
   }
