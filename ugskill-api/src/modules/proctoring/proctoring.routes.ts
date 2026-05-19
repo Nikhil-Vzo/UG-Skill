@@ -7,6 +7,7 @@ const router = Router();
 // Student routes
 router.post('/events', requireAuth, proctoringController.ingestEvent);
 router.post('/analyze-frame', requireAuth, proctoringController.analyzeFrame);
+router.post('/heartbeat', requireAuth, proctoringController.heartbeat);
 
 // Admin routes
 router.get('/attempts/:attemptId', requireAuth, requireRole(['admin', 'instructor']), proctoringController.getAttemptEvents);

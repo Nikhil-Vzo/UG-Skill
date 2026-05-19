@@ -22,6 +22,7 @@ import { CompanyDetail } from './pages/CompanyDetail';
 import { Community } from './pages/Community';
 import { PeerGroups } from './pages/PeerGroups';
 import { Exams } from './pages/Exams';
+import { ExamResults } from './pages/ExamResults';
 const ExamInterface = lazy(() => import('./pages/ExamInterface').then(m => ({ default: m.ExamInterface })));
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { InterviewPrep } from './pages/InterviewPrep';
@@ -47,6 +48,7 @@ import { PlacementsConfig } from './pages/admin/PlacementsConfig';
 import { ExamOps } from './pages/admin/ExamOps';
 import { ProctoringReport } from './pages/admin/ProctoringReport';
 import { DriveConfig } from './pages/admin/DriveConfig';
+import { PlacementApplicants } from './pages/admin/PlacementApplicants';
 import { ExamBuilder } from './pages/admin/ExamBuilder';
 import { AdminExams } from './pages/admin/AdminExams';
 
@@ -114,6 +116,7 @@ function App() {
                 <Route path="batches" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><BatchManagement /></ProtectedRoute>} />
                 <Route path="placements" element={<PlacementsConfig />} />
                 <Route path="placements/:driveId" element={<DriveConfig />} />
+                <Route path="placements/:driveId/applicants" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><PlacementApplicants /></ProtectedRoute>} />
                 <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><AdminExams /></ProtectedRoute>} />
                 <Route path="exams/ops" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />
                 <Route path="exams/builder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><ExamBuilder /></ProtectedRoute>} />
@@ -133,6 +136,7 @@ function App() {
             <Route path="/app/courses/:courseId/player/:lectureId" element={<ProtectedRoute><VideoPlayer /></ProtectedRoute>} />
             <Route path="/app/exams/:examId/pre-flight" element={<ProtectedRoute><ExamPreFlight /></ProtectedRoute>} />
             <Route path="/app/exams/:examId" element={<ProtectedRoute><ExamInterface /></ProtectedRoute>} />
+            <Route path="/app/exams/results/:attemptId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
             <Route path="/app/live-interview/:sessionId" element={<ProtectedRoute><LiveInterview /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />

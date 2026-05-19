@@ -61,7 +61,7 @@ export const BatchMembersModal: React.FC<BatchMembersModalProps> = ({ batchId, b
   });
 
   const members = batchDetails?.members || [];
-  const memberIds = new Set(members.map((m: any) => m.id));
+  const memberIds = new Set(members.map((m: any) => m.userId));
 
   return (
     <div
@@ -126,16 +126,16 @@ export const BatchMembersModal: React.FC<BatchMembersModalProps> = ({ batchId, b
               {members.map((member: any) => (
                 <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--surface-well)', borderRadius: 8 }}>
                   <div>
-                    <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{member.fullName}</div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{member.email}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{member.userName}</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{member.userEmail}</div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     style={{ color: 'var(--error)' }}
                     onClick={() => {
-                      if (confirm(`Remove ${member.fullName} from this batch?`)) {
-                        removeMemberMutation.mutate(member.id);
+                      if (confirm(`Remove ${member.userName} from this batch?`)) {
+                        removeMemberMutation.mutate(member.userId);
                       }
                     }}
                     disabled={removeMemberMutation.isPending}

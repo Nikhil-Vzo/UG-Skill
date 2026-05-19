@@ -19,6 +19,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash'),
   fullName: text('full_name').notNull(),
   avatarUrl: text('avatar_url'),
+  resumeUrl: text('resume_url'),
   phone: text('phone'),
 
   roles: text('roles').array().default(sql`ARRAY['student']::TEXT[]`),

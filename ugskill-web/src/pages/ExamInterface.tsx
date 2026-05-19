@@ -366,14 +366,14 @@ export const ExamInterface: React.FC = () => {
         if (!cancelled) {
           engine.start();
 
-          const trackingSocket = connectSocket('/tracking');
-          trackingSocket.emit('proctoring:heartbeat', { attemptId });
+          // Fallback to HTTP for heartbeat since socket tracking namespace might drop
+          api.post('/proctoring/heartbeat', { attemptId }).catch(() => {});
           
           heartbeatInterval = setInterval(() => {
             if (aiMonitoringRef.current && proctoringEngineRef.current) {
-              trackingSocket.emit('proctoring:heartbeat', { attemptId });
+              api.post('/proctoring/heartbeat', { attemptId }).catch(() => {});
             }
-          }, 30000);
+          }, 20000); // 20s interval for safety margin on 30s check
         }
       } catch {
         aiMonitoringRef.current = false;

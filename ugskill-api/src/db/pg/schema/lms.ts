@@ -9,6 +9,7 @@ import {
   smallint,
   date,
   primaryKey,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { users, batches } from './core';
 
@@ -166,6 +167,7 @@ export const progressSummary = pgTable('progress_summary', {
   totalLectures: integer('total_lectures').default(0),
   totalWatchSecs: integer('total_watch_secs').default(0),
   lastLectureId: text('last_lecture_id'),
+  bookmarks: jsonb('bookmarks').default('[]'),
   lastAccessedAt: timestamp('last_accessed_at', { withTimezone: true }),
   recomputedAt: timestamp('recomputed_at', { withTimezone: true }).defaultNow(),
 }, (table) => {
