@@ -23,7 +23,7 @@ export const leaderboardsController = {
             name: users.fullName,
             rank: examRankings.rank,
             score: examRankings.score,
-            change: examRankings.change,
+            percentile: examRankings.percentile,
             computedAt: examRankings.computedAt,
           })
           .from(examRankings)

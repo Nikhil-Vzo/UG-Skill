@@ -6,7 +6,7 @@ import {
   MessageSquare, FileText, Lightbulb, Volume2, Maximize, Minimize, Settings,
   Loader2, Send, BookOpen, ExternalLink, Download, AlignLeft, Link as LinkIcon,
   Keyboard, Clock, MoreVertical, X, RotateCcw, FastForward, Rewind, AlertCircle,
-  FileVideo, Globe
+  FileVideo, Globe, Sparkles, Bot
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -77,7 +77,7 @@ export const VideoPlayer: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'qa' | 'notes' | 'bookmarks'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'qa' | 'notes' | 'bookmarks' | 'ai'>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [qaInput, setQaInput] = useState('');
   const [noteBody, setNoteBody] = useState('');
@@ -86,6 +86,12 @@ export const VideoPlayer: React.FC = () => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [bookmarks, setBookmarks] = useState<{timestamp: number; note: string}[]>([]);
+  // AI Tutor state
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const aiMessagesEndRef = useRef<HTMLDivElement>(null);
   const debouncedNote = useDebounce(noteBody, 1500);
   const noteSavedRef = useRef(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -252,7 +258,36 @@ export const VideoPlayer: React.FC = () => {
     { id: 'qa', label: 'Q&A', icon: <MessageSquare size={15} /> },
     { id: 'notes', label: 'My Notes', icon: <FileText size={15} /> },
     { id: 'bookmarks', label: 'Bookmarks', icon: <Bookmark size={15} /> },
+    { id: 'ai', label: 'AI Tutor', icon: <Sparkles size={15} /> },
   ];
+
+  /* ── AI Tutor send ── */
+  const sendAiMessage = async () => {
+    const msg = aiInput.trim();
+    if (!msg || aiLoading) return;
+    setAiInput('');
+    setAiError(null);
+    setAiMessages(prev => [...prev, { role: 'user', text: msg }]);
+    setAiLoading(true);
+    setTimeout(() => aiMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    try {
+      const res = await api.post('/ai/chat', {
+        message: msg,
+        context: { lectureTitle: activeTitle, courseId },
+      });
+      const reply: string =
+        res.data?.data?.reply ??
+        res.data?.reply ??
+        res.data?.message ??
+        'I received your question but couldn\'t generate a response.';
+      setAiMessages(prev => [...prev, { role: 'ai', text: reply }]);
+    } catch {
+      setAiError('AI Tutor is not available right now. Please try again later.');
+    } finally {
+      setAiLoading(false);
+      setTimeout(() => aiMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -731,6 +766,89 @@ export const VideoPlayer: React.FC = () => {
                     </div>
                   </>
                 )}
+              </div>
+            )}
+
+            {/* AI Tutor Tab */}
+            {activeTab === 'ai' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0, height: 400, border: '1px solid var(--surface-highest)', borderRadius: 12, overflow: 'hidden' }}>
+                {/* Header */}
+                <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--surface-highest)', background: 'var(--surface-container)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                  <Bot size={16} style={{ color: 'var(--primary-glow)' }} />
+                  <span style={{ color: 'var(--text-high)', fontWeight: 600, fontSize: '0.875rem' }}>AI Tutor</span>
+                  <span style={{ color: 'var(--text-lowest)', fontSize: '0.75rem', marginLeft: 'auto' }}>Ask anything about this lecture</span>
+                </div>
+
+                {/* Messages */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--surface-well)' }}>
+                  {aiMessages.length === 0 && !aiLoading && !aiError && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '0.5rem', color: 'var(--text-lowest)' }}>
+                      <Sparkles size={28} style={{ color: 'var(--primary-glow)', opacity: 0.6 }} />
+                      <p style={{ margin: 0, fontSize: '0.875rem', textAlign: 'center' }}>Ask the AI Tutor anything about <strong style={{ color: 'var(--text-low)' }}>{activeTitle || 'this lecture'}</strong></p>
+                    </div>
+                  )}
+                  {aiMessages.map((msg, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'flex',
+                        justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                      }}
+                    >
+                      <div style={{
+                        maxWidth: '80%',
+                        padding: '0.625rem 0.875rem',
+                        borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                        background: msg.role === 'user' ? 'var(--primary)' : 'var(--surface-container)',
+                        color: msg.role === 'user' ? '#fff' : 'var(--text-high)',
+                        fontSize: '0.875rem',
+                        lineHeight: 1.5,
+                        border: msg.role === 'ai' ? '1px solid var(--surface-highest)' : 'none',
+                      }}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  ))}
+                  {/* Typing indicator */}
+                  {aiLoading && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ padding: '0.625rem 0.875rem', background: 'var(--surface-container)', border: '1px solid var(--surface-highest)', borderRadius: '12px 12px 12px 2px', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        {[0, 1, 2].map(d => (
+                          <span key={d} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary-glow)', display: 'inline-block', animation: `vpTyping 1.2s ${d * 0.2}s ease-in-out infinite` }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Error state */}
+                  {aiError && !aiLoading && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', background: 'var(--error-container, rgba(239,68,68,0.1))', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: 'var(--error, #ef4444)', fontSize: '0.8125rem' }}>
+                      <AlertCircle size={14} /> {aiError}
+                    </div>
+                  )}
+                  <div ref={aiMessagesEndRef} />
+                </div>
+
+                {/* Input */}
+                <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem', borderTop: '1px solid var(--surface-highest)', background: 'var(--surface-container)', flexShrink: 0 }}>
+                  <input
+                    type="text"
+                    placeholder="Ask a question..."
+                    value={aiInput}
+                    onChange={e => setAiInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiMessage(); } }}
+                    style={{ flex: 1, background: 'var(--surface-well)', border: '1px solid var(--surface-highest)', color: 'var(--text-high)', padding: '0.5rem 0.75rem', fontSize: '0.875rem', borderRadius: 8, outline: 'none' }}
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    isLoading={aiLoading}
+                    disabled={!aiInput.trim() || aiLoading}
+                    onClick={sendAiMessage}
+                    leftIcon={<Send size={14} />}
+                  >
+                    Send
+                  </Button>
+                </div>
               </div>
             )}
           </div>

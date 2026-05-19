@@ -43,7 +43,10 @@ const app = express();
 
 // Security Middlewares
 app.use(helmet());
-app.use(cors()); // Configure origin properly in production
+app.use(cors({
+  origin: env.CORS_ORIGINS?.split(',') ?? ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+}));
 
 // Global Rate Limiter
 app.use(globalLimiter);
@@ -89,8 +92,7 @@ app.use('/api/v1/quizzes', quizRoutes);
 app.use('/api/v1/assignments', assignmentRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 
-// Placement & Jobs
-app.use('/api/v1/jobs', placementRoutes);
+// Placement & Jobs — /api/v1/placements is the canonical route; /api/v1/jobs is intentionally removed to avoid duplicate router registration
 
 // Activity, AI, and Storage Modules
 app.use('/api/v1/activity', activityRouter);
@@ -100,8 +102,7 @@ app.use('/api/v1/upload', uploadRoutes);
 // Streaks — specific route registered before /lms/streaks wildcard
 app.get('/api/v1/lms/streaks/me', requireAuth, progressController.getStreak.bind(progressController));
 
-// Invite Module
-app.use('/api/v1', authLimiter, inviteRoutes);
+// Invite Module — canonical route is /api/v1/admin/invites (registered above); root-level duplicate removed (BUG-009)
 
 // ─── Real Module Implementations (replacing stubs) ────────────────────────────
 app.use('/api/v1/notifications', notificationRoutes);
@@ -117,7 +118,7 @@ app.use('/api/v1/lms/enrollments', enrollmentRoutes);
 app.use('/api/v1/lms/quizzes', quizRoutes);
 app.use('/api/v1/lms/assignments', assignmentRoutes);
 app.use('/api/v1/lms/certificates', certificateRoutes);
-app.use('/api/v1/placements', placementRoutes);     // frontend uses /placements/*, API registered as /jobs
+// /api/v1/placements already registered above (line 84); duplicate removed (BUG-008)
 app.use('/api/v1/admin/users', userRoutes);          // frontend uses /admin/users → /users
 app.use('/api/v1/admin/batches', batchRoutes);       // frontend uses /admin/batches → /batches
 app.use('/api/v1/admin/exams', examRoutes);          // frontend uses /admin/exams → /exams
