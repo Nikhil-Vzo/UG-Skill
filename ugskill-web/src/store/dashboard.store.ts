@@ -8,6 +8,8 @@ export interface Course {
   instructor: string;
   thumbnail?: string;
   lastAccessed: string;
+  lecturesCompleted?: number;
+  totalLectures?: number;
 }
 
 export interface Activity {
@@ -26,10 +28,19 @@ export interface Assessment {
   status: 'pending' | 'submitted' | 'graded';
 }
 
+export interface LeaderEntry {
+  studentId: string;
+  name: string;
+  score: number;
+  rank?: number;
+}
+
 interface DashboardState {
   courses: Course[];
   activities: Activity[];
   assessments: Assessment[];
+  topLeaders: LeaderEntry[];
+  examCount: number;
   isLoading: boolean;
   error: string | null;
   
@@ -41,6 +52,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   courses: [],
   activities: [],
   assessments: [],
+  topLeaders: [],
+  examCount: 0,
   isLoading: false,
   error: null,
 
@@ -48,9 +61,18 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     set({ isLoading: true, error: null });
     
     try {
-      // Fetch enrollments — the only confirmed endpoint
-      const enrollmentsRes = await api.get('/lms/enrollments/mine?limit=5');
-      const enrollments = enrollmentsRes.data.data ?? enrollmentsRes.data ?? [];
+      // Fetch enrollments, exams, and leaderboard in parallel
+      const [enrollmentsRes, examsRes, leaderRes] = await Promise.allSettled([
+        api.get('/lms/enrollments/mine?limit=6'),
+        api.get('/exams'),
+        api.get('/leaderboards?scope=global&limit=3'),
+      ]);
+
+      // ── Courses ─────────────────────────────────────────────
+      const enrollments = enrollmentsRes.status === 'fulfilled'
+        ? (enrollmentsRes.value.data.data ?? enrollmentsRes.value.data ?? [])
+        : [];
+
       const courseEnrollments = (Array.isArray(enrollments) ? enrollments : [])
         .filter((enrollment: any) => enrollment.enrollableType === 'course');
 
@@ -62,7 +84,6 @@ export const useDashboardStore = create<DashboardState>((set) => ({
             api.get(`/lms/courses/${courseId}/progress`),
           ]);
 
-          // Skip orphaned enrollments (course was deleted)
           if (courseRes.status === 'rejected') return null;
 
           const course = courseRes.value.data.data ?? courseRes.value.data;
@@ -74,6 +95,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
             id: course._id ?? course.id ?? courseId,
             title: course.title ?? 'Untitled Course',
             progress: progressPayload.progressPercent ?? 0,
+            lecturesCompleted: progressPayload.lecturesCompleted ?? 0,
+            totalLectures: progressPayload.totalLectures ?? 0,
             instructor: typeof course.instructor === 'string'
               ? course.instructor
               : course.instructor?.fullName ?? 'UGSkill Faculty',
@@ -83,26 +106,60 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         })
       );
 
-      // Filter out null (orphaned) and rejected results
       const courses = courseResults
         .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
         .map(r => r.value);
 
+      // ── Exams → Assessments ──────────────────────────────────
+      let assessments: Assessment[] = [];
+      let examCount = 0;
+      if (examsRes.status === 'fulfilled') {
+        const rawExams = examsRes.value.data.data?.exams ?? examsRes.value.data.data ?? examsRes.value.data ?? [];
+        const examsArr = Array.isArray(rawExams) ? rawExams : [];
+        examCount = examsArr.length;
+        assessments = examsArr
+          .filter((e: any) => e.status === 'upcoming' || e.status === 'live')
+          .slice(0, 5)
+          .map((e: any) => ({
+            id: e.id ?? e._id,
+            title: e.title,
+            closingDate: e.scheduledAt,
+            courseId: e.courseId ?? '',
+            status: 'pending' as const,
+          }));
+      }
+
+      // ── Leaderboard ──────────────────────────────────────────
+      let topLeaders: LeaderEntry[] = [];
+      if (leaderRes.status === 'fulfilled') {
+        const rawLeaders = leaderRes.value.data.data ?? leaderRes.value.data ?? [];
+        const leadersArr = Array.isArray(rawLeaders) ? rawLeaders : [];
+        topLeaders = leadersArr.slice(0, 3).map((l: any, i: number) => ({
+          studentId: l.studentId,
+          name: l.name ?? 'Anonymous',
+          score: l.score ?? l.totalScore ?? l.percentage ?? 0,
+          rank: i + 1,
+        }));
+      }
+
       set({
         courses,
-        assessments: [], // populated when assignment list endpoint is added
-        activities: [],  // populated when activity feed endpoint is added
+        assessments,
+        activities: [],
+        topLeaders,
+        examCount,
         isLoading: false,
         error: null,
       });
     } catch (error: any) {
-      // Don't block the dashboard — just show empty state
       set({ 
         courses: [],
         assessments: [],
         activities: [],
+        topLeaders: [],
+        examCount: 0,
         isLoading: false,
-        error: null, // silently fail so the UI renders
+        error: null,
       });
     }
   }
