@@ -4,27 +4,12 @@ import { examAttempts, exams } from '../../db/pg/schema/exam';
 import { eq, desc, and, gte, inArray } from 'drizzle-orm';
 import { proctoringService } from '../proctoring/proctoring.service';
 
+import { adminService } from './admin.service';
+
 export const adminController = {
   getStats: async (req: Request, res: Response) => {
     try {
-      // Reasonable mock stats — replace with real queries when analytics module is built
-      const stats = {
-        totalStudents: 12450,
-        activeCourses: 32,
-        ongoingPlacements: 14,
-        upcomingExams: 3,
-        revenueData: [
-          { month: 'Jan', revenue: 45000 },
-          { month: 'Feb', revenue: 52000 },
-          { month: 'Mar', revenue: 48000 },
-          { month: 'Apr', revenue: 61000 },
-        ],
-        recentActivity: [
-          { id: 1, action: 'New User Registered', time: '5 mins ago' },
-          { id: 2, action: 'Course "React Mastery" updated', time: '2 hours ago' },
-          { id: 3, action: 'TCS Placement Drive created', time: '1 day ago' },
-        ],
-      };
+      const stats = await adminService.getStats();
       res.status(200).json({ success: true, data: stats });
     } catch (error) {
       console.error('Admin stats error:', error);

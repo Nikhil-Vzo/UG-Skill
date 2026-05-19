@@ -1,4 +1,5 @@
 import * as placementRepo from './placement.repository';
+import * as userRepo from '../user/user.repository';
 import { 
   CreateCompanyInput, UpdateCompanyInput, CompanyQuery, 
   CreateDriveInput, UpdateDriveInput, DriveQuery, 
@@ -138,6 +139,23 @@ export const registerForDrive = async (studentId: string, data: RegisterForDrive
   const existing = await placementRepo.getRegistrationByStudentAndDrive(studentId, data.driveId);
   if (existing) {
     throw new AppError('Student already registered for this drive', 409);
+  }
+
+  const user = await userRepo.findById(studentId);
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  if (drive.eligibility && (drive.eligibility as any).cgpaCutoff !== undefined) {
+    const cutoff = (drive.eligibility as any).cgpaCutoff;
+    const userCgpa = user.cgpa ? Number(user.cgpa) : 0;
+    if (userCgpa < cutoff) {
+      throw new AppError('CGPA below required cutoff', 422);
+    }
+  }
+
+  if (!user.resumeUrl) {
+    throw new AppError('Resume is required', 422);
   }
 
   const registration = await placementRepo.insertRegistrationPg({

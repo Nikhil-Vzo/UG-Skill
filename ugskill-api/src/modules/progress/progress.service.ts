@@ -168,6 +168,34 @@ export class ProgressService {
     await progressRepository.updateStudentStreak(studentId, newCurrentStreak, newBestStreak, todayStr, newFreezeCredits);
     logger.info(`Streak updated for ${studentId}: current ${newCurrentStreak}, best ${newBestStreak}, freeze ${newFreezeCredits}`);
   }
+
+  async getBookmarks(studentId: string, courseId: string, lectureId: string) {
+    const summary = await progressRepository.getProgressSummary(studentId, courseId);
+    if (!summary || !summary.bookmarks) return [];
+    
+    // Parse jsonb if it's a string, or use as object
+    let allBookmarks: any = summary.bookmarks;
+    if (typeof allBookmarks === 'string') {
+      try {
+        allBookmarks = JSON.parse(allBookmarks);
+      } catch (e) {
+        allBookmarks = {};
+      }
+    }
+    
+    // Check if it's an array or an object map
+    if (Array.isArray(allBookmarks)) {
+      // If it's an array and hasn't been migrated to lecture-specific, return it or map it.
+      // Assuming we'll use an object map { [lectureId]: array }
+      return [];
+    }
+
+    return allBookmarks[lectureId] || [];
+  }
+
+  async saveBookmarks(studentId: string, courseId: string, lectureId: string, bookmarks: any[]) {
+    return await progressRepository.saveBookmarks(studentId, courseId, lectureId, bookmarks);
+  }
 }
 
 export const progressService = new ProgressService();
