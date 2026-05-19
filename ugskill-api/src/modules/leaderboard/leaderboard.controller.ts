@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { db } from '../../config/postgres';
 import { examScores, examRankings, exams } from '../../db/pg/schema/exam';
 import { progressSummary } from '../../db/pg/schema/lms';
+import { users } from '../../db/pg/schema/core';
 import { eq, desc } from 'drizzle-orm';
 import { successResponse } from '../../lib/response';
 
@@ -15,8 +16,18 @@ export const leaderboardsController = {
       if (examId) {
         // Exam-specific leaderboard from exam_rankings
         const rankings = await db
-          .select()
+          .select({
+            id: examRankings.id,
+            examId: examRankings.examId,
+            studentId: examRankings.studentId,
+            name: users.fullName,
+            rank: examRankings.rank,
+            score: examRankings.score,
+            change: examRankings.change,
+            computedAt: examRankings.computedAt,
+          })
           .from(examRankings)
+          .innerJoin(users, eq(examRankings.studentId, users.id))
           .where(eq(examRankings.examId, examId))
           .orderBy(examRankings.rank)
           .limit(limit);
@@ -27,12 +38,14 @@ export const leaderboardsController = {
       const scores = await db
         .select({
           studentId: examScores.studentId,
-          totalScore: examScores.totalScore,
+          name: users.fullName,
+          score: examScores.totalScore,
           percentage: examScores.percentage,
           examId: examScores.examId,
           computedAt: examScores.computedAt,
         })
         .from(examScores)
+        .innerJoin(users, eq(examScores.studentId, users.id))
         .orderBy(desc(examScores.percentage))
         .limit(limit);
 
