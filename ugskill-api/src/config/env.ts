@@ -42,6 +42,9 @@ const envSchema = z.object({
   AI_API_URL: z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional()),
   AI_API_KEY: z.preprocess((value) => value === '' ? undefined : value, z.string().min(1).optional()),
 
+  // CORS — comma-separated list of allowed origins (e.g. "http://localhost:5173,https://app.ugskill.in")
+  CORS_ORIGINS: z.string().optional(),
+
   // Sentry
   SENTRY_DSN: z.preprocess((value) => value === '' ? undefined : value, z.string().url().optional()),
 });

@@ -298,6 +298,12 @@
   }
 }
 
+/* AI Tutor typing indicator */
+@keyframes vpTyping {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
 .tab-content {
   animation: tabSlideIn 0.3s ease;
 }

@@ -6,9 +6,43 @@ import { Button } from '../../ui/Button';
 interface CourseCardProps {
   course: Course;
   onContinue?: (courseId: string) => void;
+  viewMode?: 'grid' | 'list';
 }
 
-export const CourseCard: React.FC<CourseCardProps> = ({ course, onContinue }) => {
+export const CourseCard: React.FC<CourseCardProps> = ({ course, onContinue, viewMode = 'grid' }) => {
+  if (viewMode === 'list') {
+    return (
+      <div className="course-card-list surface-card">
+        <div className="course-card-list__thumbnail">
+          {course.thumbnail ? (
+            <img src={course.thumbnail} alt={course.title} />
+          ) : (
+            <div className="course-card-list__thumb-placeholder" />
+          )}
+        </div>
+        <div className="course-card-list__body">
+          <div className="course-card-list__info">
+            <h3 className="course-card-list__title">{course.title}</h3>
+            <p className="course-card-list__instructor">by {course.instructor}</p>
+          </div>
+          <div className="course-card-list__footer">
+            <div className="course-card-list__progress">
+              <AuraProgress progress={course.progress} size="sm" />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onContinue?.(course.id)}
+            >
+              {course.progress === 0 ? 'Start' : 'Continue'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Grid mode (default)
   return (
     <div className="surface-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div>
