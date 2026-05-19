@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '../components/loaders/Skeleton';
 import { Button } from '../components/ui/Button';
 import { TextInput } from '../components/ui/TextInput';
 import { useAuthStore } from '../store/auth.store';
-import { User, Camera, Lock, AlertCircle, CheckCircle, Save } from 'lucide-react';
+import { User, Camera, Lock, AlertCircle, CheckCircle, Save, Loader2 } from 'lucide-react';
 import api from '../lib/api';
 
 interface UserProfile {
@@ -27,6 +27,10 @@ export const Profile: React.FC = () => {
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordError, setPasswordError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery<UserProfile>({
     queryKey: ['profile-me'],
@@ -34,6 +38,7 @@ export const Profile: React.FC = () => {
       const res = await api.get('/users/me');
       const p = res.data.data ?? res.data;
       setFormData({ fullName: p.fullName ?? '', branch: p.branch ?? '', cgpa: p.cgpa?.toString() ?? '' });
+      if (p.avatarUrl) setAvatarUrl(p.avatarUrl);
       return p;
     },
   });
@@ -69,6 +74,32 @@ export const Profile: React.FC = () => {
     updateMutation.mutate(payload);
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarError('');
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url: string = res.data?.data?.url ?? res.data?.url ?? res.data?.fileUrl ?? '';
+      if (!url) throw new Error('No URL returned from upload');
+      setAvatarUrl(url);
+      // Persist to profile
+      await api.put('/users/me', { avatarUrl: url });
+      queryClient.invalidateQueries({ queryKey: ['profile-me'] });
+    } catch {
+      setAvatarError('Failed to upload photo. Please try again.');
+    } finally {
+      setAvatarUploading(false);
+      // Reset so the same file can be re-selected if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleChangePassword = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setPasswordError('New passwords do not match.');
@@ -102,15 +133,38 @@ export const Profile: React.FC = () => {
           <Skeleton variant="circular" width={80} height={80} />
         ) : (
           <div style={{ position: 'relative' }}>
-            <div style={{ width: 80, height: 80, background: 'var(--primary-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: 'var(--primary-glow)', fontWeight: 700, flexShrink: 0 }}>
-              {profile?.fullName?.charAt(0)?.toUpperCase() ?? '?'}
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleAvatarChange}
+            />
+            {/* Avatar circle */}
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--primary-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: 'var(--primary-glow)', fontWeight: 700, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              ) : (
+                <>{profile?.fullName?.charAt(0)?.toUpperCase() ?? '?'}</>
+              )}
+              {avatarUploading && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>
+                  <Loader2 size={20} style={{ color: 'white', animation: 'spin 1s linear infinite' }} />
+                </div>
+              )}
             </div>
             <button
-              style={{ position: 'absolute', bottom: -4, right: -4, width: 28, height: 28, background: 'var(--surface-highest)', border: '2px solid var(--surface-well)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-low)' }}
-              title="Upload photo (coming soon)"
+              style={{ position: 'absolute', bottom: -4, right: -4, width: 28, height: 28, background: 'var(--surface-highest)', border: '2px solid var(--surface-well)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-low)', borderRadius: '50%' }}
+              title="Upload photo"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarUploading}
             >
               <Camera size={14} />
             </button>
+            {avatarError && (
+              <p style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.5rem' }}>{avatarError}</p>
+            )}
           </div>
         )}
         <div>

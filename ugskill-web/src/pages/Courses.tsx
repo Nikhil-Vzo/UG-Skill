@@ -164,7 +164,7 @@ export const Courses: React.FC = () => {
           </div>
         ) : (
           filteredCourses.map(course => (
-            <CourseCard key={course.id} course={course} onContinue={(id) => navigate(`/app/courses/${id}/player`)} />
+            <CourseCard key={course.id} course={course} viewMode={viewMode} onContinue={(id) => navigate(`/app/courses/${id}/player`)} />
           ))
         )}
       </section>

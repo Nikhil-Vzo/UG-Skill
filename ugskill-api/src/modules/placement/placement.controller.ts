@@ -104,7 +104,14 @@ export const getRegistration = async (req: Request, res: Response, next: NextFun
 
 export const listRegistrations = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await placementService.listRegistrations(req.query as any);
+    const query = { ...req.query } as Record<string, any>;
+    // BUG-001: Scope registrations for students — they may only see their own records.
+    // Admins, HR, and creators retain unrestricted access.
+    const isPrivileged = req.user?.roles.some((r) => ['admin', 'hr', 'creator'].includes(r));
+    if (!isPrivileged) {
+      query.studentId = req.user!.userId;
+    }
+    const result = await placementService.listRegistrations(query as any);
     res.status(200).json(successResponse(result.data, result.meta));
   } catch (error) {
     next(error);
