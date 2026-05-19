@@ -428,7 +428,7 @@ export const PlacementsHub: React.FC = () => {
             ))
           )}
         </div>
-      ) : (
+      ) : view === 'kanban' ? (
         <div style={{ display: 'flex', gap: '1.25rem', overflowX: 'auto', paddingBottom: '1rem' }}>
           {(['open', 'applied', 'shortlisted', 'rejected'] as const).map(s => {
             const accentMap: Record<string, string> = {
@@ -450,6 +450,83 @@ export const PlacementsHub: React.FC = () => {
               </KanbanCol>
             );
           })}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: 800, margin: '0 auto' }}>
+          {isLoading ? (
+            <DriveSkeleton />
+          ) : myApps.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-lowest)' }}>
+              No applications to track yet.
+            </div>
+          ) : (
+            myApps.map(d => {
+              const stages = ['applied', 'shortlisted', 'interview', 'selected'];
+              const isRejected = d.status === 'rejected';
+              let currentStageIdx = stages.indexOf(d.status);
+              if (currentStageIdx === -1 && !isRejected) currentStageIdx = 0; // fallback
+              
+              const { name: companyName, initial } = resolveCompany(d);
+              
+              return (
+                <div key={d.id} className="surface-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ width: 48, height: 48, background: logoColor(companyName), borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '1.25rem' }}>
+                        {initial}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-high)' }}>{companyName}</div>
+                        <div style={{ color: 'var(--text-low)', fontSize: '0.875rem' }}>{d.name}</div>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/app/placements/${d.id}`)}>View Details</Button>
+                  </div>
+                  
+                  {/* Stepper */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', marginTop: '0.5rem' }}>
+                    <div style={{ position: 'absolute', top: 16, left: 30, right: 30, height: 2, background: 'var(--border)', zIndex: 0 }} />
+                    <div style={{ position: 'absolute', top: 16, left: 30, right: 30, height: 2, background: isRejected ? 'var(--error)' : 'var(--primary)', zIndex: 0, width: isRejected ? '100%' : `${(currentStageIdx / (stages.length - 1)) * 100}%`, transition: 'width 0.5s ease' }} />
+                    
+                    {stages.map((stage, idx) => {
+                      const isActive = idx <= currentStageIdx;
+                      const isFailStage = isRejected && idx > currentStageIdx;
+                      const isCurrentFail = isRejected && idx === currentStageIdx + 1;
+                      
+                      let bgColor = 'var(--surface-well)';
+                      let borderColor = 'var(--border)';
+                      let color = 'var(--text-muted)';
+                      
+                      if (isActive && !isRejected) {
+                        bgColor = 'var(--primary)';
+                        borderColor = 'var(--primary)';
+                        color = 'white';
+                      } else if (isCurrentFail) {
+                        bgColor = 'var(--error)';
+                        borderColor = 'var(--error)';
+                        color = 'white';
+                      } else if (isRejected && isActive) {
+                        bgColor = 'var(--surface-highest)';
+                        borderColor = 'var(--error)';
+                        color = 'var(--error)';
+                      }
+
+                      return (
+                        <div key={stage} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', zIndex: 1, width: 80 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: bgColor, border: `2px solid ${borderColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, fontSize: '0.875rem', fontWeight: 600, transition: 'all 0.3s' }}>
+                            {isActive && !isRejected ? <CheckCircle size={16} /> : isCurrentFail ? <XCircle size={16} /> : (idx + 1)}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', fontWeight: isActive || isCurrentFail ? 700 : 500, color: isActive || isCurrentFail ? 'var(--text-high)' : 'var(--text-muted)', textTransform: 'capitalize' }}>
+                            {isCurrentFail ? 'Rejected' : stage}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
     </div>
