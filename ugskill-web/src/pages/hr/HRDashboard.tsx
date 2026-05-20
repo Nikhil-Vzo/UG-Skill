@@ -24,9 +24,9 @@ export const HRDashboard: React.FC = () => {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => 
       api.patch(`/placements/registrations/${id}`, { status }),
-    onSuccess: () => {
+    onSuccess: (_response, vars) => {
       queryClient.invalidateQueries({ queryKey: ['hr-applicants'] });
-      setSelectedApplicant(null);
+      setSelectedApplicant((current: any) => current ? { ...current, status: vars.status } : current);
     }
   });
 
@@ -40,11 +40,17 @@ export const HRDashboard: React.FC = () => {
     queryFn: () => api.get('/placements/registrations').then(r => r.data.data || []),
   });
 
+  const { data: activeSessions = [] } = useQuery({
+    queryKey: ['hr-active-interview-sessions'],
+    queryFn: () => api.get('/placements/sessions?active=true').then(r => r.data.data || []),
+    refetchInterval: 15000,
+  });
+
   const startInterviewMutation = useMutation({
     mutationFn: async (applicant: any) => {
       const res = await api.post('/placements/sessions', {
         studentId: applicant.studentId,
-        sessionType: 'live',
+        sessionType: 'live_interview',
         driveId: applicant.driveId,
         companyId: applicant.drive?.companyId || undefined,
         roundNumber: 1
@@ -54,6 +60,7 @@ export const HRDashboard: React.FC = () => {
     onSuccess: (session) => {
       setCreatedSession(session);
       queryClient.invalidateQueries({ queryKey: ['hr-applicants'] });
+      queryClient.invalidateQueries({ queryKey: ['hr-active-interview-sessions'] });
     },
     onError: (err: any) => {
       alert('Failed to create session: ' + (err?.response?.data?.error?.message || err.message));
@@ -73,12 +80,22 @@ export const HRDashboard: React.FC = () => {
     navigate('/hr');
   };
 
+  const activeInterviewSessions = activeSessions.filter((session: any) => session.sessionType === 'live_interview');
+
   const stats = [
     { label: 'Active Drives',    value: drives.length,                                     icon: <Briefcase size={20} />,  color: '#2dd4bf' },
     { label: 'Total Applicants', value: applicants.length,                                  icon: <Users size={20} />,      color: '#818cf8' },
     { label: 'Shortlisted',      value: applicants.filter((a: any) => a.status === 'shortlisted').length, icon: <CheckCircle size={20} />, color: '#22c55e' },
-    { label: 'Interviews Today', value: 0,                                                  icon: <CalendarCheck size={20} />, color: '#f59e0b' },
+    { label: 'Active Rooms',     value: activeInterviewSessions.length,                     icon: <CalendarCheck size={20} />, color: '#f59e0b' },
   ];
+
+  const selectedActiveSession = selectedApplicant
+    ? activeInterviewSessions.find((session: any) =>
+        session.studentId === selectedApplicant.studentId &&
+        session.driveId === selectedApplicant.driveId &&
+        ['scheduled', 'in_progress'].includes(session.status)
+      )
+    : null;
 
   return (
     <div style={{ minHeight: '100vh', background: '#060b14', color: '#f0f9ff', fontFamily: 'Inter, sans-serif' }}>
@@ -271,8 +288,11 @@ export const HRDashboard: React.FC = () => {
 
               {selectedApplicant.status === 'interview' && (
                 <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                  <button 
-                    onClick={() => startInterviewMutation.mutate(selectedApplicant)}
+                  <button
+                    onClick={() => selectedActiveSession
+                      ? window.open(`/app/placements/interview/${selectedActiveSession.id}`, '_blank')
+                      : startInterviewMutation.mutate(selectedApplicant)
+                    }
                     disabled={startInterviewMutation.isPending}
                     style={{ 
                       width: '100%', 
@@ -291,8 +311,25 @@ export const HRDashboard: React.FC = () => {
                     }}
                   >
                     <Video size={18} />
-                    {startInterviewMutation.isPending ? 'Generating Room...' : 'Start Video Interview Now'}
+                    {startInterviewMutation.isPending
+                      ? 'Creating Room...'
+                      : selectedActiveSession
+                        ? 'Open Existing Room'
+                        : 'Create Interview Room'}
                   </button>
+                  {selectedActiveSession && (
+                    <>
+                      <button
+                        onClick={() => copyLink(selectedActiveSession.id)}
+                        style={{ marginTop: '0.625rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.625rem', background: copiedLink ? 'rgba(34,197,94,0.12)' : 'rgba(20,184,166,0.1)', border: `1px solid ${copiedLink ? 'rgba(34,197,94,0.35)' : 'rgba(20,184,166,0.25)'}`, borderRadius: 8, color: copiedLink ? '#4ade80' : '#2dd4bf', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer' }}
+                      >
+                        <Copy size={14} /> {copiedLink ? 'Copied!' : 'Copy Link'}
+                      </button>
+                      <p style={{ margin: '0.625rem 0 0', color: '#94a3b8', fontSize: '0.75rem', textAlign: 'center' }}>
+                        Room status: {selectedActiveSession.status === 'in_progress' ? '🔴 Live now' : '⏳ Scheduled'} · Candidate can see this in Placement Hub.
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -312,7 +349,7 @@ export const HRDashboard: React.FC = () => {
                   </div>
                   <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#f0f9ff' }}>Interview Session Created</h2>
                 </div>
-                <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b' }}>Share the link below with the student to join</p>
+                <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b' }}>Room status: Scheduled</p>
               </div>
               <button onClick={() => setCreatedSession(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.25rem' }}>
                 <X size={20} />
@@ -341,7 +378,7 @@ export const HRDashboard: React.FC = () => {
               </button>
             </div>
             <p style={{ margin: '1rem 0 0', fontSize: '0.75rem', color: '#475569', textAlign: 'center' }}>
-              The student will see a "Join Interview" button in their Placements Hub.
+              Candidate will see this room in Placement Hub automatically.
             </p>
           </div>
         </div>

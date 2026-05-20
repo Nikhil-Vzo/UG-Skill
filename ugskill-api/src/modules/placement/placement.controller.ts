@@ -248,6 +248,23 @@ export const createPlacementSession = async (req: Request, res: Response, next: 
 
 export const updatePlacementSessionStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const isStudent = req.user?.roles?.includes('student');
+    const isPrivileged = req.user?.roles?.some(role =>
+      ['admin', 'super_admin', 'placement_coordinator', 'hr'].includes(role)
+    );
+
+    // Students can only join (in_progress) — they cannot complete, pass, fail, or cancel
+    if (isStudent && !isPrivileged && req.body.status && req.body.status !== 'in_progress') {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Students may only join a session (in_progress). Ending or cancelling requires HR/admin.',
+        },
+      });
+      return;
+    }
+
     const result = await placementService.updatePlacementSessionStatus(req.params.id as string, req.body);
     res.status(200).json(successResponse(result));
   } catch (error) {
@@ -258,6 +275,20 @@ export const updatePlacementSessionStatus = async (req: Request, res: Response, 
 export const getPlacementSession = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await placementService.getPlacementSession(req.params.id as string);
+    const isStudent = req.user?.roles?.includes('student');
+    const isPrivileged = req.user?.roles?.some(role => ['admin', 'super_admin', 'placement_coordinator', 'hr'].includes(role));
+
+    if (isStudent && !isPrivileged && result.studentId !== req.user?.userId) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You cannot access another candidate interview session',
+        },
+      });
+      return;
+    }
+
     res.status(200).json(successResponse(result));
   } catch (error) {
     next(error);
@@ -267,12 +298,16 @@ export const getPlacementSession = async (req: Request, res: Response, next: Nex
 export const listPlacementSessions = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const query = { ...req.query };
+    const isStudent = req.user?.roles?.includes('student');
+    const isPrivileged = req.user?.roles?.some(role => ['admin', 'super_admin', 'placement_coordinator', 'hr'].includes(role));
+
     if (query.studentId === 'me') query.studentId = req.user?.userId;
+    if (isStudent && !isPrivileged) query.studentId = req.user?.userId;
     if (query.type === 'upcoming') query.status = 'scheduled';
     delete query.type;
 
     const result = await placementService.listPlacementSessions(query);
-    res.status(200).json(successResponse(result));
+    res.status(200).json(successResponse(result.data, result.meta));
   } catch (error) {
     next(error);
   }

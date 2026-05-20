@@ -250,6 +250,7 @@ router.get(
 router.post(
   '/sessions/:id/end',
   requireAuth,
+  requireRole(['admin', 'super_admin', 'placement_coordinator', 'hr']),
   placementController.endPlacementSession
 );
 
