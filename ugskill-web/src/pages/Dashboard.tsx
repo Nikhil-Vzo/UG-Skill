@@ -110,7 +110,17 @@ export const Dashboard: React.FC = () => {
       return [false, false, false, false, false, false, false];
     }
 
-    const lastActive = new Date(lastActiveDate);
+    const dateStr = typeof lastActiveDate === 'string' ? lastActiveDate.split('T')[0] : '';
+    if (!dateStr) {
+      return [false, false, false, false, false, false, false];
+    }
+
+    const [year, month, day] = dateStr.split('-').map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+      return [false, false, false, false, false, false, false];
+    }
+
+    const lastActive = new Date(year, month - 1, day);
     lastActive.setHours(0, 0, 0, 0);
 
     return Array.from({ length: 7 }, (_, i) => {

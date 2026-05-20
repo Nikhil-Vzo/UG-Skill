@@ -12,7 +12,8 @@ export interface PaginationResult {
 
 export const parsePaginationQuery = (query: any): PaginationParams => {
   const page = Math.max(1, parseInt(query.page as string) || 1);
-  const perPage = Math.min(100, Math.max(1, parseInt(query.perPage as string) || 20));
+  const perPageVal = query.perPage || query.limit;
+  const perPage = Math.min(100, Math.max(1, parseInt(perPageVal as string) || 20));
   
   return { page, perPage };
 };

@@ -728,7 +728,7 @@ export class ExamService {
     const responseMap = new Map<string, any>((response?.responses || []).map((r: any) => [String(r.question_id || r.questionId || ''), r]));
 
     const formattedQuestions = questionsList.map((q: any) => {
-      const qId = q._id.toString();
+      const qId = q.id;
       const resp = responseMap.get(qId);
       const selected = resp ? (resp.selected_option ?? resp.selectedOption ?? resp.answer) : undefined;
 

@@ -689,18 +689,53 @@ export const ExamInterface: React.FC = () => {
                         if (attemptId) saveMut.mutate({ questionId: q.id, selectedOption: i });
                       }}
                       style={{
-                        textAlign: 'left', padding: '0.875rem 1.25rem', background: sel ? 'var(--primary-low)' : 'var(--surface-well)',
+                        textAlign: 'left',
+                        padding: '1rem 1.5rem',
+                        background: sel ? 'rgba(56, 189, 248, 0.08)' : 'var(--surface-well)',
                         border: sel ? '1px solid var(--primary-glow)' : '1px solid var(--surface-highest)',
-                        color: sel ? 'var(--text-high)' : 'var(--text-low)', cursor: 'pointer', fontSize: '0.9375rem',
-                        display: 'flex', alignItems: 'center', gap: '1rem', transition: 'all 0.15s',
+                        borderRadius: '12px',
+                        color: sel ? 'var(--text-high)' : 'var(--text-low)',
+                        cursor: 'pointer',
+                        fontSize: '0.9375rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1.25rem',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: sel ? '0 4px 20px rgba(56, 189, 248, 0.15)' : 'none',
                       }}
-                      onMouseEnter={e => { if (!sel) e.currentTarget.style.borderColor = 'var(--outline)'; }}
-                      onMouseLeave={e => { if (!sel) e.currentTarget.style.borderColor = 'var(--surface-highest)'; }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        if (!sel) {
+                          e.currentTarget.style.borderColor = 'var(--primary-glow)';
+                          e.currentTarget.style.background = 'var(--surface-container)';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'none';
+                        if (!sel) {
+                          e.currentTarget.style.borderColor = 'var(--surface-highest)';
+                          e.currentTarget.style.background = 'var(--surface-well)';
+                        }
+                      }}
                     >
-                      <span style={{ width: 28, height: 28, borderRadius: '50%', background: sel ? 'var(--primary-glow)' : 'var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: sel ? 'var(--bg-app)' : 'var(--text-low)', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
+                      <span style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        background: sel ? 'var(--primary-glow)' : 'var(--surface-highest)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: sel ? 'var(--bg-app)' : 'var(--text-medium)',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        flexShrink: 0,
+                        boxShadow: sel ? '0 0 10px rgba(56, 189, 248, 0.4)' : 'none',
+                        transition: 'all 0.2s',
+                      }}>
                         {String.fromCharCode(65 + i)}
                       </span>
-                      {opt}
+                      {typeof opt === 'object' && opt !== null ? (opt as any).text : opt}
                     </button>
                   );
                 })}
@@ -718,31 +753,65 @@ export const ExamInterface: React.FC = () => {
                   </span>
                 </div>
 
-                <div style={{ position: 'relative' }}>
-                  <textarea
-                    style={{
-                      width: '100%',
-                      minHeight: '300px',
-                      fontFamily: 'monospace',
-                      fontSize: '0.875rem',
-                      padding: '1.25rem',
-                      borderRadius: '12px',
-                      background: '#111216',
-                      color: '#e4e4e7',
-                      border: '1px solid var(--surface-highest)',
-                      outline: 'none',
-                      resize: 'vertical',
-                      lineHeight: '1.5',
-                      boxSizing: 'border-box'
-                    }}
-                    placeholder="Write your code here..."
-                    value={typeof answers[q.id] === 'string' ? answers[q.id] as string : (q.codeTemplate || '')}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setAnswers(a => ({ ...a, [q.id]: val }));
-                      if (attemptId) saveMut.mutate({ questionId: q.id, selectedOption: val });
-                    }}
-                  />
+                <div style={{
+                  background: '#181824',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(56, 189, 248, 0.2)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                  overflow: 'hidden'
+                }}>
+                  {/* IDE Mock Header */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 1.25rem',
+                    background: '#11111b',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                  }}>
+                    {/* Window Controls */}
+                    <div style={{ display: 'flex', gap: '0.375rem' }}>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f56' }}></span>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffbd2e' }}></span>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#27c93f' }}></span>
+                    </div>
+                    {/* Tab/Filename */}
+                    <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#888a9e', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--primary-glow)' }}></span>
+                      index.{q.codingLanguage === 'python' ? 'py' : q.codingLanguage === 'cpp' ? 'cpp' : 'js'}
+                    </span>
+                    {/* Size info / line count */}
+                    <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#565768' }}>
+                      UTF-8
+                    </span>
+                  </div>
+
+                  <div style={{ position: 'relative', display: 'flex', background: '#111216' }}>
+                    <textarea
+                      style={{
+                        width: '100%',
+                        minHeight: '320px',
+                        fontFamily: '"Fira Code", Consolas, Monaco, "Courier New", Courier, monospace',
+                        fontSize: '0.875rem',
+                        padding: '1.25rem',
+                        background: 'transparent',
+                        color: '#f8f8f2',
+                        border: 'none',
+                        outline: 'none',
+                        resize: 'vertical',
+                        lineHeight: '1.6',
+                        boxSizing: 'border-box',
+                        caretColor: 'var(--primary-glow)'
+                      }}
+                      placeholder="Write your code here..."
+                      value={typeof answers[q.id] === 'string' ? answers[q.id] as string : (q.codeTemplate || '')}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setAnswers(a => ({ ...a, [q.id]: val }));
+                        if (attemptId) saveMut.mutate({ questionId: q.id, selectedOption: val });
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ background: 'var(--surface-well)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--surface-highest)' }}>

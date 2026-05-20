@@ -1,4 +1,4 @@
-import { eq, and, isNull, ilike, sql, inArray } from 'drizzle-orm';
+import { eq, and, isNull, ilike, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../config/postgres';
 import { users } from '../../db/pg/schema/core';
 import { getOffset } from '../../lib/pagination';
@@ -39,7 +39,12 @@ export const findAll = async (
   }
 
   if (filters.search) {
-    conditions.push(ilike(users.fullName, `%${filters.search}%`));
+    conditions.push(
+      or(
+        ilike(users.fullName, `%${filters.search}%`),
+        ilike(users.email, `%${filters.search}%`)
+      )!
+    );
   }
 
   // For role filtering, we use the array contains operator
