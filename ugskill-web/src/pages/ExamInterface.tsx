@@ -90,7 +90,7 @@ const ProctoringHud: React.FC<{
 const QuestionPalette: React.FC<{
   total: number;
   current: number;
-  answers: Record<string, number>;
+  answers: Record<string, number | string>;
   flagged: Set<string>;
   questions: Question[];
   onJump: (i: number) => void;
