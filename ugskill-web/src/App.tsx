@@ -32,6 +32,7 @@ import { LiveGD } from './pages/LiveGD';
 import { LiveInterview } from './pages/LiveInterview';
 import InterviewRoom from './pages/InterviewRoom';
 import { Leaderboards } from './pages/Leaderboards';
+import { ResumeBuilder } from './pages/ResumeBuilder';
 import { HRDashboard } from './pages/hr/HRDashboard';
 import { Notifications } from './pages/Notifications';
 import { Profile } from './pages/Profile';
@@ -41,6 +42,7 @@ import { CertificateViewer } from './pages/CertificateViewer';
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 import { UserDirectory } from './pages/admin/UserDirectory';
 import { BatchManagement } from './pages/admin/BatchManagement';
+import { Feedback } from './pages/Feedback';
 const CourseBuilder = lazy(() => import('./pages/admin/CourseBuilder').then(m => ({ default: m.CourseBuilder })));
 const QuizBuilder = lazy(() => import('./pages/admin/QuizBuilder').then(m => ({ default: m.QuizBuilder })));
 import { AdminCourses } from './pages/admin/AdminCourses';
@@ -97,8 +99,12 @@ function App() {
               <Route path="placements" element={<PlacementsHub />} />
               <Route path="placements/prep" element={<InterviewPrep />} />
               <Route path="placements/analytics" element={<ReadinessAnalytics />} />
+              <Route path="placements/resume-builder" element={<ResumeBuilder />} />
               <Route path="placements/interview/:sessionId" element={<InterviewRoom />} />
-              <Route path="placements/:driveId" element={<CompanyDetail />} />
+              <Route path="placements/gd/:sessionId" element={<LiveGD />} />
+              <Route path="placements/live/:sessionId" element={<LiveInterview />} />
+              <Route path="placements/:companyId" element={<CompanyDetail />} />
+              <Route path="feedback" element={<Feedback />} />
               <Route path="community" element={<Community />} />
               <Route path="peer-groups" element={<PeerGroups />} />
               <Route path="exams" element={<Exams />} />
