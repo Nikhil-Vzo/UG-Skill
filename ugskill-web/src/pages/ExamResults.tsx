@@ -1,9 +1,35 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  AlertCircle,
+  Award,
+  Target,
+  Clock,
+  BookOpen,
+  Brain,
+  ChevronRight
+} from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import api from '../lib/api';
+
+interface QuestionBreakdown {
+  id: string;
+  text: string;
+  options: string[];
+  userAnswer: string;
+  userAnswerIndex: number;
+  correctAnswer: string;
+  correctAnswerIndex: number;
+  isCorrect: boolean;
+  marks: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;
+}
 
 export const ExamResults: React.FC = () => {
   const { attemptId } = useParams();
@@ -20,88 +46,344 @@ export const ExamResults: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', backgroundColor: 'var(--surface-0)' }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <Loader2 size={40} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>Analyzing attempt submissions...</span>
+        </div>
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div style={{ padding: '2rem', color: 'var(--error)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <AlertCircle size={20} />
-        <span>Failed to load exam results.</span>
+      <div style={{ padding: '4rem 2rem', minHeight: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'var(--surface-0)' }}>
+        <div className="surface-card noise-overlay" style={{ padding: '3rem', maxWidth: '500px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--color-error-subtle)', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--color-error)' }}>
+            <AlertCircle size={32} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Results Unavailable</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              We couldn't retrieve the detailed metrics for this exam attempt. It might still be grading or has been removed.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => navigate(-1)} leftIcon={<ArrowLeft size={16} />}>
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }
 
-  const { score, maxScore, questions, percentage } = data;
+  const rawScoreObj = data.score;
+  const scoreVal = data.totalScore ?? (rawScoreObj ? Number(rawScoreObj.totalScore) : 0);
+  const maxScoreVal = data.maxScore ?? (rawScoreObj ? Number(rawScoreObj.maxScore) : 100);
+  const percentVal = data.percentage ?? (rawScoreObj ? Number(rawScoreObj.percentage) : 0);
+  const isPassed = data.passed ?? (rawScoreObj ? Boolean(rawScoreObj.passed) : percentVal >= 60);
+  const timeTakenSecs = data.attempt?.timeTakenSecs ?? rawScoreObj?.timeTakenSecs ?? 0;
+  const questions: QuestionBreakdown[] = data.questions ?? [];
+
+  // Group by category to find topic accuracy
+  const categoryStats: Record<string, { correct: number; total: number }> = {};
+  questions.forEach((q) => {
+    const cat = q.category || 'General';
+    if (!categoryStats[cat]) {
+      categoryStats[cat] = { correct: 0, total: 0 };
+    }
+    categoryStats[cat].total += 1;
+    if (q.isCorrect) {
+      categoryStats[cat].correct += 1;
+    }
+  });
+
+  const formatTime = (secs: number) => {
+    if (!secs) return 'N/A';
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div>
+    <div className="animate-fade-in-up" style={{ padding: '2rem 1.5rem', maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', minHeight: '100vh' }}>
+      {/* Header Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} leftIcon={<ArrowLeft size={16} />}>
-          Back
+          Dashboard
         </Button>
+        <span className="label-overline" style={{ fontSize: '0.8rem' }}>
+          Attempt ID: {attemptId?.slice(-8) || 'N/A'}
+        </span>
       </div>
 
-      <div className="surface-card" style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', margin: '0 0 1rem 0' }}>Exam Results</h1>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '1.5rem' }}>
-          <div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>
-              {score ?? 0} <span style={{ fontSize: '1rem', color: 'var(--text-low)' }}>/ {maxScore ?? 0}</span>
+      {/* Hero Stats Card */}
+      <div className="surface-card noise-overlay" style={{ padding: '2.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2rem', alignItems: 'center' }}>
+        {/* Circle Progress Score */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderRight: '1px solid var(--border-default)', paddingRight: '1rem' }}>
+          <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg style={{ transform: 'rotate(-90deg)', width: '100px', height: '100px' }}>
+              <circle cx="50" cy="50" r="42" stroke="var(--surface-3)" strokeWidth="8" fill="transparent" />
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                stroke={isPassed ? 'var(--color-success)' : 'var(--color-error)'}
+                strokeWidth="8"
+                fill="transparent"
+                strokeDasharray={263.89}
+                strokeDashoffset={263.89 - (263.89 * Math.min(100, Math.max(0, percentVal))) / 100}
+                strokeLinecap="round"
+                style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+              />
+            </svg>
+            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>{percentVal}%</span>
             </div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Score</div>
           </div>
+          <span style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Score Ratio</span>
+        </div>
+
+        {/* Scoring Details */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: (percentage ?? 0) >= 60 ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-display)' }}>
-              {percentage ?? 0}%
+            <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+              {isPassed ? 'Exam Cleared' : 'Below Cutoff'}
+            </h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+              {isPassed ? 'Congratulations! You have cleared this evaluation stage.' : 'Please review the concepts and try again in the next slot.'}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                padding: '0.25rem 0.75rem',
+                borderRadius: '9999px',
+                backgroundColor: isPassed ? 'var(--color-success-subtle)' : 'var(--color-error-subtle)',
+                color: isPassed ? 'var(--color-success)' : 'var(--color-error)',
+              }}
+            >
+              {isPassed ? <Award size={14} /> : <AlertCircle size={14} />}
+              {isPassed ? 'PASSED' : 'FAILED'}
+            </span>
+          </div>
+        </div>
+
+        {/* Quick Stats Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+          <div className="surface-well" style={{ padding: '0.75rem 1rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <Target size={14} /> Score
+            </span>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-display)', marginTop: '0.25rem' }}>
+              {scoreVal} <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>/ {maxScoreVal}</span>
             </div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Percentage</div>
+          </div>
+          <div className="surface-well" style={{ padding: '0.75rem 1rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <Clock size={14} /> Time Taken
+            </span>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-display)', marginTop: '0.25rem' }}>
+              {formatTime(timeTakenSecs)}
+            </div>
           </div>
         </div>
       </div>
 
-      <div>
-        <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-display)', marginBottom: '1rem' }}>Questions Breakdown</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {questions?.map((q: any, i: number) => {
-            const isCorrect = q.isCorrect || (q.userAnswer === q.correctAnswer);
-            return (
-              <div key={q.id || i} className="surface-card" style={{ padding: '1.5rem', borderLeft: `4px solid ${isCorrect ? 'var(--success)' : 'var(--error)'}` }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600 }}>
-                      <span style={{ color: 'var(--text-low)', marginRight: '0.5rem' }}>Q{i + 1}.</span>
-                      {q.questionText || q.text}
-                    </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem', fontSize: '0.875rem' }}>
-                      <div style={{ color: isCorrect ? 'var(--success)' : 'var(--error)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: 500 }}>Your Answer:</span>
-                        {q.userAnswer}
-                        {isCorrect ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                      </div>
-                      {!isCorrect && q.correctAnswer && (
-                        <div style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontWeight: 500 }}>Correct Answer:</span>
-                          {q.correctAnswer}
-                          <CheckCircle size={14} />
-                        </div>
-                      )}
+      {/* Grid of Topic breakdown and details */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+        
+        {/* Topic Accuracy Breakdown */}
+        {Object.keys(categoryStats).length > 0 && (
+          <div className="surface-card" style={{ padding: '1.75rem' }}>
+            <h2 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              <Brain size={18} style={{ color: 'var(--primary)' }} />
+              Topic Accuracy Breakdown
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              {Object.entries(categoryStats).map(([topic, stats]) => {
+                const accuracy = Math.round((stats.correct / stats.total) * 100);
+                return (
+                  <div key={topic} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                      <span style={{ fontWeight: 600 }}>{topic}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>
+                        {stats.correct}/{stats.total} correct ({accuracy}%)
+                      </span>
+                    </div>
+                    <div style={{ height: '8px', borderRadius: '4px', backgroundColor: 'var(--surface-3)', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${accuracy}%`,
+                          borderRadius: '4px',
+                          backgroundColor: accuracy >= 70 ? 'var(--color-success)' : accuracy >= 40 ? 'var(--color-warning)' : 'var(--color-error)',
+                          transition: 'width 0.8s ease-out',
+                        }}
+                      />
                     </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-          {(!questions || questions.length === 0) && (
-            <div style={{ textAlign: 'center', color: 'var(--text-low)', padding: '2rem' }}>
-              No question details available.
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Detailed Question Review */}
+        <div>
+          <h2 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            <BookOpen size={18} style={{ color: 'var(--primary)' }} />
+            Question-by-Question Review
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {questions.map((q, idx) => {
+              const isQCorrect = q.isCorrect;
+              return (
+                <div
+                  key={q.id || idx}
+                  className="surface-card"
+                  style={{
+                    padding: '1.5rem',
+                    borderLeft: `4px solid ${isQCorrect ? 'var(--color-success)' : 'var(--color-error)'}`,
+                  }}
+                >
+                  {/* Card Header Row with Badges */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <span className="label-overline" style={{ color: 'var(--text-tertiary)' }}>
+                      Question {idx + 1}
+                    </span>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {/* Category Badge */}
+                      <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '4px', backgroundColor: 'var(--surface-3)', color: 'var(--text-secondary)' }}>
+                        {q.category || 'General'}
+                      </span>
+                      {/* Difficulty Badge */}
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '4px',
+                          backgroundColor:
+                            q.difficulty === 'hard'
+                              ? 'var(--color-error-subtle)'
+                              : q.difficulty === 'medium'
+                              ? 'var(--color-warning-subtle)'
+                              : 'var(--color-success-subtle)',
+                          color:
+                            q.difficulty === 'hard'
+                              ? 'var(--color-error)'
+                              : q.difficulty === 'medium'
+                              ? 'var(--color-warning)'
+                              : 'var(--color-success)',
+                        }}
+                      >
+                        {q.difficulty || 'easy'}
+                      </span>
+                      {/* Marks Badge */}
+                      <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '4px', backgroundColor: 'var(--primary-subtle)', color: 'var(--primary)' }}>
+                        {q.marks || 1} mark{q.marks !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Question text */}
+                  <p style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                    {q.text}
+                  </p>
+
+                  {/* Options List */}
+                  {q.options && q.options.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                      {q.options.map((opt, oIdx) => {
+                        const isUserSelected = q.userAnswerIndex === oIdx || q.userAnswer === opt;
+                        const isCorrectOpt = q.correctAnswerIndex === oIdx || q.correctAnswer === opt;
+
+                        let optionBg = 'var(--surface-0)';
+                        let optionBorder = '1px solid var(--border-default)';
+                        let optionColor = 'var(--text-primary)';
+
+                        if (isCorrectOpt) {
+                          optionBg = 'var(--color-success-subtle)';
+                          optionBorder = '1px solid var(--color-success)';
+                          optionColor = 'var(--color-success)';
+                        } else if (isUserSelected && !isCorrectOpt) {
+                          optionBg = 'var(--color-error-subtle)';
+                          optionBorder = '1px solid var(--color-error)';
+                          optionColor = 'var(--color-error)';
+                        }
+
+                        return (
+                          <div
+                            key={oIdx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '0.75rem 1rem',
+                              borderRadius: 'var(--radius-md)',
+                              backgroundColor: optionBg,
+                              border: optionBorder,
+                              color: optionColor,
+                              fontSize: '0.875rem',
+                              gap: '0.75rem',
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                backgroundColor: isCorrectOpt ? 'var(--color-success)' : isUserSelected ? 'var(--color-error)' : 'var(--surface-3)',
+                                color: isCorrectOpt || isUserSelected ? 'var(--surface-0)' : 'var(--text-secondary)',
+                              }}
+                            >
+                              {String.fromCharCode(65 + oIdx)}
+                            </span>
+                            <span style={{ flex: 1 }}>{opt}</span>
+                            {isCorrectOpt && <CheckCircle size={16} />}
+                            {isUserSelected && !isCorrectOpt && <XCircle size={16} />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Summary Footer */}
+                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8125rem', color: 'var(--text-secondary)', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      Status:
+                      <strong style={{ color: isQCorrect ? 'var(--color-success)' : 'var(--color-error)' }}>
+                        {isQCorrect ? 'Correct' : 'Incorrect'}
+                      </strong>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Earned: <strong>{isQCorrect ? q.marks || 1 : 0}</strong> points
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {questions.length === 0 && (
+              <div className="surface-card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                No question breakdown could be hydrated for this test.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
+

@@ -17,14 +17,16 @@ export class RoadmapService {
     // 2. Async Sync to Postgres via CDC
     events.emit(APP_EVENTS.ROADMAP_CREATED, {
       roadmapId: roadmap._id.toString(),
-        title: roadmap.title,
-        description: data.description,
-        creatorId: creatorId,
-        targetRole: roadmap.target_role,
-        difficulty: roadmap.difficulty,
-        thumbnailUrl: roadmap.thumbnail_url,
-        status: roadmap.status,
-        isRestricted: roadmap.is_restricted,
+      title: roadmap.title,
+      description: data.description,
+      creatorId: creatorId,
+      targetRole: roadmap.target_role,
+      difficulty: roadmap.difficulty,
+      thumbnailUrl: roadmap.thumbnail_url,
+      status: roadmap.status,
+      isRestricted: roadmap.is_restricted,
+      stageCount: roadmap.stages?.length || 0,
+      courseCount: roadmap.stages?.reduce((sum: number, s: any) => sum + (s.courseIds?.length || 0), 0) || 0,
     });
 
     return roadmap;
@@ -47,13 +49,15 @@ export class RoadmapService {
     // Sync to Postgres via CDC
     events.emit(APP_EVENTS.ROADMAP_UPDATED, {
       roadmapId: roadmap._id.toString(),
-        title: roadmap.title,
-        description: data.description || roadmap.description,
-        targetRole: roadmap.target_role,
-        difficulty: roadmap.difficulty,
-        thumbnailUrl: roadmap.thumbnail_url,
-        status: roadmap.status,
-        isRestricted: roadmap.is_restricted,
+      title: roadmap.title,
+      description: data.description || roadmap.description,
+      targetRole: roadmap.target_role,
+      difficulty: roadmap.difficulty,
+      thumbnailUrl: roadmap.thumbnail_url,
+      status: roadmap.status,
+      isRestricted: roadmap.is_restricted,
+      stageCount: roadmap.stages?.length || 0,
+      courseCount: roadmap.stages?.reduce((sum: number, s: any) => sum + (s.courseIds?.length || 0), 0) || 0,
     });
 
     return roadmap;

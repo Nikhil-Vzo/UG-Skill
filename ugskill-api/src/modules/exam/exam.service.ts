@@ -697,6 +697,28 @@ export class ExamService {
     const data = await ExamProctoringEventModel.find(query).sort({ timestamp: -1 }).limit(100).lean();
     return { data };
   }
+
+  async reportQuestion(data: {
+    examId: string;
+    attemptId: string;
+    studentId: string;
+    questionId: string;
+    issueType: string;
+    description: string;
+  }) {
+    const { ExamQuestionReportModel } = require('../../db/mongo/models/exam');
+    const report = new ExamQuestionReportModel({
+      pg_exam_id: data.examId,
+      pg_attempt_id: data.attemptId,
+      pg_student_id: data.studentId,
+      question_id: data.questionId,
+      issue_type: data.issueType,
+      description: data.description,
+      status: 'open',
+    });
+    await report.save();
+    return report;
+  }
 }
 
 export const examService = new ExamService();
