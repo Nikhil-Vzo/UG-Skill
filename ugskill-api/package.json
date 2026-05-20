@@ -10,7 +10,8 @@
     "start": "node dist/server.js",
     "seed:admin": "tsx src/db/seed-admin.ts",
     "seed:dev": "tsx src/db/seed-dev.ts",
-    "seed:courses": "tsx src/db/seed-courses.ts"
+    "seed:courses": "tsx src/db/seed-courses.ts",
+    "sync:catalog": "tsx src/db/sync-catalog.ts"
   },
   "keywords": [],
   "author": "",
