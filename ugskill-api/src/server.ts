@@ -12,11 +12,15 @@ import { registerInterviewNamespace } from './sockets/interview.namespace';
 import { registerGdNamespace } from './sockets/gd.namespace';
 import { registerLeaderboardNamespace } from './sockets/leaderboard.namespace';
 import { proctoringService } from './modules/proctoring/proctoring.service';
+import { startWorkers } from './jobs/worker';
 
 const startServer = async () => {
   try {
     // 1. Connect dependencies
     await connectMongo();
+    
+    // Start BullMQ workers for background job processing (CDC sync, AI proctoring, notifications)
+    startWorkers();
     
     // Auto-seed admin user
     await seedAdmin().catch(err => logger.error('Auto-seed Admin failed:', err));
