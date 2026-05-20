@@ -21,7 +21,7 @@ const InterviewRoom: React.FC = () => {
     queryKey: ['interview-session', sessionId],
     queryFn: () => api.get(`/placements/sessions/${sessionId}`).then(r => r.data.data),
     enabled: !!sessionId,
-    refetchInterval: joined ? false : 5000,
+    refetchInterval: 5000,  // always poll so we catch completed/cancelled status
   });
 
   const joinMutation = useMutation({
@@ -38,7 +38,7 @@ const InterviewRoom: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interview-session', sessionId] });
       // HR/admins return to their dashboard; students return to placement hub
-      navigate(isHR ? '/app/hr' : '/app/placements');
+      navigate(isHR ? '/hr/dashboard' : '/app/placements');
     },
   });
 
@@ -77,6 +77,13 @@ const InterviewRoom: React.FC = () => {
       localStream.getVideoTracks().forEach(t => t.enabled = videoOn);
     }
   }, [micOn, videoOn, localStream]);
+
+  // Auto-redirect when session is completed or cancelled externally
+  useEffect(() => {
+    if (session?.status === 'completed' || session?.status === 'cancelled') {
+      navigate(isHR ? '/hr/dashboard' : '/app/placements');
+    }
+  }, [session?.status, isHR, navigate]);
 
   if (isLoading) {
     return (
@@ -175,7 +182,7 @@ const InterviewRoom: React.FC = () => {
               {endMutation.isPending ? 'Ending...' : 'End Interview'}
             </button>
           )}
-          <button style={styles.leaveBtn} onClick={() => navigate(isHR ? '/app/hr' : '/app/placements')}>
+          <button style={styles.leaveBtn} onClick={() => navigate(isHR ? '/hr/dashboard' : '/app/placements')}>
             Leave Room
           </button>
         </div>
