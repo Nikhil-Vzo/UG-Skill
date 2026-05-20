@@ -80,7 +80,7 @@ export const BatchAccessModal: React.FC<BatchAccessModalProps> = ({ batchId, bat
           <div style={{ marginTop: '1rem', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
             {isSearchPending ? (
               <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>Loading courses...</div>
-            ) : searchResults?.courses?.length > 0 ? (
+            ) : searchResults && searchResults.courses && searchResults.courses.length > 0 ? (
               searchResults.courses.map((course: any) => (
                 <div key={course.id || course._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
                   <div>
