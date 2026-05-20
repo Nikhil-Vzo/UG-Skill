@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { examService } from './exam.service';
 import { logger } from '../../lib/logger';
 import { logAction } from '../audit/audit.service';
+import { proctoringService } from '../proctoring/proctoring.service';
 
 // --- EXAM CRUD ---
 
@@ -208,6 +209,12 @@ export const startAttempt = async (req: Request, res: Response, next: NextFuncti
     const roles = req.user?.roles || [];
     const isAdminPreview = roles.some((role: string) => ['admin', 'super_admin', 'creator', 'faculty'].includes(role));
     const attempt = await examService.startAttempt(req.user!.userId, examId, { ...req.body, isAdminPreview });
+    if (!isAdminPreview) {
+      proctoringService.ingestEvent({
+        attemptId: attempt.attemptId, examId, studentId: req.user!.userId,
+        type: 'exam_start' as any, severity: 'LOW', aiConfidence: 1.0, metadata: { status: 'started' }
+      }).catch(err => logger.warn(`Failed to log exam start event: ${err.message}`));
+    }
     res.status(201).json({ success: true, data: attempt });
   } catch (error) {
     next(error);
@@ -228,6 +235,10 @@ export const submitAttempt = async (req: Request, res: Response, next: NextFunct
   try {
     const attemptId = req.params.attemptId as string;
     const attempt = await examService.submitAttempt(req.user!.userId, attemptId, req.body);
+    proctoringService.ingestEvent({
+      attemptId, examId: attempt.examId, studentId: req.user!.userId,
+      type: 'exam_submit' as any, severity: 'LOW', aiConfidence: 1.0, metadata: { status: 'submitted' }
+    }).catch(err => logger.warn(`Failed to log exam submit event: ${err.message}`));
     res.json({ success: true, data: attempt });
   } catch (error) {
     next(error);
