@@ -4,13 +4,16 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Clock, AlertTriangle, ChevronLeft, ChevronRight,
   Flag, CheckCircle, X, Camera, Monitor, Loader2,
-  PanelRight
+  PanelRight, Calculator as CalculatorIcon, Edit3
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import api from '../lib/api';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 import { useExamTimer } from '../hooks/useExamTimer';
 import { ProctoringEngine, type ProctoringEngineStatus, type ProctoringIncident } from '../lib/proctoring/ProctoringEngine';
+import { Calculator } from '../components/features/exam/Calculator';
+import { Scratchpad } from '../components/features/exam/Scratchpad';
+import { ReportQuestionModal } from '../components/features/exam/ReportQuestionModal';
 import './ExamInterface.css';
 
 /* ────────── Types ────────── */
@@ -169,6 +172,9 @@ export const ExamInterface: React.FC = () => {
   const [, setTabSwitchWarning] = useState(false);
   const [aiWarnings, setAiWarnings] = useState<{ count: number; max: number }>({ count: 0, max: 5 });
   const [terminated, setTerminated] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [showScratchpad, setShowScratchpad] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // ── Frame capture refs ──
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -547,6 +553,32 @@ export const ExamInterface: React.FC = () => {
             <span style={{ color: 'var(--success)', fontSize: '0.75rem' }}>AI Monitoring Active</span>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              style={{ color: showCalculator ? 'var(--primary)' : 'var(--text-low)', display: 'flex', gap: '0.25rem', alignItems: 'center' }}
+              onClick={() => {
+                setShowCalculator(c => !c);
+                setShowScratchpad(false); // close other to prevent clutter
+              }}
+              title="Calculator"
+            >
+              <CalculatorIcon size={16} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Calc</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              style={{ color: showScratchpad ? 'var(--primary)' : 'var(--text-low)', display: 'flex', gap: '0.25rem', alignItems: 'center' }}
+              onClick={() => {
+                setShowScratchpad(s => !s);
+                setShowCalculator(false); // close other to prevent clutter
+              }}
+              title="Scratchpad"
+            >
+              <Edit3 size={16} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Scribble</span>
+            </Button>
             <Button variant="ghost" size="sm" className="exam-palette-toggle" onClick={() => setShowPalette(p => !p)}>
               <PanelRight size={16} />
             </Button>
@@ -606,13 +638,24 @@ export const ExamInterface: React.FC = () => {
             <Button variant="ghost" size="sm" leftIcon={<ChevronLeft size={14} />} onClick={() => setCurrent(c => Math.max(0, c - 1))} disabled={current === 0}>
               Previous
             </Button>
-            <button
-              onClick={() => setFlagged(f => { const n = new Set(f); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n; })}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: flagged.has(q.id) ? 'var(--warning)' : 'var(--text-low)', cursor: 'pointer', fontSize: '0.8125rem' }}
-            >
-              <Flag size={14} fill={flagged.has(q.id) ? 'currentColor' : 'none'} />
-              {flagged.has(q.id) ? 'Flagged' : 'Flag for Review'}
-            </button>
+            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+              <button
+                onClick={() => setFlagged(f => { const n = new Set(f); n.has(q.id) ? n.delete(q.id) : n.add(q.id); return n; })}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: flagged.has(q.id) ? 'var(--warning)' : 'var(--text-low)', cursor: 'pointer', fontSize: '0.8125rem' }}
+              >
+                <Flag size={14} fill={flagged.has(q.id) ? 'currentColor' : 'none'} />
+                {flagged.has(q.id) ? 'Flagged' : 'Flag for Review'}
+              </button>
+              <button
+                onClick={() => setShowReportModal(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '0.8125rem', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-low)'}
+              >
+                <AlertTriangle size={14} />
+                Report Issue
+              </button>
+            </div>
             <Button variant={current === questions.length - 1 ? 'primary' : 'ghost'} size="sm" rightIcon={<ChevronRight size={14} />} onClick={() => current === questions.length - 1 ? setShowSubmitModal(true) : setCurrent(c => c + 1)}>
               {current === questions.length - 1 ? 'Review & Submit' : 'Next'}
             </Button>
@@ -654,6 +697,30 @@ export const ExamInterface: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Calculator */}
+      {showCalculator && (
+        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 400 }}>
+          <Calculator onClose={() => setShowCalculator(false)} />
+        </div>
+      )}
+
+      {/* Floating Scratchpad */}
+      {showScratchpad && (
+        <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 400 }}>
+          <Scratchpad onClose={() => setShowScratchpad(false)} />
+        </div>
+      )}
+
+      {/* Report Question Modal */}
+      {showReportModal && (
+        <ReportQuestionModal
+          examId={examId!}
+          attemptId={attemptId}
+          questionId={q.id}
+          onClose={() => setShowReportModal(false)}
+        />
       )}
     </div>
   );

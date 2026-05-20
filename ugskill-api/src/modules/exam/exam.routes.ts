@@ -174,6 +174,13 @@ router.post(
   examController.submitAttempt
 );
 
+router.post(
+  '/:id/attempts/:attemptId/questions/:questionId/report',
+  requireAuth,
+  requireRole(['student', 'admin', 'super_admin', 'creator']),
+  examController.reportQuestion
+);
+
 router.get(
   '/results/:attemptId',
   requireAuth, // Handled in controller to check ownership or admin

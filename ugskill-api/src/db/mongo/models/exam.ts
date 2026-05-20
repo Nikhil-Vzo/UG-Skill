@@ -138,3 +138,33 @@ ExamProctoringEventSchema.index({ session_id: 1, timestamp: 1 });
 ExamProctoringEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 }); // TTL 12 months
 
 export const ExamProctoringEventModel = mongoose.models.ExamProctoringEvent || mongoose.model<IExamProctoringEvent>('ExamProctoringEvent', ExamProctoringEventSchema);
+
+
+// ── exam_question_reports ──────────────────────────────────────
+export interface IExamQuestionReport extends Document {
+  pg_exam_id: string;
+  pg_attempt_id: string;
+  pg_student_id: string;
+  question_id: string;
+  issue_type: string;
+  description: string;
+  status: string;
+  resolved_by?: string;
+  resolved_at?: Date;
+}
+
+const ExamQuestionReportSchema = new Schema({
+  pg_exam_id: { type: String, required: true },
+  pg_attempt_id: { type: String, required: true },
+  pg_student_id: { type: String, required: true },
+  question_id: { type: String, required: true },
+  issue_type: { type: String, required: true },
+  description: { type: String, required: true },
+  status: { type: String, default: 'open' },
+  resolved_by: { type: String },
+  resolved_at: { type: Date },
+}, { timestamps: true });
+
+ExamQuestionReportSchema.index({ pg_exam_id: 1, question_id: 1 });
+
+export const ExamQuestionReportModel = mongoose.models.ExamQuestionReport || mongoose.model<IExamQuestionReport>('ExamQuestionReport', ExamQuestionReportSchema);

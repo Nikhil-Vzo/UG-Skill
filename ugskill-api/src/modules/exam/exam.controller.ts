@@ -295,3 +295,24 @@ export const listProctoringEvents = async (req: Request, res: Response, next: Ne
     next(error);
   }
 };
+
+export const reportQuestion = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const examId = req.params.id as string;
+    const attemptId = req.params.attemptId as string;
+    const questionId = req.params.questionId as string;
+    const studentId = req.user!.userId;
+    const { issueType, description } = req.body;
+    const report = await examService.reportQuestion({
+      examId,
+      attemptId,
+      studentId,
+      questionId,
+      issueType,
+      description,
+    });
+    res.status(201).json({ success: true, data: report });
+  } catch (error) {
+    next(error);
+  }
+};
