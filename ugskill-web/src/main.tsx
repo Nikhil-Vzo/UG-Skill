@@ -1,8 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { initSentry } from './config/sentry'
 import './index.css'
 import App from './App.tsx'
+
+// Initialize Sentry before the React app boots
+initSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: {
