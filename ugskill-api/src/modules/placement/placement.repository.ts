@@ -1,4 +1,4 @@
-import { eq, and, sql, desc, count } from 'drizzle-orm';
+import { eq, and, sql, desc, count, inArray } from 'drizzle-orm';
 import { db } from '../../config/postgres';
 import { 
   companies, companyDrives, driveRegistrations, placementSessions, 
@@ -367,10 +367,60 @@ export const insertPlacementSessionPg = async (
   return session;
 };
 
-export const getPlacementSessionPg = async (id: string) => {
+export const findActivePlacementSessionPg = async (query: {
+  studentId: string;
+  sessionType: string;
+  driveId?: string;
+  roundNumber?: number;
+}) => {
+  const conditions: any[] = [
+    eq(placementSessions.studentId, query.studentId),
+    eq(placementSessions.sessionType, query.sessionType),
+    inArray(placementSessions.status, ['scheduled', 'in_progress']),
+  ];
+
+  if (query.driveId) conditions.push(eq(placementSessions.driveId, query.driveId));
+  if (query.roundNumber !== undefined) conditions.push(eq(placementSessions.roundNumber, query.roundNumber));
+
   const [session] = await db
     .select()
     .from(placementSessions)
+    .where(and(...conditions))
+    .orderBy(desc(placementSessions.createdAt))
+    .limit(1);
+
+  return session || null;
+};
+
+export const getPlacementSessionPg = async (id: string) => {
+  const [session] = await db
+    .select({
+      id: placementSessions.id,
+      studentId: placementSessions.studentId,
+      sessionType: placementSessions.sessionType,
+      driveId: placementSessions.driveId,
+      companyId: placementSessions.companyId,
+      mongoFlowId: placementSessions.mongoFlowId,
+      roundNumber: placementSessions.roundNumber,
+      status: placementSessions.status,
+      score: placementSessions.score,
+      maxScore: placementSessions.maxScore,
+      percentile: placementSessions.percentile,
+      mongoAttemptId: placementSessions.mongoAttemptId,
+      recordingUrl: placementSessions.recordingUrl,
+      proctoringVerdict: placementSessions.proctoringVerdict,
+      startedAt: placementSessions.startedAt,
+      endedAt: placementSessions.endedAt,
+      createdAt: placementSessions.createdAt,
+      updatedAt: placementSessions.updatedAt,
+      // Enriched display fields
+      driveName: companyDrives.name,
+      companyName: companies.name,
+      companyLogo: companies.logoUrl,
+    })
+    .from(placementSessions)
+    .leftJoin(companyDrives, eq(placementSessions.driveId, companyDrives.id))
+    .leftJoin(companies, eq(placementSessions.companyId, companies.id))
     .where(eq(placementSessions.id, id))
     .limit(1);
   return session || null;
@@ -389,19 +439,61 @@ export const updatePlacementSessionPg = async (
 };
 
 export const listPlacementSessionsPg = async (query: any) => {
-  const { studentId, driveId, status } = query || {};
+  const { studentId, driveId, status, active, page = 1, limit = 50 } = query || {};
+  const offset = (Number(page) - 1) * Number(limit);
   let conditions: any[] = [];
+
   if (studentId) conditions.push(eq(placementSessions.studentId, studentId));
   if (driveId) conditions.push(eq(placementSessions.driveId, driveId));
-  if (status) conditions.push(eq(placementSessions.status, status));
+  if (active === 'true') {
+    conditions.push(inArray(placementSessions.status, ['scheduled', 'in_progress']));
+  } else if (status?.includes(',')) {
+    conditions.push(inArray(placementSessions.status, status.split(',').map((s: string) => s.trim()).filter(Boolean)));
+  } else if (status) {
+    conditions.push(eq(placementSessions.status, status));
+  }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  return await db
-    .select()
+  const data = await db
+    .select({
+      id: placementSessions.id,
+      studentId: placementSessions.studentId,
+      sessionType: placementSessions.sessionType,
+      driveId: placementSessions.driveId,
+      companyId: placementSessions.companyId,
+      roundNumber: placementSessions.roundNumber,
+      status: placementSessions.status,
+      startedAt: placementSessions.startedAt,
+      endedAt: placementSessions.endedAt,
+      createdAt: placementSessions.createdAt,
+      // Enriched display fields
+      driveName: companyDrives.name,
+      companyName: companies.name,
+      companyLogo: companies.logoUrl,
+    })
     .from(placementSessions)
+    .leftJoin(companyDrives, eq(placementSessions.driveId, companyDrives.id))
+    .leftJoin(companies, eq(placementSessions.companyId, companies.id))
     .where(whereClause)
-    .orderBy(desc(placementSessions.createdAt));
+    .orderBy(desc(placementSessions.createdAt))
+    .limit(Number(limit))
+    .offset(offset);
+
+  const [countResult] = await db
+    .select({ count: count() })
+    .from(placementSessions)
+    .where(whereClause);
+
+  return {
+    data,
+    meta: {
+      total: countResult.count,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(countResult.count / Number(limit)),
+    },
+  };
 };
 
 // --- QUESTION BANK REPOSITORY ---
