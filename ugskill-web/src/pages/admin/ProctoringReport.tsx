@@ -19,6 +19,8 @@ interface ProctoringEvent {
 
 interface StudentReport {
   studentId: string;
+  studentName?: string;
+  studentEmail?: string;
   violationCount: number;
   riskScore: number;
   avgAiConfidence: number;
@@ -147,7 +149,14 @@ export const ProctoringReport: React.FC = () => {
                         <User size={20} />
                       </div>
                       <div>
-                        <p style={{ margin: 0, fontWeight: 600, fontSize: '1rem' }}>{student.studentId.slice(0, 16)}…</p>
+                        <p style={{ margin: 0, fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                          {student.studentName || `${student.studentId.slice(0, 8)}…`}
+                        </p>
+                        {student.studentEmail && (
+                          <p style={{ margin: '0.125rem 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {student.studentEmail}
+                          </p>
+                        )}
                         <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                           {student.violationCount} violations &nbsp;•&nbsp; Avg confidence {(student.avgAiConfidence * 100).toFixed(0)}%
                         </p>

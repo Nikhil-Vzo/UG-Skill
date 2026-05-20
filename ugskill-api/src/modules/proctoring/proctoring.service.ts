@@ -2,7 +2,8 @@ import { Server as SocketServer, Namespace } from 'socket.io';
 import { ProctoringEventModel } from './proctoring.model';
 import { db } from '../../config/postgres';
 import { exams, examAttempts } from '../../db/pg/schema/exam';
-import { eq, sql } from 'drizzle-orm';
+import { users } from '../../db/pg/schema/core';
+import { eq, sql, inArray } from 'drizzle-orm';
 import { logger } from '../../lib/logger';
 import { analyzeFrame as callAIAnalyzeFrame } from '../../lib/aiProctoring';
 
@@ -288,6 +289,18 @@ export class ProctoringService {
       byStudent.set(e.studentId, list);
     }
 
+    const studentIds = Array.from(byStudent.keys());
+    const userMap = new Map<string, { fullName: string; email: string }>();
+    if (studentIds.length > 0) {
+      const userList = await db
+        .select({ id: users.id, fullName: users.fullName, email: users.email })
+        .from(users)
+        .where(inArray(users.id, studentIds));
+      for (const u of userList) {
+        userMap.set(u.id, { fullName: u.fullName, email: u.email });
+      }
+    }
+
     const report = Array.from(byStudent.entries()).map(([studentId, studentEvents]) => {
       const nonOverridden = studentEvents.filter(e => !e.overriddenBy);
       const violationCount = nonOverridden.filter(e =>
@@ -300,10 +313,13 @@ export class ProctoringService {
         ? studentEvents.reduce((s, e) => s + (e.aiConfidence || 0), 0) / studentEvents.length
         : 0;
       const latestEvent = studentEvents[studentEvents.length - 1];
+      const user = userMap.get(studentId);
 
       return {
         attemptId: latestEvent?.attemptId,
         studentId,
+        studentName: user?.fullName || 'Unknown Student',
+        studentEmail: user?.email || '',
         violationCount,
         riskScore,
         avgAiConfidence: Number(avgConfidence.toFixed(2)),

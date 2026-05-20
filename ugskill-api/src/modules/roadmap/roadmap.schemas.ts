@@ -8,10 +8,12 @@ export const createRoadmapSchema = z.object({
   is_restricted: z.boolean().default(false),
   difficulty: z.string().optional(),
   thumbnail_url: z.string().url().optional(),
+  stages: z.array(z.any()).optional(),
 });
 
 export const updateRoadmapSchema = createRoadmapSchema.partial().extend({
   status: z.enum(['draft', 'published', 'archived']).optional(),
+  stages: z.array(z.any()).optional(),
 });
 
 export const addRoadmapStageSchema = z.object({
@@ -19,3 +21,4 @@ export const addRoadmapStageSchema = z.object({
   description: z.string().optional(),
   courseIds: z.array(z.string()).optional(), // Mongo course IDs
 });
+
