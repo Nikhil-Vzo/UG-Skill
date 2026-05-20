@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card } from '../../components/ui/Card';
+import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { TextInput } from '../../components/ui/TextInput';
-import { Search, X, UserPlus, Trash2 } from 'lucide-react';
+import { Search, UserPlus, Trash2 } from 'lucide-react';
 import api from '../../lib/api';
 import { useDebounce } from '../../lib/useDebounce';
 
@@ -64,19 +64,8 @@ export const BatchMembersModal: React.FC<BatchMembersModalProps> = ({ batchId, b
   const memberIds = new Set(members.map((m: any) => m.userId));
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
-      onClick={onClose}
-    >
-      <Card
-        style={{ width: '100%', maxWidth: 600, padding: '2rem', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>Members: {batchName}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}><X size={20} /></Button>
-        </div>
-
+    <Modal isOpen={true} onClose={onClose} title={`Members: ${batchName}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: '70vh', overflowY: 'auto', paddingRight: '0.25rem' }}>
         <div>
           <TextInput
             placeholder="Search users to add..."
@@ -149,7 +138,7 @@ export const BatchMembersModal: React.FC<BatchMembersModalProps> = ({ batchId, b
             <div style={{ color: 'var(--text-muted)' }}>No members in this batch.</div>
           )}
         </div>
-      </Card>
-    </div>
+      </div>
+    </Modal>
   );
 };

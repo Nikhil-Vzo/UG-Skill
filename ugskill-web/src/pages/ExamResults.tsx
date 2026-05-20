@@ -21,7 +21,7 @@ interface QuestionBreakdown {
   id: string;
   text: string;
   options: string[];
-  userAnswer: string;
+  userAnswer: string | number;
   userAnswerIndex: number;
   correctAnswer: string;
   correctAnswerIndex: number;
@@ -29,6 +29,14 @@ interface QuestionBreakdown {
   marks: number;
   difficulty: 'easy' | 'medium' | 'hard';
   category: string;
+  type?: 'mcq' | 'coding' | 'math';
+  codingLanguage?: string;
+  codeTemplate?: string;
+  testCases?: { input: string; output: string }[];
+  testCasesStatus?: { input: string; output: string; expected: string; actual: string; passed: boolean }[] | null;
+  presentationStyle?: 'numerical' | 'mcq';
+  correctAnswerText?: string;
+  tolerance?: number | string;
 }
 
 export const ExamResults: React.FC = () => {
@@ -297,8 +305,8 @@ export const ExamResults: React.FC = () => {
                     {q.text}
                   </p>
 
-                  {/* Options List */}
-                  {q.options && q.options.length > 0 && (
+                  {/* Options List / Coding Submission / Math Numerical Input */}
+                  {(!q.type || q.type === 'mcq' || (q.type === 'math' && q.presentationStyle === 'mcq')) && q.options && q.options.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
                       {q.options.map((opt, oIdx) => {
                         const isUserSelected = q.userAnswerIndex === oIdx || q.userAnswer === opt;
@@ -355,6 +363,101 @@ export const ExamResults: React.FC = () => {
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {q.type === 'coding' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                      <div style={{ padding: '0.75rem 1rem', background: 'var(--surface-3)', borderRadius: '8px', border: '1px solid var(--border-default)', fontSize: '0.8125rem' }}>
+                        Language: <strong style={{ textTransform: 'capitalize', color: 'var(--primary)' }}>{q.codingLanguage || 'javascript'}</strong>
+                      </div>
+                      
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>Submitted Code</label>
+                        <pre style={{
+                          margin: 0,
+                          padding: '1rem',
+                          background: 'var(--surface-0)',
+                          border: '1px solid var(--border-default)',
+                          borderRadius: '8px',
+                          color: '#e4e4e7',
+                          fontFamily: 'monospace',
+                          fontSize: '0.8125rem',
+                          overflowX: 'auto',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-all'
+                        }}>
+                          {String(q.userAnswer || '// No code submitted')}
+                        </pre>
+                      </div>
+
+                      {q.testCasesStatus && q.testCasesStatus.length > 0 && (
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>Test Cases Evaluation</label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {q.testCasesStatus.map((tc, tcIdx) => (
+                              <div key={tcIdx} style={{
+                                padding: '0.75rem 1rem',
+                                borderRadius: '6px',
+                                border: `1px solid ${tc.passed ? 'var(--color-success)' : 'var(--color-error)'}`,
+                                background: tc.passed ? 'var(--color-success-subtle)' : 'var(--color-error-subtle)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.25rem',
+                                fontSize: '0.8125rem',
+                                fontFamily: 'monospace'
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                                  <span>Test Case #{tcIdx + 1}</span>
+                                  <span style={{ color: tc.passed ? 'var(--color-success)' : 'var(--color-error)' }}>
+                                    {tc.passed ? 'PASSED' : 'FAILED'}
+                                  </span>
+                                </div>
+                                <div style={{ color: 'var(--text-secondary)' }}>Input: {tc.input}</div>
+                                <div style={{ color: 'var(--text-secondary)' }}>Expected: {tc.expected}</div>
+                                <div style={{ color: tc.passed ? 'var(--color-success)' : 'var(--color-error)' }}>Actual: {tc.actual ?? 'undefined'}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {q.type === 'math' && q.presentationStyle === 'numerical' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0.75rem 1rem',
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: q.isCorrect ? 'var(--color-success-subtle)' : 'var(--color-error-subtle)',
+                        border: `1px solid ${q.isCorrect ? 'var(--color-success)' : 'var(--color-error)'}`,
+                        color: q.isCorrect ? 'var(--color-success)' : 'var(--color-error)',
+                        fontSize: '0.875rem',
+                        gap: '1rem',
+                      }}>
+                        {q.isCorrect ? <CheckCircle size={16} /> : <XCircle size={16} />}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <span>Your Answer: <strong style={{ fontFamily: 'monospace' }}>{String(q.userAnswer ?? 'N/A')}</strong></span>
+                          <span>Correct Answer: <strong style={{ fontFamily: 'monospace' }}>{q.correctAnswerText}</strong></span>
+                          {(() => {
+                            const correctNum = parseFloat(q.correctAnswerText || '');
+                            const tolerance = parseFloat(String(q.tolerance || 0));
+                            if (!isNaN(correctNum) && tolerance > 0) {
+                              const allowed = Math.abs(correctNum) * (tolerance / 100);
+                              const minVal = correctNum - allowed;
+                              const maxVal = correctNum + allowed;
+                              return (
+                                <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>
+                                  Allowed Range: <strong style={{ fontFamily: 'monospace' }}>[{minVal.toFixed(4)}, {maxVal.toFixed(4)}]</strong> (±{tolerance}%)
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   )}
 

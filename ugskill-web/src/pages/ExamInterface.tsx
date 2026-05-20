@@ -22,6 +22,12 @@ interface Question {
   text: string;
   options: string[];
   marks: number;
+  type?: 'mcq' | 'coding' | 'math';
+  codingLanguage?: 'javascript' | 'python' | 'cpp' | 'java';
+  codeTemplate?: string;
+  testCases?: { input: string; output: string }[];
+  presentationStyle?: 'numerical' | 'mcq';
+  correctAnswerText?: string;
 }
 
 type ProctoringEvent = { type: string; message?: string; severity?: string; ts: number };
@@ -150,14 +156,14 @@ export const ExamInterface: React.FC = () => {
 
   // ── Save answer mutation (auto-save + on change) ──
   const saveMut = useMutation({
-    mutationFn: ({ questionId, selectedOption }: { questionId: string; selectedOption: number }) =>
+    mutationFn: ({ questionId, selectedOption }: { questionId: string; selectedOption: number | string }) =>
       api.patch(`/exams/${examId}/attempts/${attemptId}/answers`, { questionId, selectedOption }),
     // Silently fail — answers also kept in local state
     onError: () => {},
   });
 
   const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, number | string>>({});
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -433,7 +439,10 @@ export const ExamInterface: React.FC = () => {
   }
 
   if (startExamError) {
-    const message = (startExamFailure as any)?.response?.data?.message
+    const errorDetails = (startExamFailure as any)?.response?.data?.error?.details;
+    const existingAttemptId = errorDetails?.attemptId;
+    const message = (startExamFailure as any)?.response?.data?.error?.message
+      || (startExamFailure as any)?.response?.data?.message
       || 'This exam cannot be started. It may already be completed or outside the allowed window.';
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
@@ -441,7 +450,12 @@ export const ExamInterface: React.FC = () => {
           <AlertTriangle size={36} style={{ color: 'var(--warning)', marginBottom: '1rem' }} />
           <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--text-high)', margin: '0 0 0.75rem', fontSize: '1.25rem' }}>Exam Locked</h1>
           <p style={{ color: 'var(--text-low)', margin: 0, lineHeight: 1.6 }}>{message}</p>
-          <Button variant="primary" onClick={() => navigate('/app/exams')} style={{ marginTop: '1.5rem' }}>Back to Exams</Button>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1.5rem' }}>
+            {existingAttemptId && (
+              <Button variant="primary" onClick={() => navigate(`/app/exams/results/${existingAttemptId}`)}>View My Results</Button>
+            )}
+            <Button variant="outline" onClick={() => navigate('/app/exams')}>Back to Exams</Button>
+          </div>
         </div>
       </div>
     );
@@ -501,9 +515,14 @@ export const ExamInterface: React.FC = () => {
             <span>Flagged: <strong style={{ color: 'var(--warning)' }}>{flagged.size}</strong></span>
             <span>Proctoring Alerts: <strong style={{ color: 'var(--error)' }}>{proctoringEvents.length}</strong></span>
           </div>
-          <Button variant="primary" fullWidth leftIcon={<ChevronLeft size={15} />} onClick={() => navigate('/exams')}>
-            Back to Exams
-          </Button>
+          <div style={{ display: 'flex', gap: '1rem', width: '100%', marginTop: '1rem' }}>
+            <Button variant="primary" fullWidth onClick={() => navigate(`/app/exams/results/${attemptId}`)}>
+              View Detailed Results
+            </Button>
+            <Button variant="outline" fullWidth onClick={() => navigate('/app/exams')}>
+              Back to Exams
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -603,34 +622,167 @@ export const ExamInterface: React.FC = () => {
               {q.text}
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {q.options.map((opt, i) => {
-                const sel = answers[q.id] === i;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setAnswers(a => ({ ...a, [q.id]: i }));
-                      // Auto-save to backend
-                      if (attemptId) saveMut.mutate({ questionId: q.id, selectedOption: i });
-                    }}
+            {(!q.type || q.type === 'mcq' || (q.type === 'math' && q.presentationStyle === 'mcq')) && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {(q.options || []).map((opt, i) => {
+                  const sel = answers[q.id] === i;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setAnswers(a => ({ ...a, [q.id]: i }));
+                        // Auto-save to backend
+                        if (attemptId) saveMut.mutate({ questionId: q.id, selectedOption: i });
+                      }}
+                      style={{
+                        textAlign: 'left', padding: '0.875rem 1.25rem', background: sel ? 'var(--primary-low)' : 'var(--surface-well)',
+                        border: sel ? '1px solid var(--primary-glow)' : '1px solid var(--surface-highest)',
+                        color: sel ? 'var(--text-high)' : 'var(--text-low)', cursor: 'pointer', fontSize: '0.9375rem',
+                        display: 'flex', alignItems: 'center', gap: '1rem', transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => { if (!sel) e.currentTarget.style.borderColor = 'var(--outline)'; }}
+                      onMouseLeave={e => { if (!sel) e.currentTarget.style.borderColor = 'var(--surface-highest)'; }}
+                    >
+                      <span style={{ width: 28, height: 28, borderRadius: '50%', background: sel ? 'var(--primary-glow)' : 'var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: sel ? 'var(--bg-app)' : 'var(--text-low)', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
+                        {String.fromCharCode(65 + i)}
+                      </span>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {q.type === 'coding' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-well)', padding: '0.75rem 1.25rem', borderRadius: '8px', border: '1px solid var(--surface-highest)' }}>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-low)' }}>
+                    Language: <strong style={{ textTransform: 'capitalize', color: 'var(--primary-glow)' }}>{q.codingLanguage || 'javascript'}</strong>
+                  </span>
+                  <span style={{ fontSize: '0.75rem', background: 'var(--surface-highest)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                    Time limit: 1000ms
+                  </span>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  <textarea
                     style={{
-                      textAlign: 'left', padding: '0.875rem 1.25rem', background: sel ? 'var(--primary-low)' : 'var(--surface-well)',
-                      border: sel ? '1px solid var(--primary-glow)' : '1px solid var(--surface-highest)',
-                      color: sel ? 'var(--text-high)' : 'var(--text-low)', cursor: 'pointer', fontSize: '0.9375rem',
-                      display: 'flex', alignItems: 'center', gap: '1rem', transition: 'all 0.15s',
+                      width: '100%',
+                      minHeight: '300px',
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem',
+                      padding: '1.25rem',
+                      borderRadius: '12px',
+                      background: '#111216',
+                      color: '#e4e4e7',
+                      border: '1px solid var(--surface-highest)',
+                      outline: 'none',
+                      resize: 'vertical',
+                      lineHeight: '1.5',
+                      boxSizing: 'border-box'
                     }}
-                    onMouseEnter={e => { if (!sel) e.currentTarget.style.borderColor = 'var(--outline)'; }}
-                    onMouseLeave={e => { if (!sel) e.currentTarget.style.borderColor = 'var(--surface-highest)'; }}
-                  >
-                    <span style={{ width: 28, height: 28, borderRadius: '50%', background: sel ? 'var(--primary-glow)' : 'var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: sel ? 'var(--bg-app)' : 'var(--text-low)', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
+                    placeholder="Write your code here..."
+                    value={typeof answers[q.id] === 'string' ? answers[q.id] as string : (q.codeTemplate || '')}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setAnswers(a => ({ ...a, [q.id]: val }));
+                      if (attemptId) saveMut.mutate({ questionId: q.id, selectedOption: val });
+                    }}
+                  />
+                </div>
+
+                <div style={{ background: 'var(--surface-well)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--surface-highest)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-high)' }}>Verification Sandbox</h4>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const code = String(answers[q.id] || q.codeTemplate || '');
+                        const lang = (q.codingLanguage || 'javascript').toLowerCase();
+                        if (lang !== 'javascript' && lang !== 'js') {
+                          alert(`Sandbox execution is only available for JavaScript. For ${q.codingLanguage}, your syntax will be evaluated after submission.`);
+                          return;
+                        }
+                        
+                        try {
+                          let funcName = 'solution';
+                          const match = code.match(/function\s+(\w+)\s*\(/);
+                          if (match && match[1]) {
+                            funcName = match[1];
+                          }
+
+                          const testCases = q.testCases || [];
+                          let passed = 0;
+                          const fn = new Function(`${code}\nreturn ${funcName};`)();
+
+                          for (const tc of testCases) {
+                            let args: any[];
+                            try {
+                              const parsed = JSON.parse(tc.input);
+                              args = Array.isArray(parsed) ? parsed : [parsed];
+                            } catch {
+                              args = [tc.input];
+                            }
+
+                            const res = fn(...args);
+                            if (String(res).trim() === String(tc.output).trim()) {
+                              passed++;
+                            }
+                          }
+                          alert(`Ran ${testCases.length} local test cases.\nPassed: ${passed}/${testCases.length}`);
+                        } catch (err: any) {
+                          alert(`Runtime Error: ${err.message}`);
+                        }
+                      }}
+                    >
+                      Run Code (JS Only)
+                    </Button>
+                  </div>
+                  <p style={{ margin: '0 0 1rem', fontSize: '0.75rem', color: 'var(--text-low)' }}>
+                    Write a function named matching the template definition to pass parameters.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {(q.testCases || []).map((tc, idx) => (
+                      <div key={idx} style={{ fontSize: '0.8125rem', padding: '0.5rem 0.75rem', background: 'var(--surface-highest)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace' }}>
+                        <span>Input: <strong style={{ color: 'var(--text-medium)' }}>{tc.input}</strong></span>
+                        <span>Expected: <strong style={{ color: 'var(--primary-glow)' }}>{tc.output}</strong></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {q.type === 'math' && q.presentationStyle === 'numerical' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)', margin: 0 }}>
+                  Please type the exact numerical answer in the field below.
+                </p>
+                <input
+                  type="text"
+                  style={{
+                    width: '100%',
+                    padding: '1rem 1.25rem',
+                    borderRadius: '10px',
+                    background: 'var(--surface-well)',
+                    border: '1px solid var(--surface-highest)',
+                    color: 'var(--text-high)',
+                    fontSize: '1rem',
+                    fontFamily: 'monospace',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Type numerical value here (e.g. 42 or 3.14)"
+                  value={String(answers[q.id] ?? '')}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setAnswers(a => ({ ...a, [q.id]: val }));
+                    if (attemptId) saveMut.mutate({ questionId: q.id, selectedOption: val });
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Nav buttons */}
