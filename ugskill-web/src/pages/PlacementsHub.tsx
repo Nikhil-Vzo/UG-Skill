@@ -66,36 +66,37 @@ const DriveCard: React.FC<{ drive: Drive; onApply: () => void; onClick: () => vo
   const cfg = STATUS_CONFIG[drive.status] ?? STATUS_CONFIG.open;
   const { name: companyName, initial } = resolveCompany(drive);
   const color = logoColor(companyName);
+  const canApply = drive.status === 'active' || drive.status === 'open';
   return (
     <div
-      className="surface-card"
+      className="surface-card drive-card-pro"
       onClick={onClick}
       style={{ padding: '1.25rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.875rem', transition: 'transform 0.15s, box-shadow 0.15s' }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)'; }}
       onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 0, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.125rem', color: 'white', flexShrink: 0 }}>
+      <div className="drive-card-top">
+        <div className="drive-company">
+          <div className="drive-logo" style={{ background: color }}>
             {initial}
           </div>
-          <div>
-            <div style={{ color: 'var(--text-high)', fontWeight: 700, fontSize: '0.9375rem' }}>{companyName}</div>
-            <div style={{ color: 'var(--text-low)', fontSize: '0.8125rem' }}>{drive.name}</div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{drive.targetRoles?.join(', ')}</div>
+          <div className="drive-company-copy">
+            <div className="drive-company-name">{companyName}</div>
+            <div className="drive-name">{drive.name}</div>
+            <div className="drive-roles">{drive.targetRoles?.join(', ') || 'Role details pending'}</div>
           </div>
         </div>
         <Badge variant={cfg.variant} size="sm">{cfg.icon} {cfg.label}</Badge>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.8125rem', color: 'var(--text-low)' }}>
-        {drive.location && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><MapPin size={13} />{drive.location}</div>}
-        {drive.package && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Briefcase size={13} />{drive.package}</div>}
-        {drive.registrationDeadline && <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Clock size={13} />Due: {formatDeadline(drive.registrationDeadline)}</div>}
+      <div className="drive-meta-grid">
+        <div className="drive-meta-item"><MapPin size={14} /><span>{drive.location || 'Location TBA'}</span></div>
+        <div className="drive-meta-item"><Briefcase size={14} /><span>{drive.package || 'Package TBA'}</span></div>
+        <div className="drive-meta-item"><Clock size={14} /><span>{drive.registrationDeadline ? `Apply by ${formatDeadline(drive.registrationDeadline)}` : 'Deadline TBA'}</span></div>
       </div>
 
       {(drive.cgpaCutoff ?? 0) > 0 && (
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="drive-eligibility">
           <span style={{ color: 'var(--warning)' }}>CGPA ≥ {drive.cgpaCutoff}</span>
           {(drive.branches ?? []).length > 0 && (
             <><span>·</span><span>Branches: {(drive.branches ?? []).slice(0, 3).join(', ')}{(drive.branches ?? []).length > 3 ? ` +${(drive.branches ?? []).length - 3}` : ''}</span></>
@@ -103,16 +104,22 @@ const DriveCard: React.FC<{ drive: Drive; onApply: () => void; onClick: () => vo
         </div>
       )}
 
-      {drive.status === 'active' && (
+      <div className="drive-card-actions">
+        <button className="drive-details-btn" type="button" onClick={e => { e.stopPropagation(); onClick(); }}>
+          View details <ArrowRight size={14} />
+        </button>
+      {canApply && (
         <button
           onClick={e => { e.stopPropagation(); onApply(); }}
           disabled={isApplying}
+          className="drive-apply-btn"
           style={{ alignSelf: 'flex-start', padding: '0.4rem 0.875rem', background: 'var(--primary-glow)', color: 'white', border: 'none', cursor: isApplying ? 'wait' : 'pointer', fontSize: '0.8125rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
         >
           {isApplying ? <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} /> : null}
           Apply
         </button>
       )}
+      </div>
     </div>
   );
 };
@@ -150,7 +157,7 @@ export const PlacementsHub: React.FC = () => {
   const [sortBy, setSortBy] = useState<'deadline' | 'package' | 'company'>('deadline');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>('all');
-  const [minCGPA, setMinCGPA] = useState<number>(0);
+  const [eligibleOnly, setEligibleOnly] = useState(true);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const debouncedSearch = useDebounce(search, 400);
@@ -197,9 +204,10 @@ export const PlacementsHub: React.FC = () => {
       const { name: companyName } = resolveCompany(d);
       const q = debouncedSearch.toLowerCase();
       const matchesSearch = companyName.toLowerCase().includes(q) || d.name.toLowerCase().includes(q);
-      const matchesFilter = filter === 'all' || d.status === filter;
+      const normalizedStatus = d.status === 'active' ? 'open' : d.status;
+      const matchesFilter = filter === 'all' || normalizedStatus === filter;
       const matchesRole = selectedRole === 'all' || d.targetRoles?.includes(selectedRole);
-      const matchesCGPA = !d.cgpaCutoff || d.cgpaCutoff <= (user?.cgpa || 10);
+      const matchesCGPA = !eligibleOnly || !d.cgpaCutoff || d.cgpaCutoff <= (user?.cgpa || 10);
       return matchesSearch && matchesFilter && matchesRole && matchesCGPA;
     });
 
@@ -224,14 +232,16 @@ export const PlacementsHub: React.FC = () => {
         break;
     }
     return result;
-  }, [drives, debouncedSearch, filter, selectedRole, user?.cgpa, sortBy]);
+  }, [drives, debouncedSearch, filter, selectedRole, user?.cgpa, sortBy, eligibleOnly]);
 
-  const myApps = drives.filter(d => ['applied', 'shortlisted', 'rejected'].includes(d.status));
+  const myApps = drives.filter(d => ['applied', 'shortlisted', 'interview', 'selected', 'rejected'].includes(d.status));
+  const openDrives = drives.filter(d => d.status === 'active' || d.status === 'open');
+  const shortlistedCount = myApps.filter(d => d.status === 'shortlisted' || d.status === 'interview' || d.status === 'selected').length;
 
   const statsConfig = [
-    { label: 'Active Drives', val: drives.filter(d => d.status === 'active').length, color: 'var(--success)' },
+    { label: 'Active Drives', val: openDrives.length, color: 'var(--success)' },
     { label: 'Applied', val: myApps.filter(d => d.status === 'applied').length, color: 'var(--primary-glow)' },
-    { label: 'Shortlisted', val: myApps.filter(d => d.status === 'shortlisted').length, color: 'var(--warning)' },
+    { label: 'Shortlisted', val: shortlistedCount, color: 'var(--warning)' },
     { label: 'Rejected', val: myApps.filter(d => d.status === 'rejected').length, color: 'var(--error)' },
   ];
 
@@ -241,7 +251,7 @@ export const PlacementsHub: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="placements-page">
       {/* Header */}
       <div className="placements-header">
         <div className="placements-title-section">
@@ -276,10 +286,10 @@ export const PlacementsHub: React.FC = () => {
           ))
         ) : (
           [
-            { label: 'Active Drives', val: drives.filter(d => d.status === 'active').length, icon: <Zap size={18} />, color: 'var(--success)', trend: '+2 this week' },
-            { label: 'Applied', val: myApps.filter(d => d.status === 'applied').length, icon: <Briefcase size={18} />, color: 'var(--primary)', trend: '3 pending' },
-            { label: 'Shortlisted', val: myApps.filter(d => d.status === 'shortlisted').length, icon: <Star size={18} />, color: 'var(--warning)', trend: '1 interview scheduled' },
-            { label: 'Success Rate', val: `${Math.round((myApps.filter(d => d.status === 'selected').length / Math.max(myApps.length, 1)) * 100)}%`, icon: <Target size={18} />, color: 'var(--info)', trend: 'Keep going!' },
+            { label: 'Open Drives', val: openDrives.length, icon: <Zap size={18} />, color: 'var(--success)', trend: `${filtered.length} matching your filters` },
+            { label: 'Applications', val: myApps.length, icon: <Briefcase size={18} />, color: 'var(--primary)', trend: `${myApps.filter(d => d.status === 'applied').length} under review` },
+            { label: 'Pipeline', val: shortlistedCount, icon: <Star size={18} />, color: 'var(--warning)', trend: 'Shortlist and interview stages' },
+            { label: 'Offer Rate', val: `${Math.round((myApps.filter(d => d.status === 'selected').length / Math.max(myApps.length, 1)) * 100)}%`, icon: <Target size={18} />, color: 'var(--color-info)', trend: 'Selected from applications' },
           ].map(s => (
             <div key={s.label} className="stat-card" style={{ '--accent-color': s.color } as React.CSSProperties}>
               <div className="stat-icon" style={{ color: s.color }}>{s.icon}</div>
@@ -392,8 +402,8 @@ export const PlacementsHub: React.FC = () => {
               <span>Eligible drives only</span>
               <input 
                 type="checkbox" 
-                checked={minCGPA === 0}
-                onChange={(e) => setMinCGPA(e.target.checked ? 0 : 10)}
+                checked={eligibleOnly}
+                onChange={(e) => setEligibleOnly(e.target.checked)}
               />
             </div>
           </div>
@@ -413,8 +423,10 @@ export const PlacementsHub: React.FC = () => {
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => <DriveSkeleton key={i} />)
           ) : filtered.length === 0 ? (
-            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', color: 'var(--text-lowest)' }}>
-              No drives match your search.
+            <div className="placements-empty" style={{ gridColumn: '1/-1' }}>
+              <div className="placements-empty-icon"><Briefcase size={28} /></div>
+              <h2 className="placements-empty-title">No matching drives</h2>
+              <p className="placements-empty-text">Adjust search, filters, or eligibility to see more opportunities.</p>
             </div>
           ) : (
             filtered.map(d => (
