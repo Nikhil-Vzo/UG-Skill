@@ -1,4 +1,4 @@
-# UGSkill — Project Progress Tracker
+# UGSkill — Project Progress Track
 
 > Last updated: April 29, 2026
 
