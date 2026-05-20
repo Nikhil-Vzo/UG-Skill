@@ -416,6 +416,60 @@ export const ExamInterface: React.FC = () => {
 
   }, [submitted, attemptId, handleAiIncident]);
 
+  // ── Browser Events Proctoring (Tab Switch, Fullscreen, Clipboard) ──
+  useEffect(() => {
+    if (submitted || !attemptId || !examId) return;
+
+    const logEvent = (type: string, severity: string, metadata: any) => {
+      api.post('/proctoring/events', {
+        attemptId,
+        examId,
+        type,
+        severity,
+        aiConfidence: 1.0,
+        metadata: { ...metadata, timestamp: new Date().toISOString() },
+      }).catch(() => {});
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        logEvent('tab_switch', 'HIGH', { action: 'hidden' });
+        setProctoringEvents(evs => [...evs, {
+          type: 'tab_switch', severity: 'HIGH', message: 'Tab switched or minimized during exam', ts: Date.now()
+        }]);
+      }
+    };
+
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        logEvent('fullscreen_exit', 'MEDIUM', { action: 'exit' });
+        setProctoringEvents(evs => [...evs, {
+          type: 'fullscreen_exit', severity: 'MEDIUM', message: 'Exited fullscreen mode', ts: Date.now()
+        }]);
+      }
+    };
+
+    const onClipboard = (e: ClipboardEvent) => {
+      logEvent('copy_paste', 'MEDIUM', { action: e.type });
+      setProctoringEvents(evs => [...evs, {
+        type: 'copy_paste', severity: 'MEDIUM', message: `Clipboard ${e.type} detected`, ts: Date.now()
+      }]);
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('copy', onClipboard);
+    document.addEventListener('paste', onClipboard);
+    document.addEventListener('cut', onClipboard);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('copy', onClipboard);
+      document.removeEventListener('paste', onClipboard);
+      document.removeEventListener('cut', onClipboard);
+    };
+  }, [submitted, attemptId, examId]);
 
   const formatTime = (secs: number) => {
     const h = Math.floor(secs / 3600);

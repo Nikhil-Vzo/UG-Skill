@@ -21,6 +21,16 @@ export class ProctoringService {
 
   async heartbeat(attemptId: string, studentId: string) {
     this.heartbeats.set(attemptId, Date.now());
+    // Persist heartbeat to DB to leave an audit trail
+    const [attempt] = await db.select({ examId: examAttempts.examId })
+      .from(examAttempts).where(eq(examAttempts.id, attemptId));
+    if (attempt) {
+      // Ingest silently
+      this.ingestEvent({
+        attemptId, examId: attempt.examId, studentId,
+        type: 'heartbeat' as any, severity: 'LOW', aiConfidence: 1.0, metadata: { status: 'ok' }
+      }).catch(err => logger.warn(`Failed to persist heartbeat: ${err.message}`));
+    }
   }
 
   private async checkHeartbeats() {
@@ -33,7 +43,7 @@ export class ProctoringService {
         if (attempt) {
           await this.ingestEvent({
             attemptId, examId: attempt.examId, studentId: attempt.studentId,
-            type: 'Heartbeat Lost', severity: 'HIGH', metadata: { details: 'Missed 3 heartbeats' }
+            type: 'heartbeat' as any, severity: 'HIGH', aiConfidence: 1.0, metadata: { status: 'lost', details: 'Missed 3 heartbeats' }
           });
         }
         this.heartbeats.delete(attemptId);
