@@ -20,6 +20,7 @@ export const users = pgTable('users', {
   fullName: text('full_name').notNull(),
   avatarUrl: text('avatar_url'),
   resumeUrl: text('resume_url'),
+  resumeData: jsonb('resume_data'),
   phone: text('phone'),
 
   roles: text('roles').array().default(sql`ARRAY['student']::TEXT[]`),

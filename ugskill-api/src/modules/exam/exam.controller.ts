@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { examService } from './exam.service';
 import { logger } from '../../lib/logger';
+import { logAction } from '../audit/audit.service';
 
 // --- EXAM CRUD ---
 
@@ -8,6 +9,14 @@ export const createExam = async (req: Request, res: Response, next: NextFunction
   try {
     const creatorId = req.user!.userId;
     const exam = await examService.createExam(creatorId, req.body);
+    await logAction({
+      actorId: creatorId,
+      action: 'EXAM_CREATED',
+      entityType: 'exam',
+      entityId: exam.id,
+      newValue: req.body,
+      ipAddress: req.ip,
+    });
     res.status(201).json({ success: true, data: exam });
   } catch (error) {
     next(error);
@@ -67,6 +76,14 @@ export const updateExam = async (req: Request, res: Response, next: NextFunction
   try {
     const id = req.params.id as string;
     const updated = await examService.updateExam(id, req.body);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'EXAM_UPDATED',
+      entityType: 'exam',
+      entityId: id,
+      newValue: req.body,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, data: updated });
   } catch (error) {
     next(error);
@@ -77,6 +94,13 @@ export const deleteExam = async (req: Request, res: Response, next: NextFunction
   try {
     const id = req.params.id as string;
     await examService.deleteExam(id);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'EXAM_DELETED',
+      entityType: 'exam',
+      entityId: id,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, message: 'Exam deleted successfully' });
   } catch (error) {
     next(error);
@@ -110,6 +134,14 @@ export const grantBatchAccess = async (req: Request, res: Response, next: NextFu
     const examId = req.params.id as string;
     const { batchId } = req.body;
     const access = await examService.grantBatchAccess(examId, batchId, req.user!.userId);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'EXAM_BATCH_ACCESS_GRANTED',
+      entityType: 'exam',
+      entityId: examId,
+      newValue: { batchId },
+      ipAddress: req.ip,
+    });
     res.status(201).json({ success: true, data: access });
   } catch (error) {
     next(error);

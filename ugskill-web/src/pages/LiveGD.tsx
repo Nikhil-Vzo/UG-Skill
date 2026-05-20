@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Button } from '../components/ui/Button';
-import { Skeleton } from '../components/loaders/Skeleton';
-import { Mic, MicOff, Video, VideoOff, MessageSquare, Users, Hand, AlertCircle } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, MessageSquare, Users, Hand, AlertCircle, PhoneMissed, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
 import { connectSocket, disconnectSocket } from '../lib/socket';
 import api from '../lib/api';
@@ -35,15 +33,18 @@ const VideoParticipant: React.FC<{ p: Participant, stream?: MediaStream | null, 
 
   return (
     <div style={{
-      backgroundColor: '#111',
+      backgroundColor: '#0f172a',
       position: 'relative',
       overflow: 'hidden',
-      border: p.isSpeaking ? '3px solid var(--primary-glow)' : '3px solid transparent',
+      borderRadius: '16px',
+      border: p.isSpeaking ? '2px solid #14b8a6' : '1px solid rgba(255,255,255,0.05)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '200px',
-      transition: 'border-color 0.2s',
+      height: '100%',
+      transition: 'all 0.3s ease',
+      boxShadow: p.isSpeaking ? '0 0 20px rgba(20,184,166,0.3)' : 'none',
     }}>
       {stream ? (
         <video
@@ -54,16 +55,18 @@ const VideoParticipant: React.FC<{ p: Participant, stream?: MediaStream | null, 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       ) : (
-        <div style={{ width: '80px', height: '80px', background: 'var(--primary-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: 'var(--primary-glow)', fontWeight: 'bold' }}>
+        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#14b8a6', fontWeight: 'bold' }}>
           {typeof p.name === 'string' ? p.name.charAt(0).toUpperCase() : '?'}
         </div>
       )}
-      <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', backgroundColor: 'rgba(0,0,0,0.7)', padding: '0.25rem 0.75rem', color: '#fff', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      
+      <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', backgroundColor: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(8px)', padding: '0.4rem 0.8rem', borderRadius: '8px', color: '#fff', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
         {p.name} {isLocal && '(You)'}
-        {p.isSpeaking && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }}></span>}
+        {p.isSpeaking && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 8px #22c55e' }}></span>}
       </div>
+      
       {p.handRaised && (
-        <div style={{ position: 'absolute', top: '1rem', right: '1rem', backgroundColor: 'var(--warning)', color: '#000', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', backgroundColor: 'rgba(245,158,11,0.9)', backdropFilter: 'blur(4px)', color: '#fff', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(245,158,11,0.4)' }}>
           <Hand size={18} />
         </div>
       )}
@@ -91,14 +94,14 @@ export const LiveGD: React.FC = () => {
       return res.data.data ?? res.data;
     },
     enabled: !!sessionId,
-    refetchInterval: 10_000, // Refresh participant list every 10s (until Socket.io is wired)
+    refetchInterval: 10_000, 
     retry: 1,
   });
 
   const leaveMutation = useMutation({
     mutationFn: () => api.post(`/placements/gd-sessions/${sessionId}/leave`),
     onSuccess: () => navigate('/app/placements/prep'),
-    onError: () => navigate('/app/placements/prep'), // navigate out regardless
+    onError: () => navigate('/app/placements/prep'), 
   });
 
   // Session timer
@@ -183,75 +186,79 @@ export const LiveGD: React.FC = () => {
 
   const participants = liveParticipants;
 
-  // If no sessionId provided, show a "no session" state
   if (!sessionId) {
     return (
-      <div style={{ height: 'calc(100vh - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', color: 'var(--text-low)' }}>
-        <AlertCircle size={40} style={{ opacity: 0.4 }} />
-        <p>No GD session specified. Go to Interview Prep to join an active session.</p>
-        <Button variant="primary" onClick={() => navigate('/app/placements/prep')}>Back to Prep</Button>
+      <div style={styles.centerPage}>
+        <AlertCircle size={48} color="#64748b" style={{ opacity: 0.5, marginBottom: '1rem' }} />
+        <p style={{ color: '#94a3b8', fontSize: '1.125rem' }}>No GD session specified.</p>
+        <button style={styles.primaryBtn} onClick={() => navigate('/app/placements/prep')}>Back to Prep</button>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div style={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '2rem' }}>
-        <Skeleton variant="rectangular" height={60} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', flex: 1 }}>
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} variant="rectangular" />)}
-        </div>
+      <div style={styles.centerPage}>
+        <Loader2 size={40} style={{ animation: 'spin 1s linear infinite', color: '#14b8a6', marginBottom: '1rem' }} />
+        <p style={{ color: '#94a3b8' }}>Connecting to Group Discussion...</p>
       </div>
     );
   }
 
   if (error || !session) {
     return (
-      <div style={{ height: 'calc(100vh - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
-        <AlertCircle size={40} style={{ color: 'var(--error)', opacity: 0.6 }} />
-        <p style={{ color: 'var(--text-low)' }}>Failed to load GD session. The session may have ended.</p>
-        <Button variant="primary" onClick={() => navigate('/app/placements/prep')}>Back to Prep</Button>
+      <div style={styles.centerPage}>
+        <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '1rem' }} />
+        <p style={{ color: '#f8fafc', fontSize: '1.25rem', marginBottom: '0.5rem' }}>Failed to load GD session</p>
+        <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>The session may have ended or the link is invalid.</p>
+        <button style={styles.primaryBtn} onClick={() => navigate('/app/placements/prep')}>Back to Prep</button>
       </div>
     );
   }
 
+  // Determine grid layout based on participant count (up to 4 for a nice 2x2 grid)
+  const gridStyle = participants.length > 2 
+    ? { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)' } 
+    : participants.length === 2 
+      ? { gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: '1fr' }
+      : { gridTemplateColumns: '1fr', gridTemplateRows: '1fr' };
+
   return (
-    <div style={{ height: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--surface-base)' }}>
+    <div style={styles.liveRoomPage}>
       {/* Header */}
-      <header style={{ padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--surface-well)', borderBottom: '1px solid var(--surface-highest)' }}>
+      <header style={styles.roomHeader}>
         <div>
-          <h1 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-high)', fontSize: '1.25rem', fontFamily: 'var(--font-display)' }}>{session.title}</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--error)', fontSize: '0.875rem', fontWeight: 600 }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--error)', display: 'inline-block' }}></span>
-            LIVE
-            <span style={{ color: 'var(--text-low)', fontWeight: 'normal', marginLeft: '0.5rem' }}>{formatTime(elapsedSeconds)}</span>
+          <h1 style={styles.roomTitle}>{session.title}</h1>
+          <div style={styles.liveIndicator}>
+            <span style={styles.liveDot}></span> LIVE
+            <span style={{ color: '#94a3b8', fontWeight: 'normal', marginLeft: '0.5rem' }}>{formatTime(elapsedSeconds)}</span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--surface-highest)', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-high)' }}>
-            <Users size={16} /> {participants.length}/{session.maxParticipants ?? '?'}
+          <div style={styles.participantCount}>
+            <Users size={16} color="#14b8a6" /> 
+            <span>{participants.length}/{session.maxParticipants ?? 4}</span>
           </div>
-          <Button
-            variant="outline"
-            style={{ color: 'var(--error)', borderColor: 'var(--error)' }}
+          <button
+            style={styles.leaveBtn}
             onClick={() => leaveMutation.mutate()}
             disabled={leaveMutation.isPending}
           >
-            {leaveMutation.isPending ? 'Leaving...' : 'Leave'}
-          </Button>
+            {leaveMutation.isPending ? 'Leaving...' : 'Leave GD'}
+          </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      {/* Main Content Area */}
+      <div style={styles.mainArea}>
         {/* Video Grid */}
-        <div style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
+        <div style={styles.videoArea}>
           {participants.length === 0 ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-lowest)' }}>
-              <p>Waiting for participants to join...</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
+              Waiting for participants to join...
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(280px, 1fr))`, gap: '1rem', height: '100%' }}>
+            <div style={{ display: 'grid', gap: '1rem', height: '100%', width: '100%', ...gridStyle }}>
               {participants.map(p => {
                 const isLocal = p.name === user?.fullName || (!user?.fullName && p.id === participants[0]?.id);
                 return (
@@ -267,55 +274,104 @@ export const LiveGD: React.FC = () => {
           )}
         </div>
 
-        {/* AI Facilitator Sidebar */}
-        <div style={{ width: '300px', backgroundColor: 'var(--surface-well)', borderLeft: '1px solid var(--surface-highest)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '1rem', borderBottom: '1px solid var(--surface-highest)', fontWeight: 600, color: 'var(--text-high)', fontFamily: 'var(--font-display)', fontSize: '0.875rem' }}>
-            AI Facilitator Notes
-          </div>
-          <div style={{ flex: 1, padding: '1rem', color: 'var(--text-low)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-            {session.topic && <p><strong style={{ color: 'var(--text-high)' }}>Topic:</strong> {session.topic}</p>}
-            {session.aiNotes ? (
-              <p>{session.aiNotes}</p>
-            ) : (
-              <p style={{ color: 'var(--text-lowest)', fontStyle: 'italic' }}>AI notes will appear here as the discussion progresses.</p>
+        {/* Sidebar */}
+        <div style={styles.sidebar}>
+          <div style={styles.sidebarHeader}>GD Context & AI Facilitator</div>
+          <div style={styles.sidebarContent}>
+            {session.topic && (
+              <div style={styles.topicBox}>
+                <div style={styles.topicLabel}>Current Topic</div>
+                <div style={styles.topicText}>{session.topic}</div>
+              </div>
             )}
+            
+            <div style={styles.aiNote}>
+              <div style={styles.aiNoteTitle}>AI Facilitator</div>
+              {session.aiNotes ? (
+                <p style={{ margin: 0 }}>{session.aiNotes}</p>
+              ) : (
+                <p style={{ margin: 0, color: '#94a3b8', fontStyle: 'italic' }}>Monitoring discussion balance and providing real-time prompts here...</p>
+              )}
+            </div>
+            
+            {/* Example of another note to make sidebar look full */}
+            <div style={{ ...styles.aiNote, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+              <div style={{ ...styles.aiNoteTitle, color: '#60a5fa' }}>Guidance</div>
+              <p style={{ margin: 0 }}>Make sure to let others speak. Aim for concise, impactful points.</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Controls */}
-      <footer style={{ padding: '1rem', display: 'flex', justifyContent: 'center', gap: '1rem', backgroundColor: 'var(--surface-well)', borderTop: '1px solid var(--surface-highest)' }}>
-        <Button
-          variant={micOn ? 'secondary' : 'outline'}
-          onClick={() => {
-            setMicOn(m => !m);
-            // Optionally emit gd:speak if mic is turned on, though usually doing that on audio detection is better.
-          }}
-          style={{ width: '48px', height: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: micOn ? undefined : 'var(--error)', borderColor: micOn ? undefined : 'var(--error)' }}
-        >
-          {micOn ? <Mic size={20} /> : <MicOff size={20} />}
-        </Button>
-        <Button
-          variant={videoOn ? 'secondary' : 'outline'}
-          onClick={() => setVideoOn(v => !v)}
-          style={{ width: '48px', height: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: videoOn ? undefined : 'var(--error)', borderColor: videoOn ? undefined : 'var(--error)' }}
-        >
-          {videoOn ? <Video size={20} /> : <VideoOff size={20} />}
-        </Button>
-        <Button
-          variant={handRaised ? 'primary' : 'secondary'}
-          onClick={() => setHandRaised(h => !h)}
-          style={{ width: '48px', height: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Hand size={20} />
-        </Button>
-        <Button
-          variant="secondary"
-          style={{ width: '48px', height: '48px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <MessageSquare size={20} />
-        </Button>
+      <footer style={styles.controlsFooter}>
+        <div style={styles.controlGroup}>
+          <button 
+            style={micOn ? styles.controlBtn : styles.controlBtnOff} 
+            onClick={() => setMicOn(!micOn)}
+            title={micOn ? "Mute Microphone" : "Unmute Microphone"}
+          >
+            {micOn ? <Mic size={20} /> : <MicOff size={20} />}
+          </button>
+          <button 
+            style={videoOn ? styles.controlBtn : styles.controlBtnOff} 
+            onClick={() => setVideoOn(!videoOn)}
+            title={videoOn ? "Turn Off Camera" : "Turn On Camera"}
+          >
+            {videoOn ? <Video size={20} /> : <VideoOff size={20} />}
+          </button>
+          <button 
+            style={handRaised ? styles.controlBtnActive : styles.controlBtn} 
+            onClick={() => setHandRaised(!handRaised)}
+            title={handRaised ? "Lower Hand" : "Raise Hand"}
+          >
+            <Hand size={20} />
+          </button>
+          <button style={styles.controlBtn} title="Chat">
+            <MessageSquare size={20} />
+          </button>
+          <button style={styles.endCallBtn} onClick={() => leaveMutation.mutate()}>
+            <PhoneMissed size={20} />
+          </button>
+        </div>
       </footer>
     </div>
   );
 };
+
+const styles: Record<string, React.CSSProperties> = {
+  centerPage: { height: '100vh', background: '#020617', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center' },
+  primaryBtn: { padding: '0.75rem 1.5rem', background: 'linear-gradient(135deg, #14b8a6, #0d9488)', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 600, cursor: 'pointer', marginTop: '1rem', boxShadow: '0 4px 12px rgba(20,184,166,0.3)' },
+  
+  // Live Room Styles
+  liveRoomPage: { height: '100vh', background: '#020617', display: 'flex', flexDirection: 'column', color: '#f8fafc', overflow: 'hidden' },
+  roomHeader: { padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.05)' },
+  roomTitle: { margin: 0, fontSize: '1.25rem', fontWeight: 600 },
+  liveIndicator: { display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.875rem', fontWeight: 600, marginTop: '0.25rem' },
+  liveDot: { width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444', animation: 'pulse 2s infinite' },
+  participantCount: { display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500 },
+  leaveBtn: { padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.5)', color: '#ef4444', borderRadius: 8, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, transition: 'all 0.2s' },
+  
+  mainArea: { flex: 1, display: 'flex', overflow: 'hidden', padding: '1rem', gap: '1rem' },
+  videoArea: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  
+  sidebar: { width: 320, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(12px)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  sidebarHeader: { padding: '1rem', fontWeight: 600, borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' },
+  sidebarContent: { flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' },
+  
+  topicBox: { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' },
+  topicLabel: { fontSize: '0.75rem', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '0.5rem', fontWeight: 600 },
+  topicText: { fontSize: '1rem', color: '#f8fafc', lineHeight: 1.5 },
+  
+  aiNote: { background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.2)', padding: '1rem', borderRadius: 8, fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.5 },
+  aiNoteTitle: { color: '#2dd4bf', fontWeight: 600, marginBottom: '0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  
+  controlsFooter: { padding: '1rem', display: 'flex', justifyContent: 'center', background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.05)' },
+  controlGroup: { display: 'flex', gap: '1rem', alignItems: 'center' },
+  controlBtn: { width: 52, height: 52, borderRadius: 26, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' },
+  controlBtnActive: { width: 52, height: 52, borderRadius: 26, background: 'rgba(245,158,11,0.2)', border: '1px solid rgba(245,158,11,0.5)', color: '#fbbf24', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 0 15px rgba(245,158,11,0.3)' },
+  controlBtnOff: { width: 52, height: 52, borderRadius: 26, background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' },
+  endCallBtn: { width: 64, height: 52, borderRadius: 26, background: '#ef4444', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', padding: '0 1rem', boxShadow: '0 4px 15px rgba(239,68,68,0.4)' }
+};
+
+export default LiveGD;

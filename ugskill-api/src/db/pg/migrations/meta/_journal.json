@@ -22,6 +22,13 @@
       "when": 1777916607351,
       "tag": "0002_steep_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779237496933,
+      "tag": "0003_fine_gateway",
+      "breakpoints": true
     }
   ]
 }
