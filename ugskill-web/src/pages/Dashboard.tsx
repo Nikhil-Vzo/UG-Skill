@@ -209,21 +209,22 @@ export const Dashboard: React.FC = () => {
     },
   ], [isActiveToday, courses, currentStreak]);
 
+  const nextExam = assessments[0];
+
   return (
-    <div className="dashboard-content" style={{ padding: '2rem' }}>
+    <div className="dashboard-content">
 
       {/* ── Header ──────────────────────────────────────────── */}
       <header className="db-header">
         <div className="db-welcome">
           <div className="db-badge">
-            <Sparkles size={13} /> Student Dashboard
+            <Sparkles size={13} /> Learning Overview
           </div>
           <h1 className="db-title">
-            Welcome back, <span className="db-name">{user?.fullName?.split(' ')[0] || 'Initiate'}</span>
-            <span className="db-wave">👋</span>
+            Welcome back, <span className="db-name">{user?.fullName?.split(' ')[0] || 'Student'}</span>
           </h1>
           <p className="db-subtitle">
-            Level <strong style={{ color: levelColor }}>{level} {levelTitle}</strong> · {totalXP.toLocaleString()} XP total
+            Your learning, assessment, and placement readiness in one focused workspace.
           </p>
         </div>
         <div className="db-header-actions">
@@ -256,11 +257,11 @@ export const Dashboard: React.FC = () => {
       {/* ── Stat Cards ─────────────────────────────────────── */}
       <section className="db-stats">
         {[
-          { icon: <BarChart3 size={20} />, value: `${overallProgress}%`, label: 'Avg Progress', color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
-          { icon: <BookOpen size={20} />, value: `${completedCourses}/${courses.length}`, label: 'Completed', color: '#6366f1', bg: 'rgba(99,102,241,0.1)' },
-          { icon: <AlertTriangle size={20} />, value: upcomingDeadlines, label: 'Due Soon', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-          { icon: <Flame size={20} />, value: currentStreak, label: 'Day Streak', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-          { icon: <Gem size={20} />, value: `${totalXP.toLocaleString()}`, label: 'Total XP', color: levelColor, bg: `${levelColor}18` },
+          { icon: <BarChart3 size={20} />, value: `${overallProgress}%`, label: 'Learning Progress', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
+          { icon: <BookOpen size={20} />, value: `${completedCourses}/${courses.length}`, label: 'Courses Completed', color: '#60a5fa', bg: 'rgba(96,165,250,0.1)' },
+          { icon: <AlertTriangle size={20} />, value: upcomingDeadlines, label: 'Priority Exams', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+          { icon: <Flame size={20} />, value: currentStreak, label: 'Active Streak', color: '#fb7185', bg: 'rgba(251,113,133,0.1)' },
+          { icon: <Gem size={20} />, value: `${totalXP.toLocaleString()}`, label: 'Readiness XP', color: levelColor, bg: `${levelColor}18` },
         ].map((s, i) => (
           <div key={i} className="db-stat-card">
             <div className="db-stat-icon" style={{ background: s.bg, color: s.color }}>{s.icon}</div>
@@ -280,7 +281,7 @@ export const Dashboard: React.FC = () => {
           <div className="db-panel-header">
             <div className="db-panel-title"><Flame size={18} color="#ef4444" /> Activity Streak</div>
             <Badge variant={currentStreak >= 7 ? 'success' : currentStreak >= 3 ? 'warning' : 'default'} size="sm">
-              {currentStreak >= 7 ? '🔥 Perfect Week!' : currentStreak >= 3 ? `${currentStreak} day streak` : `${currentStreak} days`}
+              {currentStreak >= 7 ? 'Perfect week' : currentStreak >= 3 ? `${currentStreak} day streak` : `${currentStreak} days`}
             </Badge>
           </div>
           <div className="db-streak-calendar">
@@ -308,9 +309,9 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="db-streak-msg">
-            {currentStreak === 0 ? '🚀 Start your streak today!' :
-             currentStreak < 3 ? '💪 Good start! Keep going!' :
-             currentStreak < 7 ? '🔥 You\'re on fire! Don\'t stop!' : '🏆 Perfect week! Legendary!'}
+            {currentStreak === 0 ? 'Start a focused study session today.' :
+             currentStreak < 3 ? 'Good start. Build consistency this week.' :
+             currentStreak < 7 ? 'Strong momentum. Keep the streak active.' : 'Perfect week. Keep protecting the routine.'}
           </div>
         </div>
 
@@ -405,7 +406,7 @@ export const Dashboard: React.FC = () => {
             ) : assessments.length === 0 ? (
               <div className="db-empty-state">
                 <Trophy size={32} color="#34d39955" />
-                <span>All caught up! 🎉</span>
+                <span>No exams due right now</span>
                 <p style={{ color: '#737373', fontSize: '0.8rem', margin: 0 }}>No upcoming exams</p>
               </div>
             ) : (
@@ -486,8 +487,9 @@ export const Dashboard: React.FC = () => {
       <section className="db-courses-section">
         <div className="db-section-header">
           <h2 className="db-section-title">
-            <Activity size={20} color="#6366f1" /> My Learning Journey
+            <Activity size={20} color="#60a5fa" /> Active Courses
           </h2>
+          {nextExam && <span className="db-next-exam">Next exam: {nextExam.title}</span>}
           <button className="db-link-btn" onClick={() => navigate('/app/courses')}>
             All courses <ArrowRight size={14} />
           </button>
