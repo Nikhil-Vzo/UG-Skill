@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Plus, GripVertical, FileVideo, FileText, Link as LinkIcon,
-  AlignLeft, Settings, Save, AlertCircle, Loader, ChevronDown,
+  AlignLeft, Settings, Save, AlertCircle, AlertTriangle, Loader, ChevronDown,
   ChevronUp, Trash2, Image, Upload, X, Check, Eye,
   EyeOff, Edit2,
 } from 'lucide-react';
@@ -11,6 +11,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { FileUpload } from '../../components/ui/FileUpload';
 import { RichTextEditor } from '../../components/ui/RichTextEditor';
+import { Modal } from '../../components/ui/Modal';
 import api from '../../lib/api';
 import './CourseBuilder.css';
 
@@ -117,23 +118,17 @@ const publishCourse = async (courseId: string) => {
 
 /* ─── Type Picker Modal ──────────────────────────────────────── */
 const TypePickerModal: React.FC<{ onPick: (t: LectureType) => void; onClose: () => void }> = ({ onPick, onClose }) => (
-  <div className="cb-modal-overlay" onClick={onClose}>
-    <div className="cb-modal" onClick={(e) => e.stopPropagation()}>
-      <div className="cb-modal-header">
-        <h3>Choose Lesson Type</h3>
-        <button className="cb-icon-btn" onClick={onClose}><X size={18} /></button>
-      </div>
-      <div className="cb-type-grid">
-        {(Object.entries(LECTURE_TYPE_META) as [LectureType, typeof LECTURE_TYPE_META[LectureType]][]).map(([type, meta]) => (
-          <button key={type} className="cb-type-card" onClick={() => { onPick(type); onClose(); }}>
-            <span className="cb-type-icon" style={{ background: `${meta.color}20`, color: meta.color }}>{meta.icon}</span>
-            <strong>{meta.label}</strong>
-            <span className="cb-type-desc">{meta.desc}</span>
-          </button>
-        ))}
-      </div>
+  <Modal isOpen={true} onClose={onClose} title="Choose Lesson Type">
+    <div className="cb-type-grid">
+      {(Object.entries(LECTURE_TYPE_META) as [LectureType, typeof LECTURE_TYPE_META[LectureType]][]).map(([type, meta]) => (
+        <button key={type} className="cb-type-card" onClick={() => { onPick(type); onClose(); }}>
+          <span className="cb-type-icon" style={{ background: `${meta.color}20`, color: meta.color }}>{meta.icon}</span>
+          <strong>{meta.label}</strong>
+          <span className="cb-type-desc">{meta.desc}</span>
+        </button>
+      ))}
     </div>
-  </div>
+  </Modal>
 );
 
 /* ─── Resource Row ───────────────────────────────────────────── */
@@ -226,7 +221,18 @@ const LectureEditPanel: React.FC<{
             </div>
           ) : (
             <FileUpload category="course_content" acceptedTypes="video/mp4,video/webm"
-              maxSizeMB={2000} onUploadComplete={(p) => upd('video_url', p)} />
+              maxSizeMB={2000} onUploadComplete={(p, file) => {
+                upd('video_url', p);
+                if (file) {
+                  const video = document.createElement('video');
+                  video.preload = 'metadata';
+                  video.onloadedmetadata = () => {
+                    window.URL.revokeObjectURL(video.src);
+                    upd('duration_secs', Math.round(video.duration));
+                  };
+                  video.src = URL.createObjectURL(file);
+                }
+              }} />
           )}
           <label className="cb-label mt">
             Transcript File <span className="cb-optional">(optional — AI will auto-generate later)</span>
@@ -283,6 +289,48 @@ const LectureEditPanel: React.FC<{
           <RichTextEditor content={lecture.content} onChange={(html) => upd('content', html)}
             placeholder="Write your lesson — supports headings, lists, code blocks, links…"
             minHeight={360} />
+        </div>
+      )}
+
+      {/* Duration input for video & link types */}
+      {(lecture.type === 'video' || lecture.type === 'external_link') && (
+        <div className="cb-section-block" style={{ marginTop: '0.75rem' }}>
+          <label className="cb-label">Lesson Duration</label>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <input
+                type="number"
+                min={0}
+                className="cb-input"
+                style={{ width: '80px', textAlign: 'center' }}
+                value={Math.floor((lecture.duration_secs || 0) / 60) || ''}
+                placeholder="0"
+                onChange={(e) => {
+                  const m = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  const s = (lecture.duration_secs || 0) % 60;
+                  upd('duration_secs', (m * 60) + s);
+                }}
+              />
+              <span className="cb-optional">min</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <input
+                type="number"
+                min={0}
+                max={59}
+                className="cb-input"
+                style={{ width: '80px', textAlign: 'center' }}
+                value={((lecture.duration_secs || 0) % 60) || ''}
+                placeholder="00"
+                onChange={(e) => {
+                  const m = Math.floor((lecture.duration_secs || 0) / 60);
+                  const s = Math.min(59, Math.max(0, parseInt(e.target.value, 10) || 0));
+                  upd('duration_secs', (m * 60) + s);
+                }}
+              />
+              <span className="cb-optional">sec</span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -351,6 +399,15 @@ export const CourseBuilder: React.FC = () => {
   const [editingLectureId, setEditingLectureId] = useState<string | null>(null);
   const [typePickerFor, setTypePickerFor] = useState<{ sectionId: string } | null>(null);
   const [saveOk, setSaveOk] = useState(false);
+
+  /* ── Drag & Drop states ── */
+  const [draggedSectionIndex, setDraggedSectionIndex] = useState<number | null>(null);
+  const [draggedLectureInfo, setDraggedLectureInfo] = useState<{ sectionId: string; index: number } | null>(null);
+  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
+  const [dragOverLectureId, setDragOverLectureId] = useState<string | null>(null);
+
+  /* ── Validation & Modal states ── */
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
   const { data: courseData, isPending, isError } = useQuery<CourseDetails>({
     queryKey: ['course-builder', courseId],
@@ -481,6 +538,212 @@ export const CourseBuilder: React.FC = () => {
 
   const totalLectures = localSections.reduce((a, s) => a + s.lectures.length, 0);
 
+  /* ── Drag & Drop handlers ── */
+  const handleSectionDragStart = (e: React.DragEvent, index: number) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.cb-grip')) {
+      e.preventDefault();
+      return;
+    }
+    setDraggedLectureInfo(null);
+    setDraggedSectionIndex(index);
+    e.dataTransfer.setData('text/plain', `section:${index}`);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleSectionDragOver = (e: React.DragEvent, sectionId: string) => {
+    e.preventDefault();
+    if (draggedSectionIndex !== null) {
+      setDragOverSectionId(sectionId);
+    }
+  };
+
+  const handleSectionDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    setDragOverSectionId(null);
+    const data = e.dataTransfer.getData('text/plain');
+    if (data.startsWith('section:')) {
+      const sourceIndex = parseInt(data.split(':')[1], 10);
+      if (sourceIndex === targetIndex || isNaN(sourceIndex)) return;
+
+      const reordered = [...localSections];
+      const [removed] = reordered.splice(sourceIndex, 1);
+      reordered.splice(targetIndex, 0, removed);
+      setLocalSections(reordered);
+    }
+    setDraggedSectionIndex(null);
+  };
+
+  const handleSectionDragEnd = () => {
+    setDraggedSectionIndex(null);
+    setDragOverSectionId(null);
+  };
+
+  const handleLectureDragStart = (e: React.DragEvent, sectionId: string, lectureIndex: number) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.cb-grip-sm')) {
+      e.preventDefault();
+      return;
+    }
+    e.stopPropagation();
+    setDraggedSectionIndex(null);
+    setDraggedLectureInfo({ sectionId, index: lectureIndex });
+    e.dataTransfer.setData('text/plain', `lecture:${sectionId}:${lectureIndex}`);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleLectureDragOver = (e: React.DragEvent, targetLectureId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedLectureInfo !== null) {
+      setDragOverLectureId(targetLectureId);
+    }
+  };
+
+  const handleLectureDrop = (e: React.DragEvent, targetSectionId: string, targetLectureIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverLectureId(null);
+    const data = e.dataTransfer.getData('text/plain');
+    if (data.startsWith('lecture:')) {
+      const parts = data.split(':');
+      const sourceSectionId = parts[1];
+      const sourceLectureIndex = parseInt(parts[2], 10);
+
+      const sourceSectionIdx = localSections.findIndex(s => s.id === sourceSectionId);
+      const targetSectionIdx = localSections.findIndex(s => s.id === targetSectionId);
+
+      if (sourceSectionIdx === -1 || targetSectionIdx === -1 || isNaN(sourceLectureIndex)) return;
+
+      const newSections = [...localSections];
+      const sourceLectures = [...newSections[sourceSectionIdx].lectures];
+      const [movedLecture] = sourceLectures.splice(sourceLectureIndex, 1);
+
+      if (sourceSectionId === targetSectionId) {
+        sourceLectures.splice(targetLectureIndex, 0, movedLecture);
+        newSections[sourceSectionIdx] = {
+          ...newSections[sourceSectionIdx],
+          lectures: sourceLectures
+        };
+      } else {
+        const targetLectures = [...newSections[targetSectionIdx].lectures];
+        targetLectures.splice(targetLectureIndex, 0, movedLecture);
+        newSections[sourceSectionIdx] = {
+          ...newSections[sourceSectionIdx],
+          lectures: sourceLectures
+        };
+        newSections[targetSectionIdx] = {
+          ...newSections[targetSectionIdx],
+          lectures: targetLectures
+        };
+      }
+
+      setLocalSections(newSections);
+    }
+    setDraggedLectureInfo(null);
+  };
+
+  const handleLecturesContainerDrop = (e: React.DragEvent, targetSectionId: string) => {
+    e.preventDefault();
+    setDragOverLectureId(null);
+    const data = e.dataTransfer.getData('text/plain');
+    if (data.startsWith('lecture:')) {
+      const parts = data.split(':');
+      const sourceSectionId = parts[1];
+      const sourceLectureIndex = parseInt(parts[2], 10);
+
+      if (sourceSectionId === targetSectionId) return;
+
+      const sourceSectionIdx = localSections.findIndex(s => s.id === sourceSectionId);
+      const targetSectionIdx = localSections.findIndex(s => s.id === targetSectionId);
+
+      if (sourceSectionIdx === -1 || targetSectionIdx === -1 || isNaN(sourceLectureIndex)) return;
+
+      const newSections = [...localSections];
+      const sourceLectures = [...newSections[sourceSectionIdx].lectures];
+      const [movedLecture] = sourceLectures.splice(sourceLectureIndex, 1);
+
+      const targetLectures = [...newSections[targetSectionIdx].lectures, movedLecture];
+
+      newSections[sourceSectionIdx] = {
+        ...newSections[sourceSectionIdx],
+        lectures: sourceLectures
+      };
+      newSections[targetSectionIdx] = {
+        ...newSections[targetSectionIdx],
+        lectures: targetLectures
+      };
+
+      setLocalSections(newSections);
+    }
+    setDraggedLectureInfo(null);
+  };
+
+  const handleLectureDragEnd = () => {
+    setDraggedLectureInfo(null);
+    setDragOverLectureId(null);
+  };
+
+  /* ── Up/Down Reordering Arrow Actions ── */
+  const moveSection = (index: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= localSections.length) return;
+    const reordered = [...localSections];
+    const temp = reordered[index];
+    reordered[index] = reordered[targetIdx];
+    reordered[targetIdx] = temp;
+    setLocalSections(reordered);
+  };
+
+  const moveLecture = (sectionId: string, lectureIndex: number, direction: 'up' | 'down') => {
+    const sectionIdx = localSections.findIndex(s => s.id === sectionId);
+    if (sectionIdx === -1) return;
+    const targetIdx = direction === 'up' ? lectureIndex - 1 : lectureIndex + 1;
+    const lectures = localSections[sectionIdx].lectures;
+    if (targetIdx < 0 || targetIdx >= lectures.length) return;
+
+    const reorderedLectures = [...lectures];
+    const temp = reorderedLectures[lectureIndex];
+    reorderedLectures[lectureIndex] = reorderedLectures[targetIdx];
+    reorderedLectures[targetIdx] = temp;
+
+    const newSections = [...localSections];
+    newSections[sectionIdx] = {
+      ...newSections[sectionIdx],
+      lectures: reorderedLectures
+    };
+    setLocalSections(newSections);
+  };
+
+  /* ── Validation Checklist Helpers ── */
+  const getValidationIssues = useCallback(() => {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    if (!title.trim()) errors.push("Course title is empty.");
+    if (!description.trim() || description === '<p></p>') errors.push("Course description is empty.");
+    if (!thumbnailUrl) warnings.push("Course thumbnail is missing.");
+    if (localSections.length === 0) {
+      errors.push("Curriculum has no modules.");
+    } else {
+      localSections.forEach((s) => {
+        if (s.lectures.length === 0) {
+          warnings.push(`Module "${s.title}" has no lessons.`);
+        }
+        s.lectures.forEach((l) => {
+          if (getLectureStatus(l) === 'empty') {
+            errors.push(`Lesson "${l.title}" in Module "${s.title}" has no content attached.`);
+          }
+        });
+      });
+    }
+
+    return { errors, warnings };
+  }, [title, description, thumbnailUrl, localSections]);
+
+  const { errors: pubErrors, warnings: pubWarnings } = getValidationIssues();
+  const hasErrors = pubErrors.length > 0;
+
   if (!isNew && isPending) return (
     <div className="cb-center"><Loader size={24} className="cb-spin" /> Loading course…</div>
   );
@@ -504,7 +767,7 @@ export const CourseBuilder: React.FC = () => {
             {saveMutation.isPending ? 'Saving…' : saveOk ? 'Saved!' : isNew ? 'Create Course' : 'Save'}
           </Button>
           {!isNew && (
-            <Button variant="primary" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
+            <Button variant="primary" onClick={() => setIsPublishModalOpen(true)} disabled={publishMutation.isPending}>
               {publishMutation.isPending ? 'Publishing…' : 'Publish Course'}
             </Button>
           )}
@@ -531,14 +794,14 @@ export const CourseBuilder: React.FC = () => {
                 <input className="cb-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter course title..." />
               </div>
 
-              <div className="cb-panel-row" style={{ marginBottom: '1rem' }}>
-                <label className="cb-label">Course Subtitle</label>
-                <input className="cb-input" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="Provide a brief, catchy subtitle..." />
+              <div className="cb-panel-row" style={{ marginBottom: '1.25rem' }}>
+                <label className="cb-label">Description</label>
+                <RichTextEditor content={description} onChange={(html) => setDescription(html)} placeholder="Provide a compelling overview of what students will learn..." minHeight={180} />
               </div>
 
               <div className="cb-panel-row" style={{ marginBottom: '1rem' }}>
-                <label className="cb-label">Description</label>
-                <textarea className="cb-input cb-textarea" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Provide a compelling overview..." />
+                <label className="cb-label">Course Subtitle</label>
+                <input className="cb-input" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="Provide a brief, catchy subtitle..." />
               </div>
 
               <div className="cb-panel-row" style={{ marginBottom: '1rem' }}>
@@ -642,19 +905,44 @@ export const CourseBuilder: React.FC = () => {
              </div>
           )}
 
-          {localSections.map((section) => {
+          {localSections.map((section, sIdx) => {
             const isExpanded = expandedSection === section.id;
+            const isDragOver = dragOverSectionId === section.id;
             return (
-              <Card key={section.id} className="cb-section-card">
+              <Card
+                key={section.id}
+                className={`cb-section-card${isDragOver ? ' drag-over' : ''}`}
+                draggable
+                onDragStart={(e) => handleSectionDragStart(e, sIdx)}
+                onDragOver={(e) => handleSectionDragOver(e, section.id)}
+                onDragEnd={handleSectionDragEnd}
+                onDrop={(e) => handleSectionDrop(e, sIdx)}
+              >
                 <div className="cb-section-header">
                   <div className="cb-section-left">
-                    <GripVertical size={20} className="cb-grip" />
+                    <GripVertical size={20} className="cb-grip" style={{ cursor: 'grab' }} />
                     <input className="cb-section-title-input" value={section.title}
                       onChange={(e) => updateSectionTitle(section.id, e.target.value)}
                       onClick={(e) => e.stopPropagation()} />
                     <span className="cb-count-badge">{section.lectures.length} lessons</span>
                   </div>
                   <div className="cb-section-right">
+                    <button
+                      className="cb-icon-btn"
+                      onClick={(e) => { e.stopPropagation(); moveSection(sIdx, 'up'); }}
+                      disabled={sIdx === 0}
+                      title="Move Module Up"
+                    >
+                      <ChevronUp size={16} />
+                    </button>
+                    <button
+                      className="cb-icon-btn"
+                      onClick={(e) => { e.stopPropagation(); moveSection(sIdx, 'down'); }}
+                      disabled={sIdx === localSections.length - 1}
+                      title="Move Module Down"
+                    >
+                      <ChevronDown size={16} />
+                    </button>
                     <button className="cb-icon-btn danger" onClick={() => deleteSection(section.id)}><Trash2 size={15} /></button>
                     <button className="cb-icon-btn" onClick={() => setExpandedSection(isExpanded ? null : section.id)}>
                       {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -663,34 +951,64 @@ export const CourseBuilder: React.FC = () => {
                 </div>
 
                 {isExpanded && (
-                  <div className="cb-lectures">
+                  <div
+                    className="cb-lectures"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleLecturesContainerDrop(e, section.id)}
+                  >
                     {section.lectures.length === 0 && (
                       <div className="cb-section-empty">
                         <Upload size={22} style={{ opacity: 0.4 }} />
                         <p>No lessons yet — click <strong>Add Lesson</strong> below to upload a video, PDF, document, or write a text lesson.</p>
                       </div>
                     )}
-                    {section.lectures.map((lec) => {
+                    {section.lectures.map((lec, lIdx) => {
                       const isEditing = editingLectureId === lec.id;
                       const meta = LECTURE_TYPE_META[lec.type];
                       const status = getLectureStatus(lec);
                       const badge = STATUS_BADGE[status];
+                      const isLecDragOver = dragOverLectureId === lec.id;
                       return (
-                        <div key={lec.id} className="cb-lecture-wrapper">
+                        <div
+                          key={lec.id}
+                          className={`cb-lecture-wrapper${isLecDragOver ? ' drag-over' : ''}`}
+                          draggable
+                          onDragStart={(e) => handleLectureDragStart(e, section.id, lIdx)}
+                          onDragOver={(e) => handleLectureDragOver(e, lec.id)}
+                          onDragEnd={handleLectureDragEnd}
+                          onDrop={(e) => handleLectureDrop(e, section.id, lIdx)}
+                        >
                           <div
                             className={`cb-lecture-row${isEditing ? ' active' : ''}`}
                             onClick={() => setEditingLectureId(isEditing ? null : lec.id)}
                             title={isEditing ? 'Click to collapse' : 'Click to edit & upload content'}
                           >
                             <div className="cb-lecture-left">
-                              <GripVertical size={16} className="cb-grip-sm" />
+                              <GripVertical size={16} className="cb-grip-sm" style={{ cursor: 'grab' }} />
                               <span className="cb-lec-type-icon" style={{ color: meta.color }}>{meta.icon}</span>
                               <span className="cb-lecture-title">{lec.title}</span>
                             </div>
                             <div className="cb-lecture-right">
                               <span className="cb-status-badge" style={{ color: badge.color }}>{badge.label}</span>
                               {lec.is_free_preview && <span className="cb-free-badge"><Eye size={11} /> Free</span>}
-                              {/* Edit hint when collapsed */}
+                              
+                              <button
+                                className="cb-icon-btn"
+                                onClick={(e) => { e.stopPropagation(); moveLecture(section.id, lIdx, 'up'); }}
+                                disabled={lIdx === 0}
+                                title="Move Lesson Up"
+                              >
+                                <ChevronUp size={14} />
+                              </button>
+                              <button
+                                className="cb-icon-btn"
+                                onClick={(e) => { e.stopPropagation(); moveLecture(section.id, lIdx, 'down'); }}
+                                disabled={lIdx === section.lectures.length - 1}
+                                title="Move Lesson Down"
+                              >
+                                <ChevronDown size={14} />
+                              </button>
+
                               {!isEditing && status === 'empty' && (
                                 <span className="cb-edit-hint" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', padding: '2px 8px', borderRadius: '12px', fontWeight: 600, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                   <Upload size={12} /> Upload Content
@@ -736,6 +1054,70 @@ export const CourseBuilder: React.FC = () => {
           onClose={() => setTypePickerFor(null)}
         />
       )}
+
+      {/* Pre-Publish Checklist Modal */}
+      <Modal isOpen={isPublishModalOpen} onClose={() => setIsPublishModalOpen(false)} title="Course Publish Checklist">
+        <div className="cb-publish-modal">
+          <p className="cb-publish-modal-desc">
+            We are checking if the course is ready to be published. Students will gain access to these modules and lessons once published.
+          </p>
+
+          {/* Errors List */}
+          {pubErrors.length > 0 && (
+            <div className="cb-checklist-group errors">
+              <h4>🔴 Critical Issues ({pubErrors.length})</h4>
+              <ul className="cb-checklist">
+                {pubErrors.map((err, idx) => (
+                  <li key={idx} className="cb-checklist-item error">
+                    <AlertCircle size={16} />
+                    <span>{err}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Warnings List */}
+          {pubWarnings.length > 0 && (
+            <div className="cb-checklist-group warnings">
+              <h4>🟡 Optimization Suggestions ({pubWarnings.length})</h4>
+              <ul className="cb-checklist">
+                {pubWarnings.map((warn, idx) => (
+                  <li key={idx} className="cb-checklist-item warning">
+                    <AlertCircle size={16} />
+                    <span>{warn}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Success State */}
+          {pubErrors.length === 0 && pubWarnings.length === 0 && (
+            <div className="cb-checklist-success">
+              <Check size={48} color="#22c55e" style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '0.75rem', borderRadius: '50%', marginBottom: '1rem', display: 'inline-flex' }} />
+              <h4>Your course is ready!</h4>
+              <p>All core settings are complete and all curriculum lessons have content uploaded.</p>
+            </div>
+          )}
+
+          <div className="cb-publish-modal-actions">
+            <Button variant="outline" onClick={() => setIsPublishModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              disabled={hasErrors || publishMutation.isPending}
+              onClick={() => {
+                setIsPublishModalOpen(false);
+                publishMutation.mutate();
+              }}
+            >
+              {publishMutation.isPending ? 'Publishing...' : 'Confirm Publish'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

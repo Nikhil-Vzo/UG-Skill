@@ -108,6 +108,14 @@ export const createQuestionSchema = z.object({
     media_attachments: z.array(z.any()).optional(),
     options: z.array(z.any()).optional(),
     explanation: z.string().optional(),
+    coding_language: z.enum(['javascript', 'python', 'cpp', 'java']).nullable().optional(),
+    code_template: z.string().nullable().optional(),
+    test_cases: z.array(z.object({
+      input: z.string(),
+      output: z.string()
+    })).nullable().optional(),
+    presentation_style: z.enum(['numerical', 'mcq']).nullable().optional(),
+    correct_answer: z.string().nullable().optional(),
   })
 });
 

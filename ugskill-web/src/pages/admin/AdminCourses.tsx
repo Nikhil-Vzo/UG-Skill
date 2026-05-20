@@ -48,26 +48,22 @@ const DeleteDialog: React.FC<{
   onCancel: () => void;
   isLoading: boolean;
 }> = ({ course, onConfirm, onCancel, isLoading }) => (
-  <div className="ac-delete-overlay" onClick={onCancel}>
-    <div className="ac-delete-dialog" onClick={(e) => e.stopPropagation()}>
-      <div className="ac-delete-icon">
-        <AlertTriangle size={28} color="#ef4444" />
-      </div>
-      <h3>Delete Course?</h3>
-      <p>
-        <strong>"{course.title}"</strong> will be permanently deleted along with all its
-        sections, lectures, and enrolled student data. This cannot be undone.
+  <Modal isOpen={true} onClose={onCancel} title="Delete Course?">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+        Are you sure you want to delete <strong>"{course.title}"</strong>? This will permanently delete all its
+        sections, lectures, and enrolled student data. This action cannot be undone.
       </p>
-      <div className="ac-delete-actions">
-        <button className="ac-btn-cancel" onClick={onCancel} disabled={isLoading}>
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+        <Button variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
-        </button>
-        <button className="ac-btn-delete" onClick={onConfirm} disabled={isLoading}>
+        </Button>
+        <Button variant="primary" style={{ backgroundColor: 'var(--error)', borderColor: 'var(--error)' }} onClick={onConfirm} disabled={isLoading}>
           {isLoading ? 'Deleting…' : 'Yes, Delete Course'}
-        </button>
+        </Button>
       </div>
     </div>
-  </div>
+  </Modal>
 );
 
 /* ── Course Card ── */

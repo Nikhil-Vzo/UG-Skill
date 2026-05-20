@@ -46,6 +46,8 @@ interface Incident {
 interface StudentProctor {
   attemptId: string;
   studentId: string;
+  studentName?: string;
+  studentEmail?: string;
   riskScore: number;
   violationCount: number;
   avgAiConfidence: number;
@@ -426,8 +428,11 @@ export const ExamOps: React.FC = () => {
                     onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow)'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>{student.studentId.slice(0, 8)}…</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>{student.studentName || 'Unknown Student'}</span>
+                        {student.studentEmail && <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{student.studentEmail}</span>}
+                      </div>
                       <Badge variant={risk.variant}>{risk.label}</Badge>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -496,8 +501,9 @@ export const ExamOps: React.FC = () => {
                 <Activity size={24} />
               </div>
               <div>
-                <p style={{ margin: 0, fontWeight: 600 }}>{selectedStudent.studentId.slice(0, 16)}…</p>
-                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Attempt {selectedStudent.attemptId.slice(0, 8)}…</p>
+                <p style={{ margin: 0, fontWeight: 600 }}>{selectedStudent.studentName || selectedStudent.studentId}</p>
+                {selectedStudent.studentEmail && <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{selectedStudent.studentEmail}</p>}
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Attempt {selectedStudent.attemptId?.slice(0, 8)}…</p>
               </div>
             </div>
 
