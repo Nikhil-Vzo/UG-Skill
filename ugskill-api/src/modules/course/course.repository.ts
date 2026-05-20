@@ -69,6 +69,12 @@ export class CourseRepository {
       .limit(50)
       .lean();
   }
+
+  async getCoursesByIds(ids: string[]): Promise<ICourse[]> {
+    const validIds = ids.filter(id => Types.ObjectId.isValid(id));
+    if (validIds.length === 0) return [];
+    return await CourseModel.find({ _id: { $in: validIds } }).lean();
+  }
 }
 
 export const courseRepo = new CourseRepository();

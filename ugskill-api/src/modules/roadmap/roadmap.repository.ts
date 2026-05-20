@@ -30,6 +30,12 @@ export class RoadmapRepository {
       { new: true }
     );
   }
+
+  async getRoadmapsByIds(ids: string[]): Promise<IRoadmap[]> {
+    const validIds = ids.filter(id => Types.ObjectId.isValid(id));
+    if (validIds.length === 0) return [];
+    return await RoadmapModel.find({ _id: { $in: validIds } }).lean();
+  }
 }
 
 export const roadmapRepo = new RoadmapRepository();

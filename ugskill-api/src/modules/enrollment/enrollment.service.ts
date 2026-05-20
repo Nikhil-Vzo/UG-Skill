@@ -35,7 +35,35 @@ export class EnrollmentService {
   }
 
   async getMyEnrollments(studentId: string) {
-    return await enrollmentRepo.getStudentEnrollments(studentId);
+    const allEnrollments = await enrollmentRepo.getStudentEnrollments(studentId);
+    
+    // Separate course and roadmap enrollments
+    const courseEnrollments = allEnrollments.filter(e => e.enrollableType === 'course');
+    const roadmapEnrollments = allEnrollments.filter(e => e.enrollableType === 'roadmap');
+    
+    let validCourseIds: string[] = [];
+    if (courseEnrollments.length > 0) {
+      const courseIds = courseEnrollments.map(e => e.enrollableId);
+      const existingCourses = await courseRepo.getCoursesByIds(courseIds);
+      validCourseIds = existingCourses.map(c => c._id.toString());
+    }
+
+    let validRoadmapIds: string[] = [];
+    if (roadmapEnrollments.length > 0) {
+      const roadmapIds = roadmapEnrollments.map(e => e.enrollableId);
+      const existingRoadmaps = await roadmapRepo.getRoadmapsByIds(roadmapIds);
+      validRoadmapIds = existingRoadmaps.map(r => r._id.toString());
+    }
+
+    return allEnrollments.filter(e => {
+      if (e.enrollableType === 'course') {
+        return validCourseIds.includes(e.enrollableId);
+      }
+      if (e.enrollableType === 'roadmap') {
+        return validRoadmapIds.includes(e.enrollableId);
+      }
+      return false;
+    });
   }
 
   async checkAccess(studentId: string, enrollableType: string, enrollableId: string, userBatches?: string[]) {
