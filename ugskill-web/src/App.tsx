@@ -116,12 +116,12 @@ function App() {
               <Route path="leaderboards" element={<Leaderboards />} />
 
               {/* Admin Routes */}
-              <Route path="admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'hr']}><Outlet /></ProtectedRoute>}>
+              <Route path="admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'hr', 'creator', 'faculty']}><Outlet /></ProtectedRoute>}>
                 <Route path="analytics" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
                 <Route path="users" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><UserDirectory /></ProtectedRoute>} />
                 <Route path="batches" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><BatchManagement /></ProtectedRoute>} />
-                <Route path="placements" element={<PlacementsConfig />} />
-                <Route path="placements/:driveId" element={<DriveConfig />} />
+                <Route path="placements" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'hr']}><PlacementsConfig /></ProtectedRoute>} />
+                <Route path="placements/:driveId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'hr']}><DriveConfig /></ProtectedRoute>} />
                 <Route path="placements/:driveId/applicants" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><PlacementApplicants /></ProtectedRoute>} />
                 <Route path="exams" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'creator']}><AdminExams /></ProtectedRoute>} />
                 <Route path="exams/ops" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><ExamOps /></ProtectedRoute>} />

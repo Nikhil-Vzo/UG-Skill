@@ -1,7 +1,7 @@
 import { eq, and, isNull, sql } from 'drizzle-orm';
 import { db } from '../../config/postgres';
 import { batches, batchMembers, users } from '../../db/pg/schema/core';
-import { batchCourseAccess } from '../../db/pg/schema/lms';
+import { batchCourseAccess, courseCatalog } from '../../db/pg/schema/lms';
 import { getOffset } from '../../lib/pagination';
 
 // ─── Batch CRUD ──────────────────────────────────────────
@@ -44,9 +44,27 @@ export const findAllBatches = async (page: number, perPage: number) => {
 
   const [data, countResult] = await Promise.all([
     db
-      .select()
+      .select({
+        id: batches.id,
+        name: batches.name,
+        institution: batches.institution,
+        year: batches.year,
+        description: batches.description,
+        status: batches.status,
+        createdBy: batches.createdBy,
+        expiresAt: batches.expiresAt,
+        createdAt: batches.createdAt,
+        updatedAt: batches.updatedAt,
+        deletedAt: batches.deletedAt,
+        memberCount: sql<number>`count(distinct ${batchMembers.userId})::int`,
+      })
       .from(batches)
+      .leftJoin(batchMembers, and(
+        eq(batches.id, batchMembers.batchId),
+        isNull(batchMembers.removedAt)
+      ))
       .where(whereClause)
+      .groupBy(batches.id)
       .limit(perPage)
       .offset(getOffset(page, perPage))
       .orderBy(batches.createdAt),
@@ -140,4 +158,38 @@ export const grantCourseAccess = async (batchId: string, courseId: string, grant
   }).returning();
 
   return result[0];
+};
+
+export const findBatchCourseAccess = async (batchId: string) => {
+  const result = await db
+    .select({
+      id: batchCourseAccess.id,
+      courseId: batchCourseAccess.contentId,
+      grantedAt: batchCourseAccess.grantedAt,
+      expiresAt: batchCourseAccess.expiresAt,
+      courseTitle: courseCatalog.title,
+    })
+    .from(batchCourseAccess)
+    .leftJoin(courseCatalog, eq(batchCourseAccess.contentId, courseCatalog.id))
+    .where(
+      and(
+        eq(batchCourseAccess.batchId, batchId),
+        eq(batchCourseAccess.contentType, 'course')
+      )
+    );
+  return result;
+};
+
+export const revokeCourseAccess = async (batchId: string, courseId: string) => {
+  const result = await db
+    .delete(batchCourseAccess)
+    .where(
+      and(
+        eq(batchCourseAccess.batchId, batchId),
+        eq(batchCourseAccess.contentType, 'course'),
+        eq(batchCourseAccess.contentId, courseId)
+      )
+    )
+    .returning();
+  return result[0] || null;
 };

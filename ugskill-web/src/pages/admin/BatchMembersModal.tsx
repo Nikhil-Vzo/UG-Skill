@@ -31,11 +31,13 @@ export const BatchMembersModal: React.FC<BatchMembersModalProps> = ({ batchId, b
   const { data: searchResults, isPending: isSearchPending } = useQuery({
     queryKey: ['admin-users-search', debouncedSearch],
     queryFn: async () => {
-      if (!debouncedSearch) return { users: [] };
-      const { data } = await api.get('/admin/users', { params: { search: debouncedSearch, limit: 10 } });
-      return data.data;
+      const params: any = { limit: 20 };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+      const { data } = await api.get('/admin/users', { params });
+      return { users: data.data };
     },
-    enabled: !!debouncedSearch,
   });
 
   const addMemberMutation = useMutation({
@@ -67,43 +69,43 @@ export const BatchMembersModal: React.FC<BatchMembersModalProps> = ({ batchId, b
     <Modal isOpen={true} onClose={onClose} title={`Members: ${batchName}`}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxHeight: '70vh', overflowY: 'auto', paddingRight: '0.25rem' }}>
         <div>
+          <h3 style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)', fontSize: '1rem', fontWeight: 600 }}>Add Members to Batch</h3>
+          <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>Search for students by name or email to add them to this batch.</p>
           <TextInput
             placeholder="Search users to add..."
             leftIcon={<Search size={18} />}
             value={search}
             onChange={(e) => setSearch((e.target as HTMLInputElement).value)}
           />
-          {debouncedSearch && (
-            <div style={{ marginTop: '1rem', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-              {isSearchPending ? (
-                <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>Searching...</div>
-              ) : searchResults?.users?.length > 0 ? (
-                searchResults.users.map((user: any) => (
-                  <div key={user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
-                    <div>
-                      <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{user.fullName}</div>
-                      <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{user.email}</div>
-                    </div>
-                    {memberIds.has(user.id) ? (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Added</span>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        leftIcon={<UserPlus size={16} />}
-                        onClick={() => addMemberMutation.mutate(user.id)}
-                        disabled={addMemberMutation.isPending}
-                      >
-                        Add
-                      </Button>
-                    )}
+          <div style={{ marginTop: '1rem', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+            {isSearchPending ? (
+              <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>Loading users...</div>
+            ) : searchResults?.users?.length > 0 ? (
+              searchResults.users.map((user: any) => (
+                <div key={user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
+                  <div>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{user.fullName}</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{user.email}</div>
                   </div>
-                ))
-              ) : (
-                <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>No users found.</div>
-              )}
-            </div>
-          )}
+                  {memberIds.has(user.id) ? (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Added</span>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      leftIcon={<UserPlus size={16} />}
+                      onClick={() => addMemberMutation.mutate(user.id)}
+                      disabled={addMemberMutation.isPending}
+                    >
+                      Add
+                    </Button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>No users found.</div>
+            )}
+          </div>
         </div>
 
         <div>

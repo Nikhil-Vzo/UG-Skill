@@ -21,8 +21,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
 
   // Filter admin items based on role
   const visibleAdminItems = ADMIN_NAV_ITEMS.filter(item => {
-    if (isHR) return item.to === '/app/admin/placements'; 
-    return true; 
+    if (user?.roles?.some(r => ['admin', 'super_admin'].includes(r))) {
+      return true;
+    }
+    if (isHR) {
+      return item.to === '/app/admin/placements';
+    }
+    const isCreatorOrFaculty = user?.roles?.some(r => ['creator', 'faculty'].includes(r));
+    if (isCreatorOrFaculty) {
+      return [
+        '/app/admin/courses',
+        '/app/admin/quizzes/builder',
+        '/app/admin/exams'
+      ].includes(item.to);
+    }
+    return false;
   });
 
   return (

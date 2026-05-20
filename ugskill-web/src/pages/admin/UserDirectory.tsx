@@ -27,7 +27,10 @@ interface UsersResponse {
 /* ---------- fetchers ---------- */
 const fetchUsers = async (page: number, search: string): Promise<UsersResponse> => {
   const { data } = await api.get('/admin/users', { params: { page, limit: 20, search: search || undefined } });
-  return data.data;
+  return {
+    users: data.data,
+    meta: data.meta,
+  };
 };
 
 const patchUserRole = async ({ userId, role }: { userId: string; role: string }) => {

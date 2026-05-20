@@ -31,5 +31,6 @@ router.delete('/:id/members/:userId', requireRole(['admin']), validate(removeMem
 
 // Course access (admin only)
 router.post('/:id/course-access', requireRole(['admin']), validate(grantCourseAccessSchema), batchController.grantCourseAccess);
+router.delete('/:id/course-access/:courseId', requireRole(['admin']), batchController.revokeCourseAccess);
 
 export default router;

@@ -7,6 +7,7 @@ import { logAction } from '../audit/audit.service';
 import { logger } from '../../lib/logger';
 import type { RegisterInput, LoginInput } from './auth.schemas';
 import { events, APP_EVENTS } from '../../lib/events';
+import { progressService } from '../progress/progress.service';
 
 // Helper: hash a refresh token for storage (so it's not stored in plain text)
 const hashToken = (token: string): string => {
@@ -15,7 +16,7 @@ const hashToken = (token: string): string => {
 
 // ─── Register ────────────────────────────────────────────
 
-export const register = async (data: RegisterInput, ip?: string) => {
+export const register = async (data: RegisterInput, ip?: string, timezone?: string) => {
   // 1. Check if user exists
   const existing = await authRepo.findUserByEmail(data.email);
   if (existing) {
@@ -76,6 +77,15 @@ export const register = async (data: RegisterInput, ip?: string) => {
     createdAt: user.createdAt,
   });
 
+  // 8. Initialize streak for student role
+  if (user.roles?.includes('student')) {
+    try {
+      await progressService.getStudentStreak(user.id, timezone);
+    } catch (err) {
+      logger.error('Failed to initialize streak on register', err);
+    }
+  }
+
   logger.info('User registered', { userId: user.id, email: user.email });
 
   return {
@@ -87,7 +97,7 @@ export const register = async (data: RegisterInput, ip?: string) => {
 
 // ─── Login ───────────────────────────────────────────────
 
-export const login = async (data: LoginInput, ip?: string, userAgent?: string) => {
+export const login = async (data: LoginInput, ip?: string, userAgent?: string, timezone?: string) => {
   // 1. Find user
   const user = await authRepo.findUserByEmail(data.email);
   if (!user) {
@@ -131,6 +141,15 @@ export const login = async (data: LoginInput, ip?: string, userAgent?: string) =
 
   // 6. Update last login
   await authRepo.updateLastLogin(user.id);
+
+  // 7. Update/initialize streak for student role
+  if (user.roles?.includes('student')) {
+    try {
+      await progressService.getStudentStreak(user.id, timezone);
+    } catch (err) {
+      logger.error('Failed to update streak on login', err);
+    }
+  }
 
   logger.info('User logged in', { userId: user.id, email: user.email });
 

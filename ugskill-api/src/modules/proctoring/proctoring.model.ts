@@ -46,4 +46,4 @@ ProctoringEventSchema.index({ attemptId: 1, frameTimestamp: 1 });
 ProctoringEventSchema.index({ studentId: 1, type: 1 });
 ProctoringEventSchema.index({ createdAt: 1 }, { expireAfterSeconds: 31536000 }); // TTL 1 year
 
-export const ProctoringEventModel = mongoose.models.ProctoringEvent || mongoose.model<IProctoringEvent>('ProctoringEvent', ProctoringEventSchema);
+export const ProctoringEventModel = mongoose.models.ExamAttemptProctoringEvent || mongoose.model<IProctoringEvent>('ExamAttemptProctoringEvent', ProctoringEventSchema);

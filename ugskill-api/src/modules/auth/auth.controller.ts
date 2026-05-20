@@ -4,7 +4,8 @@ import { successResponse } from '../../lib/response';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await authService.register(req.body, req.ip);
+    const timezone = req.headers['x-timezone'] as string | undefined;
+    const result = await authService.register(req.body, req.ip, timezone);
     res.status(201).json(successResponse(result));
   } catch (error) {
     next(error);
@@ -13,7 +14,8 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await authService.login(req.body, req.ip, req.get('user-agent'));
+    const timezone = req.headers['x-timezone'] as string | undefined;
+    const result = await authService.login(req.body, req.ip, req.get('user-agent'), timezone);
     res.status(200).json(successResponse(result));
   } catch (error) {
     next(error);

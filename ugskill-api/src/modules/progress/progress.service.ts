@@ -2,9 +2,10 @@ import { progressRepository } from './progress.repository';
 import { courseRepo } from '../course/course.repository';
 import { AppError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import { getLocalDateStr } from '../../lib/date';
 
 export class ProgressService {
-  async markLectureComplete(studentId: string, courseId: string, lectureId: string) {
+  async markLectureComplete(studentId: string, courseId: string, lectureId: string, timezone?: string) {
     // 1. Verify course and get total lectures count
     const course = await courseRepo.getCourseById(courseId);
     if (!course) {
@@ -33,7 +34,7 @@ export class ProgressService {
       );
 
       // 4. Update Streak Logic
-      await this.updateStreak(studentId);
+      await this.updateStreak(studentId, timezone);
     }
 
     return {
@@ -61,10 +62,14 @@ export class ProgressService {
     };
   }
 
-  async getStudentStreak(studentId: string) {
-    const streak = await progressRepository.getStudentStreak(studentId);
+  async getStudentStreak(studentId: string, timezone?: string) {
+    let streak = await progressRepository.getStudentStreak(studentId);
+    const todayStr = getLocalDateStr(timezone);
+    const today = new Date();
+
     if (!streak) {
-      return { currentStreak: 0, bestStreak: 0, freezeCredits: 0 };
+      // Initialize streak record
+      return await progressRepository.upsertStudentStreak(studentId, today);
     }
 
     // Coerce nullable DB columns to numbers
@@ -73,8 +78,6 @@ export class ProgressService {
     const bestStreak = streak.bestStreak ?? 0;
 
     if (streak.lastActiveDate) {
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
       const lastActive = streak.lastActiveDate;
 
       if (lastActive !== todayStr) {
@@ -83,42 +86,59 @@ export class ProgressService {
         const diffTime = Math.abs(todayDate.getTime() - lastActiveDateObj.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffDays > 1) {
+        if (diffDays === 1) {
+          // Direct consecutive day login/activity
+          const newStreak = currentStreak + 1;
+          const newBest = Math.max(newStreak, bestStreak);
+          return await progressRepository.updateStudentStreak(
+            studentId,
+            newStreak,
+            newBest,
+            todayStr,
+            freezeCredits
+          );
+        } else if (diffDays > 1) {
           const missedDays = diffDays - 1;
           if (freezeCredits >= missedDays) {
-            // Apply streak freeze!
+            // Apply streak freeze and make today active
             const newFreezeCredits = freezeCredits - missedDays;
-            const yesterdayDate = new Date(todayDate.getTime() - 24 * 60 * 60 * 1000);
-            const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
-
-            const updated = await progressRepository.updateStudentStreak(
+            const newStreak = currentStreak + 1;
+            const newBest = Math.max(newStreak, bestStreak);
+            return await progressRepository.updateStudentStreak(
               studentId,
-              currentStreak,
-              bestStreak,
-              yesterdayStr,
+              newStreak,
+              newBest,
+              todayStr,
               newFreezeCredits
             );
-            return updated;
           } else {
-            // Streak is broken!
-            const updated = await progressRepository.updateStudentStreak(
+            // Streak is broken, today is day 1 of a new streak
+            return await progressRepository.updateStudentStreak(
               studentId,
-              0,
+              1,
               bestStreak,
-              lastActive
+              todayStr,
+              freezeCredits
             );
-            return updated;
           }
         }
       }
+    } else {
+      // If streak record exists but has no lastActiveDate, set it today as 1
+      return await progressRepository.updateStudentStreak(
+        studentId,
+        1,
+        Math.max(1, bestStreak),
+        todayStr,
+        freezeCredits
+      );
     }
     return streak;
   }
 
-  private async updateStreak(studentId: string) {
+  private async updateStreak(studentId: string, timezone?: string) {
+    const todayStr = getLocalDateStr(timezone);
     const today = new Date();
-    // Use UTC date string for simple daily boundaries
-    const todayStr = today.toISOString().split('T')[0];
 
     const streak = await progressRepository.getStudentStreak(studentId);
 

@@ -357,7 +357,7 @@ export const ExamResults: React.FC = () => {
                             >
                               {String.fromCharCode(65 + oIdx)}
                             </span>
-                            <span style={{ flex: 1 }}>{opt}</span>
+                            <span style={{ flex: 1 }}>{typeof opt === 'object' && opt !== null ? (opt as any).text : opt}</span>
                             {isCorrectOpt && <CheckCircle size={16} />}
                             {isUserSelected && !isCorrectOpt && <XCircle size={16} />}
                           </div>
