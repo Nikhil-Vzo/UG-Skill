@@ -301,7 +301,7 @@ export const BatchManagement: React.FC = () => {
               <div style={{ marginTop: '0.75rem', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', background: 'var(--surface-well)' }}>
                 {isSearchPending ? (
                   <div style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Searching...</div>
-                ) : searchResults?.users?.length > 0 ? (
+                ) : searchResults && searchResults.users && searchResults.users.length > 0 ? (
                   searchResults.users.map((user: any) => {
                     const isAdded = selectedUserIds.includes(user.id);
                     return (

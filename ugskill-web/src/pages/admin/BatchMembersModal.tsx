@@ -80,7 +80,7 @@ export const BatchMembersModal: React.FC<BatchMembersModalProps> = ({ batchId, b
           <div style={{ marginTop: '1rem', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
             {isSearchPending ? (
               <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>Loading users...</div>
-            ) : searchResults?.users?.length > 0 ? (
+            ) : searchResults && searchResults.users && searchResults.users.length > 0 ? (
               searchResults.users.map((user: any) => (
                 <div key={user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
                   <div>
