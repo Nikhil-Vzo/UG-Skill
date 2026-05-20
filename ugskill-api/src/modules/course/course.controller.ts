@@ -5,6 +5,7 @@ import { successResponse } from '../../lib/response';
 import { z } from 'zod';
 import { verifyAccessToken } from '../../lib/jwt';
 import { enrollmentRepo } from '../enrollment/enrollment.repository';
+import { logAction } from '../audit/audit.service';
 
 export const createCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -17,6 +18,14 @@ export const createCourse = async (req: Request, res: Response, next: NextFuncti
     if ('durationWeeks' in data) { mappedData.duration_weeks = data.durationWeeks; delete mappedData.durationWeeks; }
 
     const course = await courseService.createCourse(mappedData, req.user!.userId);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'COURSE_CREATED',
+      entityType: 'course',
+      entityId: course._id.toString(),
+      newValue: mappedData,
+      ipAddress: req.ip,
+    });
     res.status(201).json(successResponse(course));
   } catch (error) {
     next(error);
@@ -77,6 +86,14 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
     if ('durationWeeks' in data) { mappedData.duration_weeks = data.durationWeeks; delete mappedData.durationWeeks; }
 
     const course = await courseService.updateCourse(req.params.id as string, mappedData);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'COURSE_UPDATED',
+      entityType: 'course',
+      entityId: req.params.id as string,
+      newValue: mappedData,
+      ipAddress: req.ip,
+    });
     res.status(200).json(successResponse(course));
   } catch (error) {
     next(error);
@@ -86,6 +103,13 @@ export const updateCourse = async (req: Request, res: Response, next: NextFuncti
 export const deleteCourse = async (req: Request, res: Response, next: NextFunction) => {
   try {
     await courseService.deleteCourse(req.params.id as string);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'COURSE_DELETED',
+      entityType: 'course',
+      entityId: req.params.id as string,
+      ipAddress: req.ip,
+    });
     res.status(204).send();
   } catch (error) {
     next(error);

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as placementService from './placement.service';
 import { successResponse } from '../../lib/response';
+import { logAction } from '../audit/audit.service';
 
 export const createCompany = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -42,6 +43,14 @@ export const listCompanies = async (req: Request, res: Response, next: NextFunct
 export const createDrive = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await placementService.createDrive(req.body, req.user!.userId);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'PLACEMENT_DRIVE_CREATED',
+      entityType: 'placement_drive',
+      entityId: result.id,
+      newValue: req.body,
+      ipAddress: req.ip,
+    });
     res.status(201).json(successResponse(result));
   } catch (error: any) {
     console.error('Create Drive Error:', error);
@@ -77,6 +86,14 @@ export const registerForDrive = async (req: Request, res: Response, next: NextFu
     const payload = { ...req.body };
     if (req.params.id) payload.driveId = req.params.id;
     const result = await placementService.registerForDrive(req.user!.userId, payload);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'PLACEMENT_DRIVE_REGISTERED',
+      entityType: 'placement_drive',
+      entityId: result.id || payload.driveId,
+      newValue: payload,
+      ipAddress: req.ip,
+    });
     res.status(201).json(successResponse(result));
   } catch (error) {
     next(error);
@@ -87,6 +104,14 @@ export const updateRegistrationStatus = async (req: Request, res: Response, next
   try {
     console.log('Updating registration status:', { id: req.params.id, body: req.body });
     const result = await placementService.updateRegistrationStatus(req.params.id as string, req.body);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'PLACEMENT_REGISTRATION_STATUS_UPDATED',
+      entityType: 'placement_registration',
+      entityId: req.params.id as string,
+      newValue: req.body,
+      ipAddress: req.ip,
+    });
     res.status(200).json(successResponse(result));
   } catch (error) {
     next(error);

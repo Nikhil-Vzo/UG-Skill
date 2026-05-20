@@ -9,6 +9,8 @@ export const updateMeSchema = z.object({
     branch: z.string().optional(),
     cgpa: z.coerce.number().min(0).max(10).optional(),
     graduationYear: z.coerce.number().int().min(2000).max(2040).optional(),
+    resumeUrl: z.string().optional(),
+    resumeData: z.any().optional(),
   }),
 });
 

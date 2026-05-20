@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '../components/loaders/Skeleton';
 import { Button } from '../components/ui/Button';
 import { TextInput } from '../components/ui/TextInput';
 import { useAuthStore } from '../store/auth.store';
-import { User, Camera, Lock, AlertCircle, CheckCircle, Save, Loader2, FileText } from 'lucide-react';
+import { User, Camera, Lock, AlertCircle, CheckCircle, Save, Loader2, FileText, Sparkles } from 'lucide-react';
 import api from '../lib/api';
 
 interface UserProfile {
@@ -21,6 +22,7 @@ interface UserProfile {
 }
 
 export const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user: _authUser } = useAuthStore();
   const [tab, setTab] = useState<'profile' | 'security'>('profile');
@@ -289,6 +291,14 @@ export const Profile: React.FC = () => {
                 disabled={resumeUploading}
               >
                 {resumeUploading ? 'Uploading...' : 'Upload Resume'}
+              </Button>
+              <Button
+                variant="ghost"
+                leftIcon={<Sparkles size={16} style={{ color: 'var(--primary-glow)' }} />}
+                onClick={() => navigate('/app/placements/resume-builder')}
+                style={{ color: 'var(--primary-glow)' }}
+              >
+                Build with AI
               </Button>
               {resumeUrl && !resumeUploading && (
                 <a href={resumeUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.875rem', color: 'var(--primary-glow)', textDecoration: 'none' }}>
