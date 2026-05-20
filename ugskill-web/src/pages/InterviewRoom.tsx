@@ -33,7 +33,16 @@ const InterviewRoom: React.FC = () => {
     },
   });
 
-  const isHR = user?.roles?.includes('hr') || user?.roles?.includes('admin');
+  const endMutation = useMutation({
+    mutationFn: () => api.post(`/placements/sessions/${sessionId}/end`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['interview-session', sessionId] });
+      // HR/admins return to their dashboard; students return to placement hub
+      navigate(isHR ? '/app/hr' : '/app/placements');
+    },
+  });
+
+  const isHR = user?.roles?.some(r => ['hr', 'admin', 'super_admin', 'placement_coordinator'].includes(r));
   const isStudent = user?.roles?.includes('student');
 
   useEffect(() => {
@@ -112,10 +121,10 @@ const InterviewRoom: React.FC = () => {
               <Video size={28} color="#fff" />
             </div>
             <h1 style={{ color: '#f0f9ff', fontSize: '1.5rem', fontWeight: 700, margin: '1rem 0 0.375rem' }}>
-              Live Interview Session
+              {session.companyName ?? 'Live Interview Session'}
             </h1>
             <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
-              Round {session.roundNumber || 1} · {session.sessionType}
+              {session.driveName ?? 'Placement Drive'} · Round {session.roundNumber || 1}
             </p>
           </div>
 
@@ -148,13 +157,25 @@ const InterviewRoom: React.FC = () => {
       {/* Header */}
       <header style={styles.roomHeader}>
         <div>
-          <h1 style={styles.roomTitle}>Interview: {session.studentId?.slice(0, 8)}…</h1>
+          <h1 style={styles.roomTitle}>
+            {session.companyName ?? 'Interview'}
+            {session.driveName ? <span style={{ fontWeight: 400, color: '#94a3b8', fontSize: '1rem' }}> · {session.driveName}</span> : null}
+          </h1>
           <div style={styles.liveIndicator}>
-            <span style={styles.liveDot}></span> LIVE
+            <span style={styles.liveDot}></span> LIVE · Round {session.roundNumber || 1}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button style={styles.leaveBtn} onClick={() => navigate('/app/placements')}>
+          {isHR && (
+            <button
+              style={styles.endInterviewBtn}
+              onClick={() => endMutation.mutate()}
+              disabled={endMutation.isPending}
+            >
+              {endMutation.isPending ? 'Ending...' : 'End Interview'}
+            </button>
+          )}
+          <button style={styles.leaveBtn} onClick={() => navigate(isHR ? '/app/hr' : '/app/placements')}>
             Leave Room
           </button>
         </div>
@@ -246,6 +267,7 @@ const styles: Record<string, React.CSSProperties> = {
   liveIndicator: { display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', fontSize: '0.875rem', fontWeight: 600, marginTop: '0.25rem' },
   liveDot: { width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444', animation: 'pulse 2s infinite' },
   leaveBtn: { padding: '0.5rem 1rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.5)', color: '#ef4444', borderRadius: 8, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500, transition: 'all 0.2s' },
+  endInterviewBtn: { padding: '0.5rem 1rem', background: '#ef4444', border: '1px solid #ef4444', color: '#fff', borderRadius: 8, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700, transition: 'all 0.2s' },
   mainArea: { flex: 1, display: 'flex', overflow: 'hidden', padding: '1rem', gap: '1rem' },
   videoGrid: { flex: 1, position: 'relative', display: 'flex', background: '#0f172a', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' },
   remoteVideoContainer: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#090e17' },

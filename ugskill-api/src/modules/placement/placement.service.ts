@@ -272,6 +272,23 @@ export const deleteInterviewFlow = async (id: string) => {
 export const createPlacementSession = async (data: CreatePlacementSessionInput) => {
   // Normally we would verify studentId exists in users/profiles
   // We'd also verify companyId, driveId, flowId if provided.
+  if (data.sessionType === 'live_interview' && data.driveId) {
+    const registration = await placementRepo.getRegistrationByStudentAndDrive(data.studentId, data.driveId);
+    if (registration && registration.status !== 'interview') {
+      await placementRepo.updateRegistrationPg(registration.id, { status: 'interview' });
+    }
+  }
+
+  const existingActiveSession = await placementRepo.findActivePlacementSessionPg({
+    studentId: data.studentId,
+    sessionType: data.sessionType,
+    driveId: data.driveId,
+    roundNumber: data.roundNumber,
+  });
+
+  if (existingActiveSession) {
+    return existingActiveSession;
+  }
   
   return await placementRepo.insertPlacementSessionPg({
     studentId: data.studentId,
@@ -511,10 +528,37 @@ export const listLiveSlots = async (query: LiveSlotQuery) => {
 };
 
 export const bookLiveInterview = async (data: BookLiveInterviewInput, studentId: string) => {
-  return await placementRepo.insertBookingPg({
-    slotId: data.slotId,
-    studentId
+  const slot = await placementRepo.getLiveSlotByIdPg(data.slotId);
+  if (!slot) {
+    throw new NotFoundError('Live slot not found');
+  }
+
+  const drive = await placementRepo.getDriveById(slot.driveId);
+  const existingActiveSession = await placementRepo.findActivePlacementSessionPg({
+    studentId,
+    sessionType: 'live_interview',
+    driveId: slot.driveId,
+    roundNumber: 1,
   });
+
+  const session = existingActiveSession ?? await placementRepo.insertPlacementSessionPg({
+    studentId,
+    sessionType: 'live_interview',
+    driveId: slot.driveId,
+    companyId: drive?.companyId,
+    roundNumber: 1,
+    status: 'scheduled',
+  });
+
+  const booking = await placementRepo.insertBookingPg({
+    slotId: data.slotId,
+    studentId,
+    sessionId: session.id,
+  });
+
+  await placementRepo.updateLiveSlotPg(data.slotId, { status: 'booked' });
+
+  return { booking, session };
 };
 
 export const updateBookingStatus = async (id: string, data: UpdateBookingStatusInput) => {

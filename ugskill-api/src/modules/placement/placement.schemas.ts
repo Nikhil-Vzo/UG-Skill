@@ -185,7 +185,7 @@ export type InterviewFlowQuery = z.infer<typeof interviewFlowQuerySchema>['query
 export const createPlacementSessionSchema = z.object({
   body: z.object({
     studentId: z.string().uuid(),
-    sessionType: z.string(),
+    sessionType: z.enum(['live_interview', 'mock_interview', 'group_discussion']),
     driveId: z.string().uuid().optional(),
     companyId: z.string().uuid().optional(),
     mongoFlowId: z.string().optional(),
@@ -215,7 +215,8 @@ export const placementSessionQuerySchema = z.object({
     driveId: z.string().uuid().optional(),
     companyId: z.string().uuid().optional(),
     type: z.string().optional(),
-    status: z.string().optional()
+    status: z.string().optional(),
+    active: z.union([z.literal('true'), z.literal('false')]).optional()
   })
 });
 
