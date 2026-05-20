@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../../config/postgres';
 import { examAttempts, exams } from '../../db/pg/schema/exam';
+import { users } from '../../db/pg/schema/core';
 import { eq, desc, and, gte, inArray } from 'drizzle-orm';
 import { proctoringService } from '../proctoring/proctoring.service';
 
@@ -78,20 +79,35 @@ export const adminController = {
         : [];
       const examNames = new Map(examRows.map((exam) => [exam.id, exam.title]));
 
-      const incidents = events.map((event: any) => ({
-        id: String(event._id),
-        attemptId: event.attemptId,
-        userId: event.studentId,
-        userLabel: event.studentId ? `Student ${String(event.studentId).slice(0, 8)}` : 'Unknown student',
-        examId: event.examId,
-        examName: examNames.get(event.examId) || `Exam ${String(event.examId || '').slice(0, 8)}`,
-        type: event.type,
-        occurredAt: event.frameTimestamp || event.createdAt,
-        severity: String(event.severity || 'LOW').toLowerCase(),
-        riskScore: event.riskScoreAtEvent,
-        aiConfidence: event.aiConfidence,
-        hasEvidence: Boolean(event.snapshotBase64 || event.evidenceUrl),
-      }));
+      const studentIds = Array.from(new Set(events.map((event: any) => event.studentId).filter(Boolean)));
+      const userMap = new Map<string, { fullName: string; email: string }>();
+      if (studentIds.length > 0) {
+        const userList = await db
+          .select({ id: users.id, fullName: users.fullName, email: users.email })
+          .from(users)
+          .where(inArray(users.id, studentIds));
+        for (const u of userList) {
+          userMap.set(u.id, { fullName: u.fullName, email: u.email });
+        }
+      }
+
+      const incidents = events.map((event: any) => {
+        const userObj = userMap.get(event.studentId);
+        return {
+          id: String(event._id),
+          attemptId: event.attemptId,
+          userId: event.studentId,
+          userLabel: userObj?.fullName ? `${userObj.fullName} (${userObj.email})` : (event.studentId ? `Student ${String(event.studentId).slice(0, 8)}` : 'Unknown student'),
+          examId: event.examId,
+          examName: examNames.get(event.examId) || `Exam ${String(event.examId || '').slice(0, 8)}`,
+          type: event.type,
+          occurredAt: event.frameTimestamp || event.createdAt,
+          severity: String(event.severity || 'LOW').toLowerCase(),
+          riskScore: event.riskScoreAtEvent,
+          aiConfidence: event.aiConfidence,
+          hasEvidence: Boolean(event.snapshotBase64 || event.evidenceUrl),
+        };
+      });
 
       res.json({ success: true, data: incidents });
     } catch (error) {

@@ -39,6 +39,7 @@ const RowSkeleton = () => (
   </tr>
 );
 
+import { Modal } from '../../components/ui/Modal';
 import { BatchMembersModal } from './BatchMembersModal';
 
 /* ---------- component ---------- */
@@ -153,53 +154,43 @@ export const BatchManagement: React.FC = () => {
       </Card>
 
       {/* Create Batch Modal */}
-      {showCreate && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
-          onClick={() => setShowCreate(false)}
-        >
-          <Card
-            style={{ width: '100%', maxWidth: 480, padding: '2rem' }}
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          >
-            <h2 style={{ margin: '0 0 1.5rem', color: 'var(--text-primary)' }}>Create New Batch</h2>
-
-            {[
-              { label: 'Batch Name *', key: 'name', type: 'text', placeholder: 'e.g. Winter 2026 CS Core' },
-              { label: 'Description', key: 'description', type: 'text', placeholder: 'Optional description' },
-              { label: 'Start Date *', key: 'startDate', type: 'date', placeholder: '' },
-            ].map(({ label, key, type, placeholder }) => (
-              <div key={key} style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{label}</label>
-                <input
-                  type={type}
-                  placeholder={placeholder}
-                  value={(form as any)[key]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
-                />
-              </div>
-            ))}
-
-            {createMutation.isError && (
-              <p style={{ color: 'var(--error)', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                Failed to create batch — please try again.
-              </p>
-            )}
-
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-              <Button
-                variant="primary"
-                disabled={!form.name || !form.startDate || createMutation.isPending}
-                onClick={() => createMutation.mutate(form)}
-              >
-                {createMutation.isPending ? 'Creating…' : 'Create'}
-              </Button>
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create New Batch">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {[
+            { label: 'Batch Name *', key: 'name', type: 'text', placeholder: 'e.g. Winter 2026 CS Core' },
+            { label: 'Description', key: 'description', type: 'text', placeholder: 'Optional description' },
+            { label: 'Start Date *', key: 'startDate', type: 'date', placeholder: '' },
+          ].map(({ label, key, type, placeholder }) => (
+            <div key={key}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>{label}</label>
+              <input
+                type={type}
+                placeholder={placeholder}
+                value={(form as any)[key]}
+                onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+              />
             </div>
-          </Card>
+          ))}
+
+          {createMutation.isError && (
+            <p style={{ color: 'var(--error)', fontSize: '0.875rem', margin: 0 }}>
+              Failed to create batch — please try again.
+            </p>
+          )}
+
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              disabled={!form.name || !form.startDate || createMutation.isPending}
+              onClick={() => createMutation.mutate(form)}
+            >
+              {createMutation.isPending ? 'Creating…' : 'Create'}
+            </Button>
+          </div>
         </div>
-      )}
+      </Modal>
 
       {selectedBatchForMembers && (
         <BatchMembersModal

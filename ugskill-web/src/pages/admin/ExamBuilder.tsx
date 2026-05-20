@@ -13,7 +13,19 @@ import api from '../../lib/api';
 
 /* ─────────────── Types ─────────────── */
 interface Batch { id: string; name: string; }
-interface Question { _id?: string; stem: string; options: { text: string; isCorrect: boolean }[]; marks: number; difficulty: 'easy' | 'medium' | 'hard' | 'very_hard'; }
+interface Question {
+  _id?: string;
+  stem: string;
+  type?: 'mcq' | 'coding' | 'math';
+  options: { text: string; isCorrect: boolean }[];
+  marks: number;
+  difficulty: 'easy' | 'medium' | 'hard' | 'very_hard';
+  coding_language?: 'javascript' | 'python' | 'cpp' | 'java';
+  code_template?: string;
+  test_cases?: { input: string; output: string }[];
+  presentation_style?: 'numerical' | 'mcq';
+  correct_answer?: string;
+}
 interface Section { name: string; sectionOrder: number; timeLimitMinutes?: number; maxMarks?: number; questions: Question[]; }
 type ExamType = 'practice' | 'mock' | 'live' | 'assessment' | 'competitive' | '';
 interface ExamForm {
@@ -33,7 +45,8 @@ type Tab = typeof TABS[number];
 
 const normalizeQuestion = (question: any): Question => ({
   _id: question?._id ?? question?.id,
-  stem: question?.stem ?? '',
+  stem: question?.stem ?? question?.text ?? '',
+  type: question?.type ?? 'mcq',
   marks: Number(question?.marks ?? 1),
   difficulty: question?.difficulty ?? 'easy',
   options: Array.isArray(question?.options) && question.options.length > 0
@@ -42,12 +55,27 @@ const normalizeQuestion = (question: any): Question => ({
       isCorrect: Boolean(typeof option === 'string' ? index === 0 : option?.isCorrect),
     }))
     : emptyQuestion().options,
+  coding_language: question?.coding_language ?? question?.codingLanguage ?? 'javascript',
+  code_template: question?.code_template ?? question?.codeTemplate ?? '',
+  test_cases: question?.test_cases ?? question?.testCases ?? [],
+  presentation_style: question?.presentation_style ?? question?.presentationStyle ?? 'mcq',
+  correct_answer: question?.correct_answer ?? question?.correctAnswerText ?? '',
 });
 
 const isQuestionReady = (question: Question) => {
+  if (!question.stem.trim()) return false;
+  if (question.type === 'coding') {
+    return (question.test_cases ?? []).length > 0 && 
+      (question.test_cases ?? []).every(tc => tc.input.trim() && tc.output.trim());
+  }
+  if (question.type === 'math') {
+    if (question.presentation_style === 'numerical') {
+      return (question.correct_answer ?? '').trim().length > 0;
+    }
+  }
   const filledOptions = question.options.filter(option => option.text.trim()).length;
   const correctOption = question.options.find(option => option.isCorrect);
-  return question.stem.trim().length > 0 && filledOptions >= 2 && Boolean(correctOption?.text.trim());
+  return filledOptions >= 2 && Boolean(correctOption?.text.trim());
 };
 
 /* ─────────────── Anthropic Brand Palette ─────────────── */
@@ -110,6 +138,7 @@ const stepLineStyle: React.CSSProperties = {
 /* ─────────────── Empty question template ─────────────── */
 const emptyQuestion = (): Question => ({
   stem: '',
+  type: 'mcq',
   marks: 1,
   difficulty: 'easy',
   options: [
@@ -118,6 +147,11 @@ const emptyQuestion = (): Question => ({
     { text: '', isCorrect: false },
     { text: '', isCorrect: false },
   ],
+  coding_language: 'javascript',
+  code_template: '',
+  test_cases: [{ input: '', output: '' }],
+  presentation_style: 'mcq',
+  correct_answer: '',
 });
 
 /* ─────────────── Sub-components ─────────────── */
@@ -706,6 +740,24 @@ export const ExamBuilder: React.FC = () => {
                           <div style={{ height: '4px', width: '20px', background: ANTHRO.gray, borderRadius: '2px' }} />
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                          <select
+                            value={q.type || 'mcq'}
+                            onChange={e => {
+                              const t = e.target.value as 'mcq' | 'coding' | 'math';
+                              const testCases = t === 'coding' ? (q.test_cases?.length ? q.test_cases : [{ input: '', output: '' }]) : undefined;
+                              updateQuestion(si, qi, { 
+                                type: t,
+                                test_cases: testCases,
+                                coding_language: t === 'coding' ? (q.coding_language || 'javascript') : undefined,
+                                presentation_style: t === 'math' ? (q.presentation_style || 'mcq') : undefined,
+                              });
+                            }}
+                            style={{ ...inputStyle, width: 'auto', padding: '0.4rem 1rem', fontSize: '0.8125rem', borderRadius: '10px', fontWeight: 600 }}
+                          >
+                            <option value="mcq">MCQ</option>
+                            <option value="coding">Coding</option>
+                            <option value="math">Math</option>
+                          </select>
                           <select 
                             value={q.difficulty} 
                             onChange={e => updateQuestion(si, qi, { difficulty: e.target.value as any })} 
@@ -732,36 +784,180 @@ export const ExamBuilder: React.FC = () => {
                         value={q.stem}
                         onChange={e => updateQuestion(si, qi, { stem: e.target.value })}
                       />
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        {q.options.map((opt, oi) => (
-                          <div key={oi} style={{ position: 'relative' }}>
-                            <input
-                              style={{ 
-                                ...inputStyle, 
-                                paddingLeft: '3rem',
-                                borderColor: opt.isCorrect ? ANTHRO.success : ANTHRO.gray,
-                                background: opt.isCorrect ? `${ANTHRO.success}05` : ANTHRO.white
-                              }}
-                              placeholder={`Distractor ${oi + 1}`}
-                              value={opt.text}
-                              onChange={e => updateQuestion(si, qi, { options: q.options.map((o, i) => i === oi ? { ...o, text: e.target.value } : o) })}
-                            />
-                            <div 
-                              onClick={() => setCorrect(si, qi, oi)}
-                              style={{
-                                position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
-                                width: '24px', height: '24px', borderRadius: '50%',
-                                border: `2px solid ${opt.isCorrect ? ANTHRO.success : ANTHRO.gray}`,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', background: opt.isCorrect ? ANTHRO.success : 'transparent',
-                                color: ANTHRO.white, transition: 'all 0.2s ease'
-                              }}
-                            >
-                              {opt.isCorrect && <CheckCircle size={14} />}
+
+                      {(!q.type || q.type === 'mcq') && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          {q.options.map((opt, oi) => (
+                            <div key={oi} style={{ position: 'relative' }}>
+                              <input
+                                style={{ 
+                                  ...inputStyle, 
+                                  paddingLeft: '3rem',
+                                  borderColor: opt.isCorrect ? ANTHRO.success : ANTHRO.gray,
+                                  background: opt.isCorrect ? `${ANTHRO.success}05` : ANTHRO.white
+                                }}
+                                placeholder={`Distractor ${oi + 1}`}
+                                value={opt.text}
+                                onChange={e => updateQuestion(si, qi, { options: q.options.map((o, i) => i === oi ? { ...o, text: e.target.value } : o) })}
+                              />
+                              <div 
+                                onClick={() => setCorrect(si, qi, oi)}
+                                style={{
+                                  position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+                                  width: '24px', height: '24px', borderRadius: '50%',
+                                  border: `2px solid ${opt.isCorrect ? ANTHRO.success : ANTHRO.gray}`,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  cursor: 'pointer', background: opt.isCorrect ? ANTHRO.success : 'transparent',
+                                  color: ANTHRO.white, transition: 'all 0.2s ease'
+                                }}
+                              >
+                                {opt.isCorrect && <CheckCircle size={14} />}
+                              </div>
                             </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {q.type === 'coding' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: `${ANTHRO.bg}50`, padding: '1.5rem', borderRadius: '16px', border: `1px solid ${ANTHRO.gray}` }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', alignItems: 'center', gap: '1rem' }}>
+                            <label style={{ ...labelStyle, marginBottom: 0 }}>Language</label>
+                            <select
+                              value={q.coding_language || 'javascript'}
+                              onChange={e => updateQuestion(si, qi, { coding_language: e.target.value as any })}
+                              style={{ ...inputStyle, padding: '0.5rem 1rem', borderRadius: '10px' }}
+                            >
+                              <option value="javascript">JavaScript</option>
+                              <option value="python">Python</option>
+                              <option value="cpp">C++</option>
+                              <option value="java">Java</option>
+                            </select>
                           </div>
-                        ))}
-                      </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <label style={labelStyle}>Code Template (Starter Code)</label>
+                            <textarea
+                              style={{ ...inputStyle, minHeight: 120, fontFamily: 'monospace', fontSize: '0.875rem' }}
+                              placeholder={`e.g. \nfunction solution(nums) {\n  // Write code here\n}`}
+                              value={q.code_template || ''}
+                              onChange={e => updateQuestion(si, qi, { code_template: e.target.value })}
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <label style={{ ...labelStyle, marginBottom: 0 }}>Test Cases</label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const cases = [...(q.test_cases || []), { input: '', output: '' }];
+                                  updateQuestion(si, qi, { test_cases: cases });
+                                }}
+                                style={{
+                                  background: 'transparent', border: `1px solid ${ANTHRO.accent}`,
+                                  borderRadius: '8px', padding: '0.35rem 0.75rem', color: ANTHRO.accent,
+                                  fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer'
+                                }}
+                              >
+                                + Add Case
+                              </button>
+                            </div>
+                            
+                            {(q.test_cases || []).map((tc, tcIdx) => (
+                              <div key={tcIdx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                <input
+                                  style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '0.8125rem', padding: '0.5rem' }}
+                                  placeholder="Input (e.g. [2,3] or 5)"
+                                  value={tc.input}
+                                  onChange={e => {
+                                    const cases = (q.test_cases || []).map((c, i) => i === tcIdx ? { ...c, input: e.target.value } : c);
+                                    updateQuestion(si, qi, { test_cases: cases });
+                                  }}
+                                />
+                                <input
+                                  style={{ ...inputStyle, fontFamily: 'monospace', fontSize: '0.8125rem', padding: '0.5rem' }}
+                                  placeholder="Expected Output (e.g. 5)"
+                                  value={tc.output}
+                                  onChange={e => {
+                                    const cases = (q.test_cases || []).map((c, i) => i === tcIdx ? { ...c, output: e.target.value } : c);
+                                    updateQuestion(si, qi, { test_cases: cases });
+                                  }}
+                                />
+                                {(q.test_cases || []).length > 1 && (
+                                  <button
+                                    onClick={() => {
+                                      const cases = (q.test_cases || []).filter((_, i) => i !== tcIdx);
+                                      updateQuestion(si, qi, { test_cases: cases });
+                                    }}
+                                    style={{ border: 'none', background: 'none', color: ANTHRO.error, cursor: 'pointer' }}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {q.type === 'math' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', background: `${ANTHRO.bg}50`, padding: '1.5rem', borderRadius: '16px', border: `1px solid ${ANTHRO.gray}` }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', alignItems: 'center', gap: '1rem' }}>
+                            <label style={{ ...labelStyle, marginBottom: 0 }}>Presentation Style</label>
+                            <select
+                              value={q.presentation_style || 'mcq'}
+                              onChange={e => updateQuestion(si, qi, { presentation_style: e.target.value as any })}
+                              style={{ ...inputStyle, padding: '0.5rem 1rem', borderRadius: '10px' }}
+                            >
+                              <option value="mcq">Multiple Choice Options (MCQ)</option>
+                              <option value="numerical">Numerical Input (Text field)</option>
+                            </select>
+                          </div>
+
+                          {q.presentation_style === 'numerical' ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              <label style={labelStyle}>Correct Numerical Answer</label>
+                              <input
+                                style={inputStyle}
+                                placeholder="e.g. 42 or 3.14"
+                                value={q.correct_answer || ''}
+                                onChange={e => updateQuestion(si, qi, { correct_answer: e.target.value })}
+                              />
+                            </div>
+                          ) : (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                              {q.options.map((opt, oi) => (
+                                <div key={oi} style={{ position: 'relative' }}>
+                                  <input
+                                    style={{ 
+                                      ...inputStyle, 
+                                      paddingLeft: '3rem',
+                                      borderColor: opt.isCorrect ? ANTHRO.success : ANTHRO.gray,
+                                      background: opt.isCorrect ? `${ANTHRO.success}05` : ANTHRO.white
+                                    }}
+                                    placeholder={`Distractor ${oi + 1}`}
+                                    value={opt.text}
+                                    onChange={e => updateQuestion(si, qi, { options: q.options.map((o, i) => i === oi ? { ...o, text: e.target.value } : o) })}
+                                  />
+                                  <div 
+                                    onClick={() => setCorrect(si, qi, oi)}
+                                    style={{
+                                      position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+                                      width: '24px', height: '24px', borderRadius: '50%',
+                                      border: `2px solid ${opt.isCorrect ? ANTHRO.success : ANTHRO.gray}`,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      cursor: 'pointer', background: opt.isCorrect ? ANTHRO.success : 'transparent',
+                                      color: ANTHRO.white, transition: 'all 0.2s ease'
+                                    }}
+                                  >
+                                    {opt.isCorrect && <CheckCircle size={14} />}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
