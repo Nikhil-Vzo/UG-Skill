@@ -41,7 +41,10 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  // Start loading if there's a stored token — ProtectedRoute will wait for checkAuth
+  // before rendering children or redirecting.  Without this, the guard would
+  // immediately redirect to /login before the async checkAuth() resolves.
+  isLoading: !!(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('ugs_access')),
   error: null,
 
   // ── Login ──────────────────────────────────────────────────────────────────

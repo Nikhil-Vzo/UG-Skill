@@ -11,10 +11,12 @@ import {
   Flame, Clock, Calendar, AlertTriangle, BookOpen,
   Award, Zap, Target, ArrowRight, PlayCircle, ChevronRight, Sparkles,
   BarChart3, Trophy, Star, Activity, Shield, Swords, Crown, Gem,
-  TrendingUp, CheckCircle2, Circle, Lock
+  TrendingUp, CheckCircle2, Circle, Lock, Briefcase, Building2, XCircle
 } from 'lucide-react';
 import api from '../lib/api';
 import './Dashboard.css';
+import { InterviewBanner } from '../components/features/placements/InterviewBanner';
+import type { InterviewSession } from '../components/features/placements/InterviewBanner';
 
 /** Returns days until a given ISO date string (negative = overdue) */
 function daysUntil(dateStr: string): number {
@@ -96,6 +98,41 @@ export const Dashboard: React.FC = () => {
   const bestStreak = streakData?.bestStreak ?? 0;
   const freezeCredits = streakData?.freezeCredits ?? 0;
   const lastActiveDate = streakData?.lastActiveDate;
+
+  // Fetch placement drives for the tracker
+  const { data: drives = [], isLoading: isDrivesLoading } = useQuery<any[]>({
+    queryKey: ['placement-drives-db'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/placements/drives');
+        return res.data.data?.drives ?? res.data.data ?? res.data ?? [];
+      } catch (e) {
+        return [];
+      }
+    },
+    staleTime: 60_000,
+  });
+
+  // Fetch active interview sessions
+  const { data: mySessions = [] } = useQuery<InterviewSession[]>({
+    queryKey: ['my-interview-sessions-db', user?.id],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/placements/sessions?studentId=me&active=true');
+        return res.data.data || res.data || [];
+      } catch (e) {
+        return [];
+      }
+    },
+    enabled: !!user?.id,
+    refetchInterval: 10000,
+  });
+
+  const appliedDrives = useMemo(() => {
+    return drives.filter((d: any) =>
+      ['applied', 'shortlisted', 'interview', 'selected', 'rejected'].includes(d.status)
+    );
+  }, [drives]);
 
   // Compute which days of current week are active
   const streakDays = useMemo<boolean[]>(() => {
@@ -213,6 +250,10 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-content">
+      <InterviewBanner 
+        sessions={mySessions} 
+        onJoin={(sessionId) => navigate(`/app/placements/interview/${sessionId}`)} 
+      />
 
       {/* ── Header ──────────────────────────────────────────── */}
       <header className="db-header">
@@ -481,6 +522,116 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
+      </section>
+
+      {/* ── Placement Pipeline ───────────────────────────────── */}
+      <section className="db-placements-section">
+        <div className="db-section-header">
+          <h2 className="db-section-title">
+            <Briefcase size={20} color="#818cf8" /> Placement Pipeline
+          </h2>
+          <button className="db-link-btn" onClick={() => navigate('/app/placements')}>
+            Placements Hub <ArrowRight size={14} />
+          </button>
+        </div>
+
+        {isDrivesLoading ? (
+          <div className="db-courses-grid">
+            <div className="db-course-skeleton">
+              <Skeleton variant="rectangular" height={100} />
+              <Skeleton variant="text" width="60%" height="18px" className="mt-3" />
+            </div>
+          </div>
+        ) : appliedDrives.length === 0 ? (
+          <div className="db-placements-empty">
+            <div className="db-placements-empty-icon">
+              <Building2 size={36} color="#818cf844" />
+            </div>
+            <h3>Elevate Your Career Path</h3>
+            <p>You haven't applied to any hiring drives yet. Browse open roles and start your applications.</p>
+            <Button variant="primary" size="sm" onClick={() => navigate('/app/placements')}>
+              Explore Open Drives
+            </Button>
+          </div>
+        ) : (
+          <div className="db-placement-cards">
+            {appliedDrives.slice(0, 3).map((drive: any) => {
+              // Steps logic
+              const steps = [
+                { label: 'Applied', key: 'applied' },
+                { label: 'Shortlist', key: 'shortlisted' },
+                { label: 'Interview', key: 'interview' },
+                { label: 'Offer', key: 'selected' },
+              ];
+
+              const currentStatus = drive.status;
+              
+              const getStepState = (stepIndex: number) => {
+                if (currentStatus === 'rejected') {
+                  if (stepIndex < 3) return 'completed';
+                  if (stepIndex === 3) return 'failed';
+                  return 'pending';
+                }
+                
+                const statusIndices: Record<string, number> = {
+                  applied: 0,
+                  shortlisted: 1,
+                  interview: 2,
+                  selected: 3,
+                };
+                
+                const currentIndex = statusIndices[currentStatus] ?? 0;
+                if (stepIndex < currentIndex) return 'completed';
+                if (stepIndex === currentIndex) return 'active';
+                return 'pending';
+              };
+
+              return (
+                <div key={drive.id} className="db-placement-card" onClick={() => navigate('/app/placements')}>
+                  <div className="db-placement-card-header">
+                    <div className="db-placement-logo-wrap">
+                      <div className="db-placement-logo" style={{ backgroundColor: '#2563eb' }}>
+                        {drive.companyName?.[0] || 'D'}
+                      </div>
+                    </div>
+                    <div className="db-placement-card-title-area">
+                      <h3 className="db-placement-company">{drive.companyName}</h3>
+                      <p className="db-placement-role">{drive.name || drive.targetRoles?.join(', ')}</p>
+                    </div>
+                    <div className="db-placement-badge-wrap">
+                      <Badge variant={currentStatus === 'selected' ? 'success' : currentStatus === 'rejected' ? 'danger' : currentStatus === 'interview' ? 'warning' : 'primary'} size="sm">
+                        {currentStatus.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="db-pipeline-tracker">
+                    <div className="db-pipeline-steps">
+                      {steps.map((step, idx) => {
+                        const state = getStepState(idx);
+                        return (
+                          <React.Fragment key={step.key}>
+                            {idx > 0 && (
+                              <div className={`db-pipeline-line ${idx <= (currentStatus === 'rejected' ? 2 : (steps.findIndex(s => s.key === currentStatus) ?? 0)) ? 'active' : ''}`} />
+                            )}
+                            <div className={`db-pipeline-step ${state}`}>
+                              <div className="db-pipeline-dot">
+                                {state === 'completed' && <CheckCircle2 size={12} />}
+                                {state === 'failed' && <XCircle size={12} />}
+                                {state === 'active' && <Circle size={10} fill="currentColor" />}
+                              </div>
+                              <span className="db-pipeline-label">{step.label}</span>
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* ── My Courses ─────────────────────────────────────── */}
