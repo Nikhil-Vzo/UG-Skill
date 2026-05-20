@@ -21,7 +21,7 @@ function mapAIResultToEvent(ai: AIAnalysisResult): {
   type: 'gaze_away' | 'no_face' | 'multiple_faces' | 'eyes_closed';
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   metadata: Record<string, unknown>;
-} {
+} | null {
   // CRITICAL: no face detected at all
   if (!ai.facePresent) {
     return {
@@ -61,11 +61,7 @@ function mapAIResultToEvent(ai: AIAnalysisResult): {
   }
 
   // Center gaze, face present, eyes open → no violation
-  return {
-    type: 'gaze_away',
-    severity: 'LOW',
-    metadata: { gaze: ai.gaze, confidence: ai.confidence, headPose: ai.headPose },
-  };
+  return null;
 }
 
 /**
@@ -88,6 +84,11 @@ export const handleAiFrameAnalysis = async (job: Job) => {
 
     // 2. Map AI result to proctoring event
     const event = mapAIResultToEvent(aiResult);
+
+    if (!event) {
+      logger.info('Clean frame — no violation to log', { attemptId });
+      return { status: 'clean' };
+    }
 
     // 3. Load exam proctoring config for threshold-aware scoring
     const examRows = await db
