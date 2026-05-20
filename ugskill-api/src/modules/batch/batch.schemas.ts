@@ -52,7 +52,7 @@ export const grantCourseAccessSchema = z.object({
     id: z.string().uuid('Invalid batch ID'),
   }),
   body: z.object({
-    courseId: z.string().uuid('Invalid course ID'),
+    courseId: z.string(),
   }),
 });
 

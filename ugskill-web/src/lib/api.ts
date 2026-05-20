@@ -27,12 +27,15 @@ const api = axios.create({
   },
 });
 
-// ─── Request Interceptor — attach access token ────────────────────────────────
+// ─── Request Interceptor — attach access token & timezone ─────────────────────
 api.interceptors.request.use(
   (config) => {
     const token = tokenStore.getAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (config.headers) {
+      config.headers['x-timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
     }
     return config;
   },

@@ -86,3 +86,17 @@ export const grantCourseAccess = async (req: Request, res: Response, next: NextF
     next(error);
   }
 };
+
+export const revokeCourseAccess = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await batchService.revokeCourseAccess(
+      req.params.id as string,
+      req.params.courseId as string,
+      req.user!.userId,
+      getIp(req)
+    );
+    res.status(200).json(successResponse(result));
+  } catch (error) {
+    next(error);
+  }
+};

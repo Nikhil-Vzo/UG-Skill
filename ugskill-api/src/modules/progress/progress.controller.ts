@@ -7,8 +7,14 @@ export class ProgressController {
     try {
       const studentId = req.user!.userId;
       const { courseId, lectureId } = req.params;
+      const timezone = req.headers['x-timezone'] as string | undefined;
 
-      const result = await progressService.markLectureComplete(studentId, courseId as string, lectureId as string);
+      const result = await progressService.markLectureComplete(
+        studentId,
+        courseId as string,
+        lectureId as string,
+        timezone
+      );
 
       res.status(200).json(successResponse(result.progress, { message: result.message }));
     } catch (error) {
@@ -32,8 +38,9 @@ export class ProgressController {
   async getStreak(req: Request, res: Response, next: NextFunction) {
     try {
       const studentId = req.user!.userId;
+      const timezone = req.headers['x-timezone'] as string | undefined;
 
-      const streak = await progressService.getStudentStreak(studentId);
+      const streak = await progressService.getStudentStreak(studentId, timezone);
 
       res.status(200).json(successResponse(streak, { message: 'Student streak retrieved' }));
     } catch (error) {

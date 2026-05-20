@@ -43,6 +43,7 @@ export const listUsersQuerySchema = z.object({
   query: z.object({
     page: z.string().optional(),
     perPage: z.string().optional(),
+    limit: z.string().optional(),
     role: z.string().optional(),
     status: z.string().optional(),
     search: z.string().optional(),

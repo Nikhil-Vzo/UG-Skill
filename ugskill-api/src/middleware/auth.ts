@@ -46,7 +46,9 @@ export const requireRole = (roles: string[]) => {
         throw new AuthError('User not authenticated');
       }
 
-      const hasRole = req.user.roles.some((role) => roles.includes(role));
+      const hasRole = req.user.roles.some((role) => 
+        role === 'super_admin' || roles.includes(role)
+      );
       if (!hasRole) {
         logger.warn('Forbidden access attempt', { userId: req.user.userId, requiredRoles: roles, actualRoles: req.user.roles });
         return res.status(403).json({
