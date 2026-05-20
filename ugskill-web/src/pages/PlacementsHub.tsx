@@ -15,6 +15,8 @@ import { Skeleton } from '../components/loaders/Skeleton';
 import { useDebounce } from '../hooks/useDebounce';
 import api from '../lib/api';
 import './PlacementsHub.css';
+import { InterviewBanner } from '../components/features/placements/InterviewBanner';
+import type { InterviewSession } from '../components/features/placements/InterviewBanner';
 
 /* ─────────── Types ─────────── */
 type DriveStatus = 'open' | 'active' | 'applied' | 'shortlisted' | 'interview' | 'rejected' | 'closed' | 'selected';
@@ -31,17 +33,6 @@ interface Drive {
   status: DriveStatus;
   cgpaCutoff?: number;
   branches?: string[];
-}
-
-interface InterviewSession {
-  id: string;
-  companyName?: string;
-  driveName?: string;
-  companyLogo?: string;
-  roundNumber?: number;
-  status: 'scheduled' | 'in_progress' | 'completed';
-  createdAt?: string;
-  startedAt?: string;
 }
 
 /* ─────────── Config ─────────── */
@@ -79,54 +70,6 @@ function daysUntil(d?: string): number | null {
   return Math.ceil(diff / 86_400_000);
 }
 
-/* ─────────── Interview Banner ─────────── */
-const InterviewBanner: React.FC<{ sessions: InterviewSession[]; onJoin: (id: string) => void }> = ({ sessions, onJoin }) => {
-  const live = sessions.filter(s => s.status === 'in_progress');
-  const scheduled = sessions.filter(s => s.status === 'scheduled');
-  const allActive = [...live, ...scheduled];
-
-  if (allActive.length === 0) return null;
-
-  return (
-    <div className="interview-banner-container">
-      {live.length > 0 && (
-        <div className="interview-banner interview-banner--live">
-          <div className="interview-banner__pulse-ring" />
-          <div className="interview-banner__icon-wrap">
-            <Radio size={20} className="interview-banner__icon" />
-          </div>
-          <div className="interview-banner__body">
-            <div className="interview-banner__label">Interview in progress</div>
-            <div className="interview-banner__sub">
-              {live[0].companyName ?? 'Your interview'} · Round {live[0].roundNumber || 1}
-              {live[0].driveName ? ` · ${live[0].driveName}` : ''}
-            </div>
-          </div>
-          <button className="interview-banner__cta interview-banner__cta--live" onClick={() => onJoin(live[0].id)}>
-            <PlayCircle size={16} /> Rejoin Now
-          </button>
-        </div>
-      )}
-      {scheduled.map(s => (
-        <div key={s.id} className="interview-banner interview-banner--scheduled">
-          <div className="interview-banner__icon-wrap interview-banner__icon-wrap--amber">
-            <Video size={20} className="interview-banner__icon" />
-          </div>
-          <div className="interview-banner__body">
-            <div className="interview-banner__label">Interview room ready</div>
-            <div className="interview-banner__sub">
-              {s.companyName ?? 'Interview'} · Round {s.roundNumber || 1}
-              {s.driveName ? ` · ${s.driveName}` : ''}
-            </div>
-          </div>
-          <button className="interview-banner__cta" onClick={() => onJoin(s.id)}>
-            <ExternalLink size={16} /> Join Interview
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-};
 
 /* ─────────── Drive Card ─────────── */
 const DriveCard: React.FC<{ drive: Drive; onApply: () => void; onClick: () => void; isApplying: boolean }> = ({ drive, onClick, onApply, isApplying }) => {

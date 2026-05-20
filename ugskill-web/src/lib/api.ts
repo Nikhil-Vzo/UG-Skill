@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-// ─── In-Memory Token Store ────────────────────────────────────────────────────
-// Access token lives only in JS memory (never localStorage) to prevent XSS theft.
-// Refresh token is kept in memory as well — the backend returns it in the response body.
-let _accessToken: string | null = null;
-let _refreshToken: string | null = null;
+// ─── Token Store (sessionStorage-backed) ─────────────────────────────────────
+// Tokens are stored in sessionStorage so they survive SPA navigations within
+// the same browser tab, but are cleared automatically when the tab closes.
+// sessionStorage is safer than localStorage (no cross-tab access) while still
+// allowing full-page refreshes to remain authenticated.
+const SESSION_ACCESS_KEY = 'ugs_access';
+const SESSION_REFRESH_KEY = 'ugs_refresh';
+
+let _accessToken: string | null = sessionStorage.getItem(SESSION_ACCESS_KEY);
+let _refreshToken: string | null = sessionStorage.getItem(SESSION_REFRESH_KEY);
 
 export const tokenStore = {
   getAccessToken: () => _accessToken,
@@ -12,10 +17,14 @@ export const tokenStore = {
   setTokens: (access: string, refresh: string) => {
     _accessToken = access;
     _refreshToken = refresh;
+    sessionStorage.setItem(SESSION_ACCESS_KEY, access);
+    sessionStorage.setItem(SESSION_REFRESH_KEY, refresh);
   },
   clearTokens: () => {
     _accessToken = null;
     _refreshToken = null;
+    sessionStorage.removeItem(SESSION_ACCESS_KEY);
+    sessionStorage.removeItem(SESSION_REFRESH_KEY);
   },
 };
 

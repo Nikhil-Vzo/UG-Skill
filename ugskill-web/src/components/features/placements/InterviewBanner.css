@@ -1,0 +1,183 @@
+/* ─────────────────────────────────────────────────────────────
+   Interview Banner — Premium Glassmorphic Layout & Animations
+   ───────────────────────────────────────────────────────────── */
+
+.interview-banner-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.interview-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.125rem 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: bannerSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@keyframes bannerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Live Interview State Styles */
+.interview-banner--live {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.04));
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  box-shadow: 
+    0 0 35px rgba(239, 68, 68, 0.12), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Scheduled Interview State Styles */
+.interview-banner--scheduled {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03));
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  box-shadow: 
+    0 0 24px rgba(245, 158, 11, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Animated live pulse ring background */
+.interview-banner__pulse-ring {
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.22) 0%, transparent 70%);
+  animation: pulseRing 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulseRing {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translateY(-50%) scale(0.85);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translateY(-50%) scale(1.15);
+  }
+}
+
+.interview-banner__icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ef4444;
+  animation: iconPulse 2s ease-in-out infinite;
+  z-index: 1;
+}
+
+.interview-banner__icon-wrap--amber {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  animation: none;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.interview-banner__body {
+  flex: 1;
+  min-width: 0;
+  z-index: 1;
+}
+
+.interview-banner__label {
+  font-weight: 750;
+  font-size: 0.95rem;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.interview-banner--live .interview-banner__label {
+  color: #fca5a5;
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.interview-banner--scheduled .interview-banner__label {
+  color: #fcd34d;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+.interview-banner__sub {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin-top: 0.125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.interview-banner__cta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  z-index: 1;
+}
+
+.interview-banner__cta--live {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.interview-banner__cta:hover {
+  background: rgba(245, 158, 11, 0.28);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 15px rgba(245, 158, 11, 0.25),
+    0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.interview-banner__cta--live:hover {
+  background: rgba(239, 68, 68, 0.32);
+  box-shadow: 
+    0 4px 15px rgba(239, 68, 68, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.interview-banner__cta:active {
+  transform: translateY(-0.5px);
+}
