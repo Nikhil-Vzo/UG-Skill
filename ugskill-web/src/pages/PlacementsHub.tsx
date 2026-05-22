@@ -258,7 +258,11 @@ export const PlacementsHub: React.FC = () => {
 
   const applyMut = useMutation({
     mutationFn: (driveId: string) => api.post('/placements/registrations', { driveId }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['placement-drives'] }); setApplyingId(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['placement-drives'] });
+      queryClient.invalidateQueries({ queryKey: ['placement-drives-db'] });
+      setApplyingId(null);
+    },
     onError: () => setApplyingId(null),
   });
 

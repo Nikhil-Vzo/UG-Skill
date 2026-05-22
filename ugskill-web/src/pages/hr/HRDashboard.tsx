@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Briefcase, Users, CalendarCheck, LogOut, TrendingUp, Clock, CheckCircle, XCircle, ChevronRight, FileText, Plus, Video, Copy, Link, ExternalLink, X } from 'lucide-react';
+import { Briefcase, Users, CalendarCheck, LogOut, TrendingUp, Clock, CheckCircle, XCircle, ChevronRight, FileText, Plus, Video, Copy, Link, ExternalLink, X, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import api from '../../lib/api';
@@ -20,6 +20,20 @@ export const HRDashboard: React.FC = () => {
   const [selectedApplicant, setSelectedApplicant] = useState<any | null>(null);
   const [createdSession, setCreatedSession] = useState<any | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [driveToDelete, setDriveToDelete] = useState<{ id: string, name: string } | null>(null);
+
+  const deleteDriveMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/placements/drives/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hr-drives'] });
+      queryClient.invalidateQueries({ queryKey: ['placement-drives'] });
+      queryClient.invalidateQueries({ queryKey: ['placement-drives-db'] });
+      setDriveToDelete(null);
+    },
+    onError: (err: any) => {
+      alert('Failed to delete placement drive: ' + (err?.response?.data?.error?.message || err.message));
+    }
+  });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string, status: string }) => 
@@ -32,8 +46,13 @@ export const HRDashboard: React.FC = () => {
 
   const { data: drives = [] } = useQuery({
     queryKey: ['hr-drives'],
-    queryFn: () => api.get('/placements/drives').then(r => r.data.data || []),
+    queryFn: () => api.get('/placements/drives?limit=100').then(r => r.data.data || []),
   });
+
+  const displayedDrives = drives.filter((d: any) =>
+    user?.roles?.some((role: string) => ['admin', 'creator', 'super_admin'].includes(role)) ||
+    d.createdBy === user?.id
+  );
 
   const { data: applicants = [] } = useQuery({
     queryKey: ['hr-applicants'],
@@ -83,7 +102,7 @@ export const HRDashboard: React.FC = () => {
   const activeInterviewSessions = activeSessions.filter((session: any) => session.sessionType === 'live_interview');
 
   const stats = [
-    { label: 'Active Drives',    value: drives.length,                                     icon: <Briefcase size={20} />,  color: '#2dd4bf' },
+    { label: 'Active Drives',    value: displayedDrives.length,                            icon: <Briefcase size={20} />,  color: '#2dd4bf' },
     { label: 'Total Applicants', value: applicants.length,                                  icon: <Users size={20} />,      color: '#818cf8' },
     { label: 'Shortlisted',      value: applicants.filter((a: any) => a.status === 'shortlisted').length, icon: <CheckCircle size={20} />, color: '#22c55e' },
     { label: 'Active Rooms',     value: activeInterviewSessions.length,                     icon: <CalendarCheck size={20} />, color: '#f59e0b' },
@@ -210,7 +229,7 @@ export const HRDashboard: React.FC = () => {
               <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>Your Drives</h2>
             </div>
 
-            {drives.length === 0 ? (
+            {displayedDrives.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem 0', color: '#334155' }}>
                 <Briefcase size={32} style={{ margin: '0 auto 0.75rem', display: 'block', opacity: 0.4 }} />
                 <p style={{ fontSize: '0.875rem' }}>No placement drives yet.</p>
@@ -218,13 +237,39 @@ export const HRDashboard: React.FC = () => {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-                {drives.map((d: any) => (
-                  <div key={d.id} style={{ padding: '1rem', background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.12)', borderRadius: 10 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.375rem' }}>{d.name}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: '#475569' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Users size={12} /> {d.applicationCount || 0} applicants</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> Closes {d.registrationDeadline ? new Date(d.registrationDeadline).toLocaleDateString() : 'TBD'}</span>
+                {displayedDrives.map((d: any) => (
+                  <div key={d.id} style={{ padding: '1rem', background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.12)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.375rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: '#475569' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Users size={12} /> {d.applicationCount || 0} applicants</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> Closes {d.registrationDeadline ? new Date(d.registrationDeadline).toLocaleDateString() : 'TBD'}</span>
+                      </div>
                     </div>
+                    {(user?.roles?.includes('admin') || user?.roles?.includes('creator') || user?.roles?.includes('super_admin') || d.createdBy === user?.id) && (
+                      <button
+                        onClick={() => setDriveToDelete({ id: d.id, name: d.name })}
+                        title="Delete Placement Drive"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          padding: '0.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '6px',
+                          marginLeft: '0.5rem',
+                          flexShrink: 0,
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -380,6 +425,52 @@ export const HRDashboard: React.FC = () => {
             <p style={{ margin: '1rem 0 0', fontSize: '0.75rem', color: '#475569', textAlign: 'center' }}>
               Candidate will see this room in Placement Hub automatically.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {driveToDelete && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+          <div style={{ background: '#0f172a', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: '2.5rem', maxWidth: 480, width: '90%', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.375rem' }}>
+                  <div style={{ width: 32, height: 32, background: 'rgba(239,68,68,0.1)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                    <Trash2 size={16} />
+                  </div>
+                  <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#f0f9ff' }}>Delete Placement Drive</h2>
+                </div>
+              </div>
+              <button onClick={() => setDriveToDelete(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.25rem' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.5' }}>
+                Are you sure you want to delete the placement drive <strong style={{ color: '#f8fafc' }}>{driveToDelete.name}</strong>?
+              </p>
+              <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 8, padding: '0.875rem', fontSize: '0.8125rem', color: '#fca5a5', lineHeight: '1.4' }}>
+                <strong>Warning:</strong> This action cannot be undone. All registrations, scheduled interviews, live slot bookings, and group discussions associated with this drive will be permanently deleted.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => setDriveToDelete(null)}
+                style={{ flex: 1, padding: '0.875rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#f8fafc', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteDriveMutation.mutate(driveToDelete.id)}
+                disabled={deleteDriveMutation.isPending}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+              >
+                {deleteDriveMutation.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

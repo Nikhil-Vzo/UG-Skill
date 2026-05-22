@@ -120,6 +120,61 @@ export const insertDrivePg = async (
   return drive;
 };
 
+export const deleteDrivePg = async (id: string): Promise<void> => {
+  await db.transaction(async (tx) => {
+    // 1. Delete live interview bookings for the slots of this drive
+    const slots = await tx
+      .select({ id: liveInterviewSlots.id })
+      .from(liveInterviewSlots)
+      .where(eq(liveInterviewSlots.driveId, id));
+    
+    const slotIds = slots.map(s => s.id);
+    if (slotIds.length > 0) {
+      await tx
+        .delete(liveInterviewBookings)
+        .where(inArray(liveInterviewBookings.slotId, slotIds));
+    }
+
+    // 2. Delete live interview slots
+    await tx
+      .delete(liveInterviewSlots)
+      .where(eq(liveInterviewSlots.driveId, id));
+
+    // 3. Delete GD participants
+    const gdSess = await tx
+      .select({ id: gdSessions.id })
+      .from(gdSessions)
+      .where(eq(gdSessions.driveId, id));
+      
+    const gdSessionIds = gdSess.map(s => s.id);
+    if (gdSessionIds.length > 0) {
+      await tx
+        .delete(gdParticipants)
+        .where(inArray(gdParticipants.gdSessionId, gdSessionIds));
+    }
+
+    // 4. Delete GD sessions
+    await tx
+      .delete(gdSessions)
+      .where(eq(gdSessions.driveId, id));
+
+    // 5. Delete placement sessions
+    await tx
+      .delete(placementSessions)
+      .where(eq(placementSessions.driveId, id));
+
+    // 6. Delete drive registrations
+    await tx
+      .delete(driveRegistrations)
+      .where(eq(driveRegistrations.driveId, id));
+
+    // 7. Delete the company drive itself
+    await tx
+      .delete(companyDrives)
+      .where(eq(companyDrives.id, id));
+  });
+};
+
 // --- PROCTORING EVENTS (5.12) ---
 
 export const insertProctoringEventMongo = async (payload: IngestProctoringEventInput & { pg_student_id: string }) => {
@@ -187,6 +242,7 @@ export const getDriveById = async (id: string, userId?: string) => {
       eligibility: companyDrives.eligibility,
       mongoFlowId: companyDrives.mongoFlowId,
       createdAt: companyDrives.createdAt,
+      createdBy: companyDrives.createdBy,
       myStatus: userId ? driveRegistrations.status : sql<string | null>`NULL`,
     })
     .from(companyDrives)
@@ -202,12 +258,17 @@ export const getDriveById = async (id: string, userId?: string) => {
 
   if (!drive) return null;
 
+  let driveStatus = drive.status;
+  if (userId && drive.myStatus) {
+    driveStatus = drive.myStatus === 'registered' ? 'applied' : drive.myStatus;
+  }
+
   let interviewFlow = null;
   if (drive.mongoFlowId) {
     interviewFlow = await InterviewFlowModel.findById(drive.mongoFlowId).lean();
   }
 
-  return { ...drive, flow: interviewFlow };
+  return { ...drive, status: driveStatus, flow: interviewFlow };
 };
 
 export const listDrivesPg = async (query: DriveQuery) => {
@@ -232,6 +293,7 @@ export const listDrivesPg = async (query: DriveQuery) => {
       scheduledAt: companyDrives.scheduledAt,
       registrationDeadline: companyDrives.registrationDeadline,
       createdAt: companyDrives.createdAt,
+      createdBy: companyDrives.createdBy,
       myStatus: userId ? driveRegistrations.status : sql<string | null>`NULL`,
     })
     .from(companyDrives)
@@ -247,13 +309,24 @@ export const listDrivesPg = async (query: DriveQuery) => {
     .limit(limit)
     .offset(offset);
 
+  const mappedData = data.map(drive => {
+    let driveStatus = drive.status;
+    if (userId && drive.myStatus) {
+      driveStatus = drive.myStatus === 'registered' ? 'applied' : drive.myStatus;
+    }
+    return {
+      ...drive,
+      status: driveStatus,
+    };
+  });
+
   const [countResult] = await db
     .select({ count: count() })
     .from(companyDrives)
     .where(whereClause);
 
   return {
-    data,
+    data: mappedData,
     meta: {
       total: countResult.count,
       page,
@@ -417,10 +490,16 @@ export const getPlacementSessionPg = async (id: string) => {
       driveName: companyDrives.name,
       companyName: companies.name,
       companyLogo: companies.logoUrl,
+      candidateName: users.fullName,
+      candidateEmail: users.email,
+      candidateResumeUrl: users.resumeUrl,
+      candidateCgpa: users.cgpa,
+      candidateBranch: users.branch,
     })
     .from(placementSessions)
     .leftJoin(companyDrives, eq(placementSessions.driveId, companyDrives.id))
     .leftJoin(companies, eq(placementSessions.companyId, companies.id))
+    .leftJoin(users, eq(placementSessions.studentId, users.id))
     .where(eq(placementSessions.id, id))
     .limit(1);
   return session || null;
