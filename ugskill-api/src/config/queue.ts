@@ -2,12 +2,11 @@ import { Queue, QueueOptions } from 'bullmq';
 import { env } from './env';
 import { logger } from '../lib/logger';
 import Redis from 'ioredis';
-import RedisMock from 'ioredis-mock';
 
-// Default connection uses local redis assuming standard 6379, or parsing REDIS_URL
-export const queueConnection = env.REDIS_URL 
+// Default connection uses real Redis in production, falls back to ioredis-mock for local dev
+export const queueConnection = env.REDIS_URL
   ? new Redis(env.REDIS_URL, { maxRetriesPerRequest: null })
-  : new RedisMock();
+  : new (require('ioredis-mock').default)();
 
 if (!env.REDIS_URL) {
   logger.warn('⚠️ REDIS_URL not provided — using ioredis-mock for BullMQ queues');
