@@ -1,4 +1,4 @@
-put sentry and bull mcq
+put sentry and bull mq
 
 
 
