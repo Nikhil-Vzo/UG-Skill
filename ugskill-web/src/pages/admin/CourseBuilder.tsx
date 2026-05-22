@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Plus, GripVertical, FileVideo, FileText, Link as LinkIcon,
@@ -170,24 +170,41 @@ const LectureEditPanel: React.FC<{
   const meta = LECTURE_TYPE_META[lecture.type];
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const lectureRef = useRef(lecture);
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    lectureRef.current = lecture;
+  }, [lecture]);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   // Auto-scroll into view when panel opens
   React.useEffect(() => {
     panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, []);
 
   const upd = useCallback(<K extends keyof Lecture>(key: K, val: Lecture[K]) => {
-    onChange({ ...lecture, [key]: val });
-  }, [lecture, onChange]);
+    const next = { ...lectureRef.current, [key]: val };
+    lectureRef.current = next;
+    onChangeRef.current(next);
+  }, []);
 
   const addResource = (type: 'pdf' | 'link') => {
     const r: Resource = { id: `res_${Date.now()}`, type, title: '', url: '' };
-    upd('resources', [...lecture.resources, r]);
+    upd('resources', [...(lectureRef.current.resources || []), r]);
   };
-  const updateResource = (idx: number, r: Resource) => {
-    const a = [...lecture.resources]; a[idx] = r; upd('resources', a);
+  const updateResource = (idx: number, updates: Partial<Resource>) => {
+    const a = [...(lectureRef.current.resources || [])];
+    if (a[idx]) {
+      a[idx] = { ...a[idx], ...updates };
+      upd('resources', a);
+    }
   };
   const removeResource = (idx: number) => {
-    upd('resources', lecture.resources.filter((_, i) => i !== idx));
+    upd('resources', (lectureRef.current.resources || []).filter((_, i) => i !== idx));
   };
 
   return (
@@ -355,9 +372,9 @@ const LectureEditPanel: React.FC<{
               r.type === 'pdf' && !r.url ? (
                 <div key={r.id} className="cb-resource-upload-row">
                   <input className="cb-input" placeholder="Resource title" value={r.title}
-                    onChange={(e) => updateResource(idx, { ...r, title: e.target.value })} />
+                    onChange={(e) => updateResource(idx, { title: e.target.value })} />
                   <FileUpload category="course_content" acceptedTypes="application/pdf"
-                    maxSizeMB={50} onUploadComplete={(p) => updateResource(idx, { ...r, url: p })} />
+                    maxSizeMB={50} onUploadComplete={(p) => updateResource(idx, { url: p })} />
                   <button className="cb-icon-btn danger" onClick={() => removeResource(idx)}><X size={14} /></button>
                 </div>
               ) : (
@@ -380,6 +397,7 @@ export const CourseBuilder: React.FC = () => {
   const { courseId } = useParams<{ courseId?: string }>();
   const navigate = useNavigate();
   const isNew = !courseId;
+  const queryClient = useQueryClient();
 
   const [localSections, setLocalSections] = useState<Section[]>([]);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
@@ -493,7 +511,12 @@ export const CourseBuilder: React.FC = () => {
         await api.put(`/lms/courses/${courseId}`, payload);
       }
     },
-    onSuccess: () => { setSaveOk(true); setSaveError(null); setTimeout(() => setSaveOk(false), 2000); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-builder', courseId] });
+      setSaveOk(true);
+      setSaveError(null);
+      setTimeout(() => setSaveOk(false), 2000);
+    },
     onError: (err: any) => {
       const msg = err?.response?.data?.error?.message || err?.message || 'Save failed — check console for details';
       setSaveError(msg);
@@ -501,8 +524,31 @@ export const CourseBuilder: React.FC = () => {
     },
   });
   const publishMutation = useMutation({
-    mutationFn: () => publishCourse(courseId!),
-    onSuccess: () => navigate('/app/admin/courses'),
+    mutationFn: async () => {
+      const payload = {
+        title,
+        subtitle,
+        description,
+        whatYouLearn: whatYouLearn.split(',').map((s: string) => s.trim()).filter(Boolean),
+        durationWeeks,
+        category,
+        difficulty,
+        language,
+        isFree,
+        price,
+        thumbnailUrl,
+      };
+
+      // Auto-save the latest curriculum and course metadata before publishing
+      await saveCurriculum({ courseId: courseId!, sections: localSections });
+      await api.put(`/lms/courses/${courseId}`, payload);
+
+      return publishCourse(courseId!);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-builder', courseId] });
+      navigate('/app/admin/courses');
+    },
   });
 
   const addSection = () => {

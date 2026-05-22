@@ -130,6 +130,28 @@ export const listDrives = async (query: DriveQuery) => {
   return await placementRepo.listDrivesPg(query);
 };
 
+export const deleteDrive = async (id: string, userId: string, userRoles: string[]) => {
+  const drive = await placementRepo.getDriveById(id);
+  if (!drive) {
+    throw new NotFoundError('Drive not found');
+  }
+
+  // Check permissions: admin and creator can delete any drive.
+  // hr can only delete their own drive.
+  const isAdmin = userRoles.includes('admin') || userRoles.includes('creator');
+  if (!isAdmin && drive.createdBy !== userId) {
+    throw new AppError('You are not authorized to delete this placement drive', 403);
+  }
+
+  // Delete the drive (cascade deletes all related entities in postgres)
+  await placementRepo.deleteDrivePg(id);
+  
+  // If the drive has a mongoFlowId, delete the interview flow from MongoDB
+  if (drive.mongoFlowId) {
+    await placementRepo.deleteInterviewFlowMongo(drive.mongoFlowId);
+  }
+};
+
 export const registerForDrive = async (studentId: string, data: RegisterForDriveInput) => {
   const drive = await placementRepo.getDriveById(data.driveId);
   if (!drive) {

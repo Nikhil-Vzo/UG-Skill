@@ -80,6 +80,23 @@ export const listDrives = async (req: Request, res: Response, next: NextFunction
   }
 };
 
+export const deleteDrive = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await placementService.deleteDrive(req.params.id as string, req.user!.userId, req.user!.roles);
+    await logAction({
+      actorId: req.user!.userId,
+      action: 'PLACEMENT_DRIVE_DELETED',
+      entityType: 'placement_drive',
+      entityId: req.params.id as string,
+      newValue: { id: req.params.id },
+      ipAddress: req.ip,
+    });
+    res.status(200).json(successResponse({ message: 'Placement drive deleted successfully' }));
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const registerForDrive = async (req: Request, res: Response, next: NextFunction) => {
   try {
     console.log('Registering for drive:', { params: req.params, body: req.body, user: req.user?.userId });
