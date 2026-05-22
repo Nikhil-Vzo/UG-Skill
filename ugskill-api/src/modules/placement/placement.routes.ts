@@ -100,6 +100,13 @@ router.get(
   placementController.getDrive
 );
 
+router.delete(
+  '/drives/:id',
+  requireAuth,
+  requireRole(['admin', 'creator', 'hr']),
+  placementController.deleteDrive
+);
+
 // --- DRIVE REGISTRATIONS ---
 router.post(
   '/drives/:id/apply',
