@@ -398,9 +398,11 @@ export const listRegistrationsPg = async (query: RegistrationQuery) => {
       driveId: driveRegistrations.driveId,
       status: driveRegistrations.status,
       registeredAt: driveRegistrations.registeredAt,
+      resumeUrl: users.resumeUrl,
       student: {
         fullName: users.fullName,
         email: users.email,
+        resumeUrl: users.resumeUrl,
       },
       drive: {
         name: companyDrives.name,

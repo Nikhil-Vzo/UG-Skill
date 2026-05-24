@@ -4,6 +4,7 @@ import { Briefcase, Users, CalendarCheck, LogOut, TrendingUp, Clock, CheckCircle
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import api from '../../lib/api';
+import './HRDashboard.css';
 
 const statusColor: Record<string, string> = {
   shortlisted: '#22c55e',
@@ -117,11 +118,11 @@ export const HRDashboard: React.FC = () => {
     : null;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060b14', color: '#f0f9ff', fontFamily: 'Inter, sans-serif' }}>
+    <div className="hr-portal">
       {/* Top bar */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 2.5rem', background: 'rgba(8,12,20,0.95)', borderBottom: '1px solid rgba(20,184,166,0.1)', position: 'sticky', top: 0, zIndex: 50 }}>
+      <header className="hr-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #14b8a6, #0d9488)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div className="hr-header-logo-wrap">
             <Briefcase size={18} />
           </div>
           <div>
@@ -130,23 +131,10 @@ export const HRDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <div className="hr-header-actions">
           <button
             onClick={() => navigate('/app/admin/placements')}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              padding: '0.625rem 1.25rem', 
-              background: 'linear-gradient(135deg, #14b8a6, #0d9488)', 
-              border: 'none', 
-              borderRadius: 8, 
-              color: '#fff', 
-              fontSize: '0.875rem', 
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(20, 184, 166, 0.2)'
-            }}
+            className="hr-btn-create"
           >
             <Plus size={16} /> Create New Drive
           </button>
@@ -157,43 +145,43 @@ export const HRDashboard: React.FC = () => {
           </div>
           <button
             onClick={handleLogout}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#fca5a5', fontSize: '0.8125rem', cursor: 'pointer' }}
+            className="hr-btn-logout"
           >
             <LogOut size={14} /> Logout
           </button>
         </div>
       </header>
 
-      <main style={{ padding: '2.5rem', maxWidth: 1200, margin: '0 auto' }}>
+      <main className="hr-main">
         {/* Welcome */}
         <div style={{ marginBottom: '2.5rem' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '0.375rem' }}>
+          <h1 className="hr-welcome-title">
             Welcome back, {user?.fullName?.split(' ')[0]}
           </h1>
-          <p style={{ color: '#475569', fontSize: '0.9375rem' }}>
+          <p className="hr-welcome-subtitle">
             Here's your recruitment overview for today.
           </p>
         </div>
 
         {/* Stat cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+        <div className="hr-stats-grid">
           {stats.map(s => (
-            <div key={s.label} style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.8125rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</span>
+            <div key={s.label} className="hr-stat-card" style={{ '--accent-color': s.color } as React.CSSProperties}>
+              <div className="hr-stat-header">
+                <span className="hr-stat-label">{s.label}</span>
                 <span style={{ color: s.color }}>{s.icon}</span>
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: s.color }}>{s.value}</div>
+              <div className="hr-stat-value" style={{ color: s.color }}>{s.value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+        <div className="hr-grid-layout">
           {/* Applicant pipeline */}
-          <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>Recent Applicants</h2>
-              <span style={{ fontSize: '0.75rem', color: '#2dd4bf', cursor: 'pointer' }}>View all →</span>
+          <div className="hr-panel">
+            <div className="hr-panel-header">
+              <h2 className="hr-panel-title">Recent Applicants</h2>
+              <span className="hr-panel-link">View all →</span>
             </div>
 
             {applicants.length === 0 ? (
@@ -203,20 +191,20 @@ export const HRDashboard: React.FC = () => {
                 <p style={{ fontSize: '0.8125rem', marginTop: '0.375rem' }}>Post a placement drive to start receiving applications.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="hr-applicant-list">
                 {applicants.slice(0, 8).map((a: any) => (
-                  <div key={a.id} onClick={() => setSelectedApplicant(a)} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: 8, cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}>
-                    <div style={{ width: 36, height: 36, background: 'rgba(20,184,166,0.12)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.875rem', color: '#2dd4bf', flexShrink: 0 }}>
+                  <div key={a.id} onClick={() => setSelectedApplicant(a)} className="hr-applicant-item">
+                    <div className="hr-avatar">
                       {a.student?.fullName?.[0] || '?'}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.student?.fullName}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#475569' }}>{a.drive?.name}</div>
+                    <div className="hr-applicant-info">
+                      <div className="hr-applicant-name">{a.student?.fullName}</div>
+                      <div className="hr-applicant-drive">{a.drive?.name}</div>
                     </div>
-                    <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.625rem', borderRadius: 100, background: `${statusColor[a.status] || '#818cf8'}18`, color: statusColor[a.status] || '#818cf8', fontWeight: 600, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
+                    <span className="hr-status-badge" style={{ background: `${statusColor[a.status] || '#818cf8'}18`, color: statusColor[a.status] || '#818cf8' }}>
                       {a.status}
                     </span>
-                    <ChevronRight size={14} style={{ color: '#334155', flexShrink: 0 }} />
+                    <ChevronRight size={14} className="hr-chevron" />
                   </div>
                 ))}
               </div>
@@ -224,9 +212,9 @@ export const HRDashboard: React.FC = () => {
           </div>
 
           {/* Active drives */}
-          <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>Your Drives</h2>
+          <div className="hr-panel">
+            <div className="hr-panel-header">
+              <h2 className="hr-panel-title">Your Drives</h2>
             </div>
 
             {displayedDrives.length === 0 ? (
@@ -236,36 +224,21 @@ export const HRDashboard: React.FC = () => {
                 <p style={{ fontSize: '0.8125rem', marginTop: '0.375rem' }}>Contact the UGSkill admin team to set up your first drive.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              <div className="hr-drive-list">
                 {displayedDrives.map((d: any) => (
-                  <div key={d.id} style={{ padding: '1rem', background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.12)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={d.id} className="hr-drive-item">
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: '0.375rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: '#475569' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Users size={12} /> {d.applicationCount || 0} applicants</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock size={12} /> Closes {d.registrationDeadline ? new Date(d.registrationDeadline).toLocaleDateString() : 'TBD'}</span>
+                      <div className="hr-drive-name">{d.name}</div>
+                      <div className="hr-drive-meta">
+                        <span className="hr-drive-meta-item"><Users size={12} /> {d.applicationCount || 0} applicants</span>
+                        <span className="hr-drive-meta-item"><Clock size={12} /> Closes {d.registrationDeadline ? new Date(d.registrationDeadline).toLocaleDateString() : 'TBD'}</span>
                       </div>
                     </div>
                     {(user?.roles?.includes('admin') || user?.roles?.includes('creator') || user?.roles?.includes('super_admin') || d.createdBy === user?.id) && (
                       <button
                         onClick={() => setDriveToDelete({ id: d.id, name: d.name })}
                         title="Delete Placement Drive"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#ef4444',
-                          cursor: 'pointer',
-                          padding: '0.5rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: '6px',
-                          marginLeft: '0.5rem',
-                          flexShrink: 0,
-                          transition: 'background 0.2s',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                        className="hr-btn-delete"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -280,26 +253,26 @@ export const HRDashboard: React.FC = () => {
 
       {/* Applicant Side-Panel */}
       {selectedApplicant && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', justifyContent: 'flex-end', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setSelectedApplicant(null)}>
-          <div style={{ width: 400, background: '#0f172a', borderLeft: '1px solid rgba(255,255,255,0.1)', padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxShadow: '-10px 0 30px rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+        <div className="hr-backdrop" onClick={() => setSelectedApplicant(null)}>
+          <div className="hr-side-panel" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem' }}>{selectedApplicant.student?.fullName}</h2>
-                <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Applied for: <span style={{ color: '#f8fafc', fontWeight: 500 }}>{selectedApplicant.drive?.name}</span></div>
+                <h2 className="hr-side-title">{selectedApplicant.student?.fullName}</h2>
+                <div className="hr-side-subtitle">Applied for: <span style={{ color: '#f8fafc', fontWeight: 500 }}>{selectedApplicant.drive?.name}</span></div>
               </div>
-              <button onClick={() => setSelectedApplicant(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.25rem' }}><XCircle size={24} /></button>
+              <button onClick={() => setSelectedApplicant(null)} className="hr-side-close"><X size={24} /></button>
             </div>
             
             {/* Status Badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <span style={{ fontSize: '0.75rem', padding: '0.375rem 0.875rem', borderRadius: 100, background: `${statusColor[selectedApplicant.status] || '#818cf8'}25`, color: statusColor[selectedApplicant.status] || '#818cf8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div className="hr-side-status-section">
+              <span className="hr-status-badge" style={{ background: `${statusColor[selectedApplicant.status] || '#818cf8'}25`, color: statusColor[selectedApplicant.status] || '#818cf8', padding: '0.375rem 0.875rem' }}>
                 Current Status: {selectedApplicant.status}
               </span>
             </div>
 
             {/* Resume Action */}
             {selectedApplicant.resumeUrl ? (
-              <button onClick={() => window.open(selectedApplicant.resumeUrl, '_blank')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#f8fafc', fontWeight: 500, cursor: 'pointer' }}>
+              <button onClick={() => window.open(selectedApplicant.resumeUrl, '_blank')} className="hr-resume-btn">
                 <FileText size={18} /> View Resume
               </button>
             ) : (
@@ -307,53 +280,39 @@ export const HRDashboard: React.FC = () => {
             )}
 
             {/* Pipeline Actions */}
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <h3 style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Update Pipeline Status</h3>
+            <div className="hr-action-group">
+              <h3 className="hr-action-title">Update Pipeline Status</h3>
               <button 
                 onClick={() => updateStatusMutation.mutate({ id: selectedApplicant.id, status: 'shortlisted' })}
                 disabled={updateStatusMutation.isPending || selectedApplicant.status === 'shortlisted'}
-                style={{ padding: '1rem', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 8, color: '#4ade80', fontWeight: 600, cursor: 'pointer', opacity: selectedApplicant.status === 'shortlisted' ? 0.5 : 1 }}
+                className="hr-btn-pipeline shortlist"
               >
                 {updateStatusMutation.isPending && selectedApplicant.status !== 'shortlisted' ? 'Updating...' : 'Shortlist Candidate'}
               </button>
               <button 
                 onClick={() => updateStatusMutation.mutate({ id: selectedApplicant.id, status: 'interview' })}
                 disabled={updateStatusMutation.isPending || selectedApplicant.status === 'interview'}
-                style={{ padding: '1rem', background: 'rgba(129,140,248,0.1)', border: '1px solid rgba(129,140,248,0.3)', borderRadius: 8, color: '#818cf8', fontWeight: 600, cursor: 'pointer', opacity: selectedApplicant.status === 'interview' ? 0.5 : 1 }}
+                className="hr-btn-pipeline interview"
               >
                 Move to Interview Stage
               </button>
               <button 
                 onClick={() => updateStatusMutation.mutate({ id: selectedApplicant.id, status: 'rejected' })}
                 disabled={updateStatusMutation.isPending || selectedApplicant.status === 'rejected'}
-                style={{ padding: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#f87171', fontWeight: 600, cursor: 'pointer', opacity: selectedApplicant.status === 'rejected' ? 0.5 : 1 }}
+                className="hr-btn-pipeline reject"
               >
                 Reject Candidate
               </button>
 
               {selectedApplicant.status === 'interview' && (
-                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="hr-interview-action-panel">
                   <button
                     onClick={() => selectedActiveSession
                       ? window.open(`/app/placements/interview/${selectedActiveSession.id}`, '_blank')
                       : startInterviewMutation.mutate(selectedApplicant)
                     }
                     disabled={startInterviewMutation.isPending}
-                    style={{ 
-                      width: '100%', 
-                      padding: '1rem', 
-                      background: 'linear-gradient(135deg, #eab308, #ca8a04)', 
-                      border: 'none', 
-                      borderRadius: 8, 
-                      color: '#000', 
-                      fontWeight: 700, 
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      boxShadow: '0 4px 12px rgba(234, 179, 8, 0.3)'
-                    }}
+                    className="hr-btn-video-room"
                   >
                     <Video size={18} />
                     {startInterviewMutation.isPending
@@ -366,11 +325,11 @@ export const HRDashboard: React.FC = () => {
                     <>
                       <button
                         onClick={() => copyLink(selectedActiveSession.id)}
-                        style={{ marginTop: '0.625rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.625rem', background: copiedLink ? 'rgba(34,197,94,0.12)' : 'rgba(20,184,166,0.1)', border: `1px solid ${copiedLink ? 'rgba(34,197,94,0.35)' : 'rgba(20,184,166,0.25)'}`, borderRadius: 8, color: copiedLink ? '#4ade80' : '#2dd4bf', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer' }}
+                        className={`hr-btn-copy-link ${copiedLink ? 'copied' : ''}`}
                       >
                         <Copy size={14} /> {copiedLink ? 'Copied!' : 'Copy Link'}
                       </button>
-                      <p style={{ margin: '0.625rem 0 0', color: '#94a3b8', fontSize: '0.75rem', textAlign: 'center' }}>
+                      <p className="hr-interview-status-msg">
                         Room status: {selectedActiveSession.status === 'in_progress' ? '🔴 Live now' : '⏳ Scheduled'} · Candidate can see this in Placement Hub.
                       </p>
                     </>
@@ -384,40 +343,40 @@ export const HRDashboard: React.FC = () => {
 
       {/* ── Session Created Invite Modal ── */}
       {createdSession && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-          <div style={{ background: '#0f172a', border: '1px solid rgba(20,184,166,0.3)', borderRadius: 16, padding: '2.5rem', maxWidth: 480, width: '90%', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div className="hr-modal-overlay">
+          <div className="hr-modal">
+            <div className="hr-modal-header">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.375rem' }}>
-                  <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg,#14b8a6,#0d9488)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="hr-modal-title-area">
+                  <div className="hr-modal-icon-wrap">
                     <Video size={16} color="#fff" />
                   </div>
-                  <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#f0f9ff' }}>Interview Session Created</h2>
+                  <h2 className="hr-modal-title">Interview Session Created</h2>
                 </div>
-                <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b' }}>Room status: Scheduled</p>
+                <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b', marginTop: '0.25rem' }}>Room status: Scheduled</p>
               </div>
-              <button onClick={() => setCreatedSession(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.25rem' }}>
+              <button onClick={() => setCreatedSession(null)} className="hr-modal-close">
                 <X size={20} />
               </button>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '1rem', marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Student Join Link</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: '#2dd4bf', wordBreak: 'break-all' }}>
+            <div className="hr-modal-link-box">
+              <div className="hr-modal-link-label">Student Join Link</div>
+              <div className="hr-modal-link-url">
                 {`${window.location.origin}/app/placements/interview/${createdSession.id}`}
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div className="hr-modal-actions">
               <button
                 onClick={() => copyLink(createdSession.id)}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: copiedLink ? 'rgba(34,197,94,0.15)' : 'rgba(20,184,166,0.12)', border: `1px solid ${copiedLink ? 'rgba(34,197,94,0.4)' : 'rgba(20,184,166,0.3)'}`, borderRadius: 8, color: copiedLink ? '#4ade80' : '#2dd4bf', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+                className={`hr-modal-btn secondary ${copiedLink ? 'copied' : ''}`}
               >
                 <Copy size={15} /> {copiedLink ? 'Copied!' : 'Copy Link'}
               </button>
               <button
                 onClick={() => window.open(`/app/placements/interview/${createdSession.id}`, '_blank')}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: 'linear-gradient(135deg,#14b8a6,#0d9488)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+                className="hr-modal-btn primary"
               >
                 <ExternalLink size={15} /> Open Room
               </button>
@@ -431,18 +390,18 @@ export const HRDashboard: React.FC = () => {
 
       {/* Delete Confirmation Modal */}
       {driveToDelete && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-          <div style={{ background: '#0f172a', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 16, padding: '2.5rem', maxWidth: 480, width: '90%', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div className="hr-modal-overlay">
+          <div className="hr-modal danger">
+            <div className="hr-modal-header">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.375rem' }}>
-                  <div style={{ width: 32, height: 32, background: 'rgba(239,68,68,0.1)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                <div className="hr-modal-title-area">
+                  <div className="hr-modal-icon-wrap danger">
                     <Trash2 size={16} />
                   </div>
-                  <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: '#f0f9ff' }}>Delete Placement Drive</h2>
+                  <h2 className="hr-modal-title">Delete Placement Drive</h2>
                 </div>
               </div>
-              <button onClick={() => setDriveToDelete(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.25rem' }}>
+              <button onClick={() => setDriveToDelete(null)} className="hr-modal-close">
                 <X size={20} />
               </button>
             </div>
@@ -451,22 +410,22 @@ export const HRDashboard: React.FC = () => {
               <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.5' }}>
                 Are you sure you want to delete the placement drive <strong style={{ color: '#f8fafc' }}>{driveToDelete.name}</strong>?
               </p>
-              <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 8, padding: '0.875rem', fontSize: '0.8125rem', color: '#fca5a5', lineHeight: '1.4' }}>
+              <div className="hr-modal-warning-box">
                 <strong>Warning:</strong> This action cannot be undone. All registrations, scheduled interviews, live slot bookings, and group discussions associated with this drive will be permanently deleted.
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div className="hr-modal-actions">
               <button
                 onClick={() => setDriveToDelete(null)}
-                style={{ flex: 1, padding: '0.875rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#f8fafc', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+                className="hr-modal-btn secondary"
               >
                 Cancel
               </button>
               <button
                 onClick={() => deleteDriveMutation.mutate(driveToDelete.id)}
                 disabled={deleteDriveMutation.isPending}
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.875rem', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' }}
+                className="hr-modal-btn danger"
               >
                 {deleteDriveMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>

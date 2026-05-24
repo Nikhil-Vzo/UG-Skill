@@ -63,6 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
                     >
                       <span className="nav-icon">{item.icon}</span>
                       <span className="nav-label">{item.label}</span>
+                      {item.badge && <span className="nav-badge-soon">{item.badge}</span>}
                     </NavLink>
                   </li>
                 ))}
@@ -100,6 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
                     >
                       <span className="nav-icon">{item.icon}</span>
                       <span className="nav-label">{item.label}</span>
+                      {item.badge && <span className="nav-badge-soon">{item.badge}</span>}
                     </NavLink>
                   </li>
                 ))}
