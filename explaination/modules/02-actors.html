@@ -1,0 +1,122 @@
+<section class="module" id="module-2" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">Meet the Actors</h1>
+      <p class="module-subtitle">Introducing the tech stack: A film crew coordination</p>
+    </header>
+
+    <div class="module-body">
+      <!-- Screen 1: Film Crew Metaphor -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The Tech Stack Film Crew</h2>
+        <p>
+          A modern web application is like a film crew, where different specialists collaborate to produce a single seamless experience. Let's meet the characters in the UGSkill project:
+        </p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🎬</div>
+            <h4 class="pattern-title">The Director (<span class="term" data-definition="Frontend — the visible part of a website or app that users interact with directly in their browser.">Frontend</span>)</h4>
+            <p class="pattern-desc"><strong>React 19 & Vite:</strong> Decides exactly what the student sees, draws the video player, captures button clicks, and orchestrates client interactions.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">💼</div>
+            <h4 class="pattern-title">The Producer (<span class="term" data-definition="Backend — the behind-the-scenes server that handles business logic, security, and talks to databases.">Backend</span>)</h4>
+            <p class="pattern-desc"><strong>Express.js & Node:</strong> Coordinates everything behind the scenes, checks permissions, handles API routing, and runs the business checks.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">⚡</div>
+            <h4 class="pattern-title">The Runner (Cache)</h4>
+            <p class="pattern-desc"><strong><span class="term" data-definition="Redis — an in-memory key-value data store used as a super-fast cache or queue buffer.">Redis</span>:</strong> A fast runner that keeps temporary statuses (like active exam heartbeats or session tokens) ready in seconds.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: SQL vs NoSQL: The Database Duo -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">The Dual Database Archivists</h2>
+        <p>
+          Instead of relying on a single filing system, UGSkill uses a dual database setup to balance speed, structure, and reliability:
+        </p>
+
+        <div class="translation-block">
+          <div class="translation-english" style="border-left: 3px solid var(--color-actor-3); background: var(--color-surface);">
+            <h4 style="color: var(--color-actor-3)">The SQL Ledger (PostgreSQL & Supabase)</h4>
+            <p>
+              Stores transactional, structured data in tables with rigid relationships. This is where student records, course catalog data, placement drives, and verified exam scores live.
+            </p>
+            <p>
+              <em>Why?</em> Because grades and placements require absolute relational integrity (no orphan records).
+            </p>
+          </div>
+          <div class="translation-english" style="border-left: 3px solid var(--color-actor-5); background: var(--color-surface);">
+            <h4 style="color: var(--color-actor-5)">The NoSQL Folder (MongoDB)</h4>
+            <p>
+              Stores flexible, unstructured JSON-like documents. This is where polymorphic quiz questions, mock interview responses, and raw webcam proctoring activity events are filed.
+            </p>
+            <p>
+              <em>Why?</em> Because quizzes can have diverse formats, and proctoring activity streams require high-write speed without rigid <span class="term" data-definition="Schema — the blueprint or formal structure that defines how data is organized in a database.">schema</span> checks.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-8)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Steering AI on Databases</strong>
+            <p>
+              If you instruct an AI assistant to "add a user metadata field like a bio," explain whether it belongs to the relational profile (<span class="term" data-definition="PostgreSQL — a relational database that stores data in structured tables with rows and columns, ideal for transactional data.">Postgres</span>) or the flexible, polymorphic metadata object (<span class="term" data-definition="MongoDB — a document-based database that stores data in flexible, JSON-like formats, ideal for high-write or polymorphic data.">MongoDB</span>).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Drag-and-Drop Actor Matching -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Actor Matching Challenge</h2>
+        <p>
+          Drag each tech stack character to their correct operational responsibility:
+        </p>
+
+        <div class="dnd-container" id="dnd-actors">
+          <div class="dnd-chips">
+            <div class="dnd-chip" draggable="true" data-answer="frontend">Director (React Frontend)</div>
+            <div class="dnd-chip" draggable="true" data-answer="backend">Producer (Express API)</div>
+            <div class="dnd-chip" draggable="true" data-answer="postgres">Archivist (Supabase Postgres)</div>
+            <div class="dnd-chip" draggable="true" data-answer="mongo">Archivist (MongoDB)</div>
+            <div class="dnd-chip" draggable="true" data-answer="redis">Runner (Redis)</div>
+          </div>
+          
+          <div class="dnd-zones">
+            <div class="dnd-zone" data-correct="postgres">
+              <p class="dnd-zone-label">Checks student grades and eligibility rules in relational tables.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="mongo">
+              <p class="dnd-zone-label">Stores polymorphic quiz questions and high-write camera violations.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="frontend">
+              <p class="dnd-zone-label">Renders button layouts, logs video clicks, and displays dashboards.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="backend">
+              <p class="dnd-zone-label">Handles API routes and checks user roles before talking to databases.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="redis">
+              <p class="dnd-zone-label">Temporarily stores exam active heartbeats for 45 seconds.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+          </div>
+
+          <div style="margin-top: var(--space-6); display: flex; gap: var(--space-4)">
+            <button class="quiz-check-btn" onclick="checkDnD('dnd-actors')">Check Matches</button>
+            <button class="quiz-reset-btn" onclick="resetDnD('dnd-actors')">Reset</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

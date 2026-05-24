@@ -15,7 +15,7 @@ def run_test():
         # 1. Register new student
         print("Registering new student...")
         page.goto("http://localhost:5173/signup")
-        page.fill("input[placeholder='Full Name']", f"Test Student {unique_id}")
+        page.fill("input[placeholder='Jane Doe']", f"Test Student {unique_id}")
         page.fill("input[type='email']", test_email)
         page.fill("input[type='password']", "Test@1234")
         page.click("button[type='submit']")
@@ -28,36 +28,42 @@ def run_test():
         page.goto("http://localhost:5173/app/discover")
         page.wait_for_load_state("networkidle")
         
-        # Click on the first course card to view details
-        course_cards = page.locator(".surface-card")
-        if course_cards.count() > 0:
-            course_cards.first.click()
+        # Click on the course card with lectures to view details
+        course_card = page.locator(".discover-course-card, .discover-featured-card, .surface-card").filter(has_text="Full Stack Web Development").first
+        if course_card.is_visible():
+            print("Found Full Stack Web Development course card.")
+            course_card.click()
             page.wait_for_load_state("networkidle")
+            print(f"Current page URL: {page.url}")
             
-            # 3. Enroll
-            print("Enrolling in Course...")
-            enroll_btn = page.locator("button:has-text('Enroll')")
-            if enroll_btn.is_visible():
-                enroll_btn.click()
-                print("Enrollment clicked.")
-                time.sleep(2)
+            # 3. Enroll / Continue learning
+            print("Enrolling or starting the course...")
+            action_btn = page.locator("button:has-text('Enroll'), button:has-text('Continue'), button:has-text('Start Learning')").first
+            action_btn.wait_for(state="visible", timeout=10000)
+            action_btn.click()
+            print("Enrollment/Continue clicked.")
+            time.sleep(2)
             
             # 4. Watch Lecture / Go to Player
-            print("Navigating to Video Player...")
-            start_learning_btn = page.locator("button:has-text('Start Learning'), button:has-text('Continue')")
-            if start_learning_btn.is_visible():
-                start_learning_btn.click()
+            print("Waiting for Video Player...")
+            try:
                 page.wait_for_url("**/player**", timeout=15000)
                 print("In Video Player.")
                 
                 # Mark Complete
-                mark_complete_btn = page.locator("button:has-text('Mark Complete')")
+                mark_complete_btn = page.locator("button:has-text('Mark Complete')").first
+                mark_complete_btn.wait_for(state="visible", timeout=10000)
                 if mark_complete_btn.is_visible():
                     mark_complete_btn.click()
                     print("Lecture marked complete.")
                     time.sleep(2)
-            else:
-                print("No start learning button found.")
+                else:
+                    print("Mark Complete button not visible.")
+            except Exception as e:
+                print(f"Could not reach video player or mark complete: {e}")
+                page.screenshot(path="c:/Users/nikhi/Downloads/ugskill/screenshots/player_error.png")
+                print("Page URL on error:", page.url)
+                print("HTML content excerpt on error:", page.content()[:1000])
         else:
             print("No courses found in Discover.")
 

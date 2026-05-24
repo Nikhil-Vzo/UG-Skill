@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { TextInput } from '../components/ui/TextInput';
 import { useAuthStore } from '../store/auth.store';
 import { User, Camera, Lock, AlertCircle, CheckCircle, Save, Loader2, FileText, Sparkles } from 'lucide-react';
+import axios from 'axios';
 import api from '../lib/api';
 
 interface UserProfile {
@@ -89,16 +90,24 @@ export const Profile: React.FC = () => {
     setAvatarError('');
     setAvatarUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      // 1. Get presigned URL
+      const response = await api.post('/upload/presigned', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        category: 'user_profile',
       });
-      const url: string = res.data?.data?.url ?? res.data?.url ?? res.data?.fileUrl ?? '';
-      if (!url) throw new Error('No URL returned from upload');
-      setAvatarUrl(url);
+      const { signedUrl, publicUrl } = response.data.data;
+      if (!signedUrl || !publicUrl) throw new Error('No URL returned from upload');
+
+      // 2. Upload file directly to Supabase Storage
+      await axios.put(signedUrl, file, {
+        headers: { 'Content-Type': file.type },
+      });
+
+      setAvatarUrl(publicUrl);
       // Persist to profile
-      await api.put('/users/me', { avatarUrl: url });
+      await api.put('/users/me', { avatarUrl: publicUrl });
       queryClient.invalidateQueries({ queryKey: ['profile-me'] });
     } catch {
       setAvatarError('Failed to upload photo. Please try again.');
@@ -115,16 +124,24 @@ export const Profile: React.FC = () => {
     setResumeError('');
     setResumeUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      // 1. Get presigned URL
+      const response = await api.post('/upload/presigned', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        category: 'placement_resume',
       });
-      const url: string = res.data?.data?.url ?? res.data?.url ?? res.data?.fileUrl ?? '';
-      if (!url) throw new Error('No URL returned from upload');
-      setResumeUrl(url);
+      const { signedUrl, publicUrl } = response.data.data;
+      if (!signedUrl || !publicUrl) throw new Error('No URL returned from upload');
+
+      // 2. Upload file directly to Supabase Storage
+      await axios.put(signedUrl, file, {
+        headers: { 'Content-Type': file.type },
+      });
+
+      setResumeUrl(publicUrl);
       // Persist to profile
-      await api.put('/users/me', { resumeUrl: url });
+      await api.put('/users/me', { resumeUrl: publicUrl });
       queryClient.invalidateQueries({ queryKey: ['profile-me'] });
     } catch {
       setResumeError('Failed to upload resume. Please try again.');

@@ -47,10 +47,11 @@ const SAMPLE_COURSES = [
     tags: ['react', 'node', 'javascript', 'web'],
     sections: [
       {
+        _id: new mongoose.Types.ObjectId('6a01fe8b0cef37dbaf97a89a'),
         title: 'Introduction to Modern Web',
         lectures: [
-          { title: 'The Evolution of the Web', type: 'video', duration_secs: 600 },
-          { title: 'Setting up your Dev Environment', type: 'video', duration_secs: 900 }
+          { _id: new mongoose.Types.ObjectId('6a01fe8b0cef37dbaf97a89b'), title: 'The Evolution of the Web', type: 'video', duration_secs: 600 },
+          { _id: new mongoose.Types.ObjectId('6a01fe8b0cef37dbaf97a89c'), title: 'Setting up your Dev Environment', type: 'video', duration_secs: 900 }
         ]
       }
     ]
