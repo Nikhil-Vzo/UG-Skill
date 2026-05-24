@@ -24,7 +24,13 @@ def login(page, email, password, role_label):
 
 def run_test():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--use-fake-ui-for-media-stream",
+                "--use-fake-device-for-media-stream"
+            ]
+        )
 
         print("=" * 50)
         print("  PROCTORING E2E FLOW TEST")
@@ -86,14 +92,29 @@ def run_test():
         print("  URL after click: " + student_page.url)
 
         if "pre-flight" in student_page.url:
-            print("  On Pre-Flight page. Waiting for 'Start Exam' button...")
+            print("  On Pre-Flight page. Checking policies and waiting for hardware diagnostics...")
             try:
-                student_page.wait_for_selector("button:has-text('Start Exam')", timeout=12000)
-                student_page.click("button:has-text('Start Exam')")
+                # Click 'Initiate Secure Scan' to trigger getUserMedia and start radar sweep diagnostics
+                scan_btn = student_page.locator("button:has-text('Initiate Secure Scan')")
+                if scan_btn.is_visible():
+                    print("  Clicking Initiate Secure Scan...")
+                    scan_btn.click()
+                    time.sleep(2) # Give it a brief moment to open the stream
+                
+                # Check the agreement rules checkbox
+                student_page.locator("label[for='agree-rules']").click()
+                
+                # Locate and wait for 'Begin Examination' to be visible and enabled
+                begin_btn = student_page.locator("button:has-text('Begin Examination')")
+                begin_btn.wait_for(state="visible", timeout=20000)
+                
+                # Allow a short duration for video analysis to register 'detected'
+                time.sleep(4)
+                begin_btn.click()
                 student_page.wait_for_load_state("networkidle")
                 print("  Pre-flight passed. URL: " + student_page.url)
             except PlaywrightTimeout:
-                print("  [WARN] Pre-flight 'Start Exam' button not found within 12s.")
+                print("  [WARN] Pre-flight 'Begin Examination' button not found or enabled within 20s.")
 
         # -- PHASE 5: PROCTORING HUD --
         print("\n[Phase 5] Checking Proctoring HUD...")

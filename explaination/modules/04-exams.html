@@ -1,0 +1,204 @@
+<section class="module" id="module-4" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">High-Stakes Exams & Proctoring</h1>
+      <p class="module-subtitle">Real-time anti-cheat signals using WebSockets and event streaming</p>
+    </header>
+
+    <div class="module-body">
+      <!-- Screen 1: Real-Time Anti-Cheat -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The Silent Exam Hall Metaphor</h2>
+        <p>
+          During a high-stakes exam, a student's webcam and tab actions are monitored live. Rather than refreshing a database every second (which would crash the server), the app operates like a <strong>silent exam hall</strong>:
+        </p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🔌</div>
+            <h4 class="pattern-title">The Dedicated Line (<span class="term" data-definition="WebSocket — a protocol providing full-duplex, real-time communication channels over a single persistent TCP connection.">WebSockets</span>)</h4>
+            <p class="pattern-desc">A continuous open pipe connects the browser directly to the server. Information flows instantly in both directions with zero request delays.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🎟️</div>
+            <h4 class="pattern-title">Exam Channels (<span class="term" data-definition="Namespace — a logical division of a WebSocket server that allows separating distinct communication channels, e.g., tracking vs chat.">Namespaces</span>)</h4>
+            <p class="pattern-desc">A special `/tracking` namespace separates tracking alerts from generic chat or exam question updates, keeping traffic clean.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">💓</div>
+            <h4 class="pattern-title">Keep-Alive check (<span class="term" data-definition="Heartbeat — a periodic signal sent between a client and server to verify that the connection remains active.">Heartbeat</span>)</h4>
+            <p class="pattern-desc">The browser sends a heartbeat every 30 seconds. If it stops, the system knows the student disconnected or closed the window.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: Flag Event Code translation -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Behind the Scenes: Streaming the Flags</h2>
+        <p>
+          Let's trace how the server handles anti-cheat event alerts via the WebSocket socket listener:
+        </p>
+
+        <div class="translation-block">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-line">socket.on(<span class="code-string">'flag:event'</span>, <span class="code-keyword">async</span> ({ attemptId, eventType, severity, metadata }) => {</span>
+<span class="code-line">  <span class="code-keyword">if</span> (!attemptId || !eventType || !severity) {</span>
+<span class="code-line">    socket.emit(<span class="code-string">'error'</span>, { message: <span class="code-string">'Missing fields'</span> });</span>
+<span class="code-line">    <span class="code-keyword">return</span>;</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">const</span> room = <span class="code-string">`tracking:${attemptId}`</span>;</span>
+<span class="code-line">  <span class="code-keyword">const</span> alert = { attemptId, eventType, severity, userId, timestamp: <span class="code-keyword">new</span> Date().toISOString() };</span>
+<span class="code-line">  <span class="code-keyword">try</span> {</span>
+<span class="code-line">    <span class="code-keyword">const</span> attempt = <span class="code-keyword">await</span> examAttemptRepository.findAttemptById(attemptId);</span>
+<span class="code-line">    <span class="code-keyword">await</span> proctoringService.ingestEvent({</span>
+<span class="code-line">      attemptId, examId: attempt.examId, studentId: attempt.studentId,</span>
+<span class="code-line">      type: normalizeEventType(eventType), severity: severity.toUpperCase()</span>
+<span class="code-line">    });</span>
+<span class="code-line">  } <span class="code-keyword">catch</span> (err) { logger.error(<span class="code-string">'Failed to persist flag'</span>, err); }</span>
+<span class="code-line">  <span class="code-comment">// Broadcast alerts</span></span>
+<span class="code-line">  trackingNS.to(room).emit(<span class="code-string">'flag:alert'</span>, alert);</span>
+<span class="code-line">  trackingNS.to(<span class="code-string">'admin:monitoring'</span>).emit(<span class="code-string">'flag:alert'</span>, alert);</span>
+<span class="code-line">});</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">Listen for a client incoming 'flag:event' message (e.g. face missing)...</p>
+              <p class="tl">Ensure we received the attempt ID, the event type, and severity...</p>
+              <p class="tl">If fields are missing, send an error reply back to that socket...</p>
+              <p class="tl">Stop execution of this event handler.</p>
+              <p class="tl">End validation check.</p>
+              <p class="tl">Format the room channel name specific to this student's exam session...</p>
+              <p class="tl">Construct a structured alert payload containing user, event, and current time...</p>
+              <p class="tl">Start a try block to save this violation in the database...</p>
+              <p class="tl">Find the specific exam session record to load context...</p>
+              <p class="tl">Save the violation event to MongoDB (e.g. tab-switch, phone-detected)...</p>
+              <p class="tl">Pass the normalized types, exam IDs, and severity levels.</p>
+              <p class="tl">End database storage parameters.</p>
+              <p class="tl">If database ingestion fails, print an error to the server console log...</p>
+              <p class="tl">Send alerts in real-time to other listeners...</p>
+              <p class="tl">Send (<span class="term" data-definition="Broadcast — sending a message to all connected clients or rooms at once.">broadcast</span>) the alert to the instructor monitoring the specific student...</p>
+              <p class="tl">Also broadcast the alert to the global admin dashboard for main dashboard logs.</p>
+              <p class="tl">Done handling the flag event.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Live Proctoring Conversation (Group Chat Animation) -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Live Proctoring Dialogue</h2>
+        <p>
+          Let's see how these actors communicate in real-time during an active exam violation:
+        </p>
+
+        <div class="chat-window" id="chat-module4">
+          <div class="chat-messages">
+            <div class="chat-message" data-msg="0" data-sender="student" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">S</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Student Browser</span>
+                <p>Establishing Socket connection. Joining tracking channel room: tracking:attempt_999.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="1" data-sender="server" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">SV</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">WebSocket Server</span>
+                <p>Accepted! You are now subscribed to the tracking room. Heartbeat clock started.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="2" data-sender="student" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">S</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Student Browser</span>
+                <p>Emitting flag:event { eventType: 'tab_switch', severity: 'medium' } (Student opened a new browser tab!).</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="3" data-sender="server" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">SV</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">WebSocket Server</span>
+                <p>Received! Writing event to MongoDB logs. Broadcasting flag:alert to room tracking:attempt_999 and admin:monitoring room.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="4" data-sender="proctor" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">P</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">Proctor Dashboard</span>
+                <p>Alert popped: Student switched tabs! Flag count updated to 1. Warning badge rendered on screen.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="5" data-sender="student" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">S</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Student Browser</span>
+                <p>Sending periodic ping: proctoring:heartbeat { attemptId: 'attempt_999' }.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="6" data-sender="server" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">SV</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">WebSocket Server</span>
+                <p>Received heartbeat. Resetting Redis expiration tracker to 45 seconds. Student connection is active.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-typing" id="chat-typing-module4" style="display:none">
+            <div class="chat-avatar" id="chat-module4-typing-avatar">?</div>
+            <div class="chat-typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+
+          <div class="chat-controls">
+            <button class="btn chat-next-btn">Next Message</button>
+            <button class="btn chat-all-btn">Play All</button>
+            <button class="btn chat-reset-btn">Replay</button>
+            <span class="chat-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 4: Real-Time Anti-Cheat Quiz -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Test Your Proctoring Logic</h2>
+        <p>
+          WebSockets make real-time features responsive, but require solid error handling:
+        </p>
+
+        <div class="quiz-container" id="quiz-module4">
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Exactly! Redis is extremely fast and stores key-value pairs with automatic expiration times. Setting a key like heartbeat:attemptId to expire in 45 seconds acts as a dead-man switch. If the student closes their laptop, the heartbeat stops, the key expires in Redis, and a background watcher marks the exam as disconnected."
+               data-explanation-wrong="Not quite. Saving each heartbeat in MongoDB would write to disk 20 times a minute per student, overloading the database. A WebSocket error event does not persist connection drops if the client crashes. Look at the Redis key expiration option.">
+            <h3 class="quiz-question">Scenario: You want to detect when a student closes their browser window entirely during an exam. The client cannot send a disconnect signal because the browser was killed instantly. How does the system handle this?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option A: The server expects a Redis heartbeat key which expires in 45 seconds; if expired, the attempt is marked offline.</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option B: The Express server logs every heartbeat into MongoDB and does a database count check every second.</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option C: Socket.io sends an automatic client-side popup command to force reopen the window.</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answer</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

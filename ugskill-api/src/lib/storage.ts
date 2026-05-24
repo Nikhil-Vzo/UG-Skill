@@ -25,6 +25,7 @@ export const storage = {
         signedUrl: uploadUrl,
         path,
         bucket: env.SUPABASE_STORAGE_BUCKET,
+        publicUrl: `${env.SUPABASE_URL}/storage/v1/object/public/${env.SUPABASE_STORAGE_BUCKET}/${path}`
       };
     } catch (error) {
       logger.error('Error generating pre-signed upload URL for Supabase', error);

@@ -1,6 +1,10 @@
 import type { ObjectDetection } from '@tensorflow-models/coco-ssd';
 import type { FaceLandmarker, NormalizedLandmark } from '@mediapipe/tasks-vision';
 
+// Global cache for loaded model instances to enable pre-flight warming and instant exam start
+let globalFaceLandmarker: FaceLandmarker | null = null;
+let globalObjectDetector: ObjectDetection | null = null;
+
 type Severity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export type ProctoringViolationType =
@@ -25,6 +29,8 @@ export interface ProctoringEngineStatus {
   faceReady: boolean;
   objectReady: boolean;
   lastError?: string;
+  facePresent?: boolean;
+  phonePresent?: boolean;
 }
 
 interface ProctoringEngineOptions {
@@ -211,7 +217,7 @@ export class ProctoringEngine {
       window.cancelAnimationFrame(this.rafId);
       this.rafId = 0;
     }
-    this.faceLandmarker?.close();
+    // Do NOT close the globalFaceLandmarker instance so we can reuse it across page transitions
     this.faceLandmarker = null;
     this.objectDetector = null;
     this.updateStatus({ state: 'stopped', faceReady: false, objectReady: false });
@@ -222,6 +228,10 @@ export class ProctoringEngine {
   }
 
   private async loadFaceLandmarker() {
+    if (globalFaceLandmarker) {
+      this.faceLandmarker = globalFaceLandmarker;
+      return true;
+    }
     try {
       const { FaceLandmarker, FilesetResolver } = await import('@mediapipe/tasks-vision');
       const vision = await FilesetResolver.forVisionTasks(VISION_WASM_ROOT);
@@ -234,6 +244,7 @@ export class ProctoringEngine {
         numFaces: 2,
         outputFaceBlendshapes: true,
       });
+      globalFaceLandmarker = this.faceLandmarker;
       return true;
     } catch (error) {
       this.updateStatus({
@@ -245,10 +256,15 @@ export class ProctoringEngine {
   }
 
   private async loadObjectDetector() {
+    if (globalObjectDetector) {
+      this.objectDetector = globalObjectDetector;
+      return true;
+    }
     try {
       await import('@tensorflow/tfjs');
       const cocoSsd = await import('@tensorflow-models/coco-ssd');
       this.objectDetector = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
+      globalObjectDetector = this.objectDetector;
       return true;
     } catch (error) {
       this.updateStatus({
@@ -280,6 +296,8 @@ export class ProctoringEngine {
     const incidents: ProctoringIncident[] = [];
     const video = this.options.video;
     let suspicious = false;
+    let facePresent = this.status.facePresent || false;
+    let phonePresent = this.status.phonePresent || false;
 
     if (this.faceLandmarker && video.currentTime !== this.lastVideoTime) {
       this.lastVideoTime = video.currentTime;
@@ -288,16 +306,19 @@ export class ProctoringEngine {
 
       if (faces.length === 0) {
         suspicious = true;
+        facePresent = false;
         this.gazeAwayStartedAt = 0;
         incidents.push(this.createIncident('no_face', 'HIGH', 'Face not detected. Please stay centered in the camera.', 0.95, {}));
       } else if (faces.length > 1) {
         suspicious = true;
+        facePresent = true;
         incidents.push(
           this.createIncident('multiple_faces', 'CRITICAL', 'Multiple people detected in the camera frame.', 0.98, {
             faceCount: faces.length,
           }),
         );
       } else {
+        facePresent = true;
         const face = faces[0];
         const gaze = gazeFromEyes(
           computeEyeRatio(face, LEFT_IRIS, LEFT_EYE),
@@ -351,14 +372,19 @@ export class ProctoringEngine {
 
       if (phone) {
         suspicious = true;
+        phonePresent = true;
         incidents.push(
           this.createIncident('phone_detected', phone.score >= 0.75 ? 'CRITICAL' : 'HIGH', 'Phone detected in the camera frame.', phone.score, {
             bbox: phone.bbox,
             score: phone.score,
           }),
         );
+      } else {
+        phonePresent = false;
       }
     }
+
+    this.updateStatus({ facePresent, phonePresent });
 
     return { suspicious, incidents };
   }

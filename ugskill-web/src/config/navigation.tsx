@@ -21,6 +21,7 @@ export interface NavItem {
   icon: React.ReactNode;
   label: string;
   to: string;
+  badge?: string;
 }
 
 export const MAIN_NAV_ITEMS: NavItem[] = [
@@ -30,11 +31,8 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: <Building2 size={18} strokeWidth={2.5} />, label: 'Placements', to: '/app/placements' },
   { icon: <BarChart3 size={18} strokeWidth={2.5} />, label: 'Leaderboards', to: '/app/leaderboards' },
   { icon: <FileText size={18} strokeWidth={2.5} />, label: 'Exams & Quizzes', to: '/app/exams' },
-  { icon: <Users2 size={18} strokeWidth={2.5} />, label: 'Community', to: '/app/community' },
-  { icon: <Users size={18} strokeWidth={2.5} />, label: 'Peer Groups', to: '/app/peer-groups' },
   { icon: <CalendarDays size={18} strokeWidth={2.5} />, label: 'Interview Prep', to: '/app/placements/prep' },
-  { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live GD Sessions', to: '/app/live-gd' },
-  { icon: <Target size={18} strokeWidth={2.5} />, label: 'Hall of Fame', to: '/app/showcase' },
+  { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live GD Sessions', to: '/app/live-gd', badge: 'Soon' },
 ];
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [

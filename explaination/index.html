@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UGSkill: Under the Hood of a Modern LMS & Exam Platform</title>
+
+  <!-- Google Fonts: Bricolage Grotesque · DM Sans · JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    :root {
+      --color-accent:       #2A7B9B;
+      --color-accent-hover: #1F6280;
+      --color-accent-light: #E4F2F7;
+      --color-accent-muted: #5A9DB8;
+    }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">UGSkill: Under the Hood of a Modern LMS & Exam Platform</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <button class="nav-dot active" data-target="module-1" data-tooltip="Overview & Student Journey" role="tab" aria-label="Module 1: Overview & Student Journey"></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="Meet the Actors" role="tab" aria-label="Module 2: Meet the Actors"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="LMS Videos & Background Syncing" role="tab" aria-label="Module 3: LMS Videos & Background Syncing"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="High-Stakes Exams & Proctoring" role="tab" aria-label="Module 4: High-Stakes Exams & Proctoring"></button>
+        <button class="nav-dot" data-target="module-5" data-tooltip="Placements Hub & Live GDs" role="tab" aria-label="Module 5: Placements Hub & Live GDs"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+<section class="module" id="module-1" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">Overview & Student Journey</h1>
+      <p class="module-subtitle">Welcome to UGSkill: A physical academy campus workflow under the hood</p>
+    </header>
+
+    <div class="module-body">
+      <!-- Screen 1: Welcome to the Campus -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The Physical Academy Metaphor</h2>
+        <p>
+          Think of UGSkill not as a cold set of files, but as a vibrant physical <strong>career-focused campus</strong>.
+          Every feature you see on the screen represents a physical space or person working to help students get jobs:
+        </p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">📚</div>
+            <h4 class="pattern-title">The Classroom (LMS)</h4>
+            <p class="pattern-desc">Where students attend lectures and complete timestamped quizzes, managed by the <span class="term" data-definition="LMS (Learning Management System) — a software application that hosts learning materials, tracks student progress, and manages courses.">LMS</span> controller.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🕵️</div>
+            <h4 class="pattern-title">The Exam Hall</h4>
+            <p class="pattern-desc">A highly secure room with proctors checking webcams and browser tabs to ensure no cheating happens during tests.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🤝</div>
+            <h4 class="pattern-title">The Placements Desk</h4>
+            <p class="pattern-desc">The matching desk that checks student eligibility (like grades or resume uploads) and organizes interview rooms.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Steering your AI Assistant</strong>
+            <p>
+              When instructing AI, rather than asking for "a page that updates user data," describe the specific room they are entering: "We need to update the student registration checklist at the Placements Desk." This aligns code structure with the business purpose.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: The Student Lifecycle Journey -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">The 5-Step Lifecycle Journey</h2>
+        <p>
+          How does a student go from a newcomer to a placed hire? The platform orchestrates a step-by-step pipeline
+          to make sure they are trained and ready:
+        </p>
+
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-step-num">1</div>
+            <strong>Attend Lectures</strong>
+            <p>Watch videos on the <span class="term" data-definition="UI (User Interface) — the visual elements of an app (buttons, text, layouts) that you see and interact with.">UI</span> dashboard.</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">2</div>
+            <strong>Background Sync</strong>
+            <p>Progress updates are sent via <span class="term" data-definition="CDC (Change Data Capture) — a design pattern that detects when data changes in one database and automatically updates it in another database.">CDC</span> queues.</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">3</div>
+            <strong>Take Exams</strong>
+            <p>Anti-cheat proctoring checks tabs and face cams.</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">4</div>
+            <strong>Interview Hub</strong>
+            <p>Book live slots & participate in Group Discussions.</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">5</div>
+            <strong>Get Hired</strong>
+            <p>Readiness scores are updated and shared with recruiters.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Journey Check Quiz -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Test Your Direction</h2>
+        <p>
+          Let's see how you would steer an AI agent when expanding this system. Answer this practical scenario:
+        </p>
+
+        <div class="quiz-container" id="quiz-module1">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Exactly! Placing it at the Placements Desk (Placement Service) ensures eligibility checks block unsubmitted resumes before any slot booking starts, keeping the workflow neat."
+               data-explanation-wrong="Not quite. That would let students book interviews even if they forgot their resume, leading to incomplete placement files when HR opens them. Think about where the gates are.">
+            <h3 class="quiz-question">Scenario: You want to add a rule: 'Students can only book Live Interview slots if they have uploaded a resume.' Where would you tell the AI to add this check?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option A: Inside the Video Player component (LMS module)</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option B: Inside the Placement booking checks (Placements Desk)</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option C: Inside the webcam tracking proctor namespace</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">Check Answer</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">Try Again</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-2" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">Meet the Actors</h1>
+      <p class="module-subtitle">Introducing the tech stack: A film crew coordination</p>
+    </header>
+
+    <div class="module-body">
+      <!-- Screen 1: Film Crew Metaphor -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The Tech Stack Film Crew</h2>
+        <p>
+          A modern web application is like a film crew, where different specialists collaborate to produce a single seamless experience. Let's meet the characters in the UGSkill project:
+        </p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🎬</div>
+            <h4 class="pattern-title">The Director (<span class="term" data-definition="Frontend — the visible part of a website or app that users interact with directly in their browser.">Frontend</span>)</h4>
+            <p class="pattern-desc"><strong>React 19 & Vite:</strong> Decides exactly what the student sees, draws the video player, captures button clicks, and orchestrates client interactions.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">💼</div>
+            <h4 class="pattern-title">The Producer (<span class="term" data-definition="Backend — the behind-the-scenes server that handles business logic, security, and talks to databases.">Backend</span>)</h4>
+            <p class="pattern-desc"><strong>Express.js & Node:</strong> Coordinates everything behind the scenes, checks permissions, handles API routing, and runs the business checks.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">⚡</div>
+            <h4 class="pattern-title">The Runner (Cache)</h4>
+            <p class="pattern-desc"><strong><span class="term" data-definition="Redis — an in-memory key-value data store used as a super-fast cache or queue buffer.">Redis</span>:</strong> A fast runner that keeps temporary statuses (like active exam heartbeats or session tokens) ready in seconds.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: SQL vs NoSQL: The Database Duo -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">The Dual Database Archivists</h2>
+        <p>
+          Instead of relying on a single filing system, UGSkill uses a dual database setup to balance speed, structure, and reliability:
+        </p>
+
+        <div class="translation-block">
+          <div class="translation-english" style="border-left: 3px solid var(--color-actor-3); background: var(--color-surface);">
+            <h4 style="color: var(--color-actor-3)">The SQL Ledger (PostgreSQL & Supabase)</h4>
+            <p>
+              Stores transactional, structured data in tables with rigid relationships. This is where student records, course catalog data, placement drives, and verified exam scores live.
+            </p>
+            <p>
+              <em>Why?</em> Because grades and placements require absolute relational integrity (no orphan records).
+            </p>
+          </div>
+          <div class="translation-english" style="border-left: 3px solid var(--color-actor-5); background: var(--color-surface);">
+            <h4 style="color: var(--color-actor-5)">The NoSQL Folder (MongoDB)</h4>
+            <p>
+              Stores flexible, unstructured JSON-like documents. This is where polymorphic quiz questions, mock interview responses, and raw webcam proctoring activity events are filed.
+            </p>
+            <p>
+              <em>Why?</em> Because quizzes can have diverse formats, and proctoring activity streams require high-write speed without rigid <span class="term" data-definition="Schema — the blueprint or formal structure that defines how data is organized in a database.">schema</span> checks.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout callout-info" style="margin-top: var(--space-8)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Steering AI on Databases</strong>
+            <p>
+              If you instruct an AI assistant to "add a user metadata field like a bio," explain whether it belongs to the relational profile (<span class="term" data-definition="PostgreSQL — a relational database that stores data in structured tables with rows and columns, ideal for transactional data.">Postgres</span>) or the flexible, polymorphic metadata object (<span class="term" data-definition="MongoDB — a document-based database that stores data in flexible, JSON-like formats, ideal for high-write or polymorphic data.">MongoDB</span>).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Drag-and-Drop Actor Matching -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Actor Matching Challenge</h2>
+        <p>
+          Drag each tech stack character to their correct operational responsibility:
+        </p>
+
+        <div class="dnd-container" id="dnd-actors">
+          <div class="dnd-chips">
+            <div class="dnd-chip" draggable="true" data-answer="frontend">Director (React Frontend)</div>
+            <div class="dnd-chip" draggable="true" data-answer="backend">Producer (Express API)</div>
+            <div class="dnd-chip" draggable="true" data-answer="postgres">Archivist (Supabase Postgres)</div>
+            <div class="dnd-chip" draggable="true" data-answer="mongo">Archivist (MongoDB)</div>
+            <div class="dnd-chip" draggable="true" data-answer="redis">Runner (Redis)</div>
+          </div>
+          
+          <div class="dnd-zones">
+            <div class="dnd-zone" data-correct="postgres">
+              <p class="dnd-zone-label">Checks student grades and eligibility rules in relational tables.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="mongo">
+              <p class="dnd-zone-label">Stores polymorphic quiz questions and high-write camera violations.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="frontend">
+              <p class="dnd-zone-label">Renders button layouts, logs video clicks, and displays dashboards.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="backend">
+              <p class="dnd-zone-label">Handles API routes and checks user roles before talking to databases.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+            <div class="dnd-zone" data-correct="redis">
+              <p class="dnd-zone-label">Temporarily stores exam active heartbeats for 45 seconds.</p>
+              <div class="dnd-zone-target">Drop here</div>
+            </div>
+          </div>
+
+          <div style="margin-top: var(--space-6); display: flex; gap: var(--space-4)">
+            <button class="quiz-check-btn" onclick="checkDnD('dnd-actors')">Check Matches</button>
+            <button class="quiz-reset-btn" onclick="resetDnD('dnd-actors')">Reset</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-3" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">LMS Videos & Background Syncing</h1>
+      <p class="module-subtitle">How user activity is logged in MongoDB and synced asynchronously to PostgreSQL</p>
+    </header>
+
+    <div class="module-body">
+      <!-- Screen 1: The Sorting Post Office -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The Sorting Post Office Metaphor</h2>
+        <p>
+          When a student watches a video lecture, they click "Complete Lesson." Instead of holding up the screen while writing to multiple databases, the system acts like a <strong>sorting post office</strong>:
+        </p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">📥</div>
+            <h4 class="pattern-title">The Mailbox (<span class="term" data-definition="Ingestion — receiving or writing incoming data streams into a system.">Ingestion</span>)</h4>
+            <p class="pattern-desc">The student's browser sends a fast completion message. Express logs this event rapidly inside MongoDB without waiting.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">📯</div>
+            <h4 class="pattern-title">The Conveyor Belt (<span class="term" data-definition="Queue — a data structure that processes messages or tasks in a first-in, first-out sequence.">Queue</span>)</h4>
+            <p class="pattern-desc"><strong><span class="term" data-definition="BullMQ — a robust Node.js queue library backed by Redis for handling asynchronous background jobs.">BullMQ</span>:</strong> Places the sync job onto a Redis-backed queue. The student's video page continues playing immediately.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-5)">
+            <div class="pattern-icon" style="background: var(--color-actor-5)">📮</div>
+            <h4 class="pattern-title">The Sorting Clerk (Sync Worker)</h4>
+            <p class="pattern-desc">The background worker picks up the job and writes a clean summary row inside the PostgreSQL database using the <span class="term" data-definition="ORM (Object-Relational Mapping) — a tool that lets you interact with a relational database using objects and code, instead of writing raw SQL.">Drizzle ORM</span>.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: The Sync Code Translation -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Behind the Scenes: The Sync Worker</h2>
+        <p>
+          Here is the exact background worker code in `ugskill-api` that handles syncing user progress events from MongoDB to PostgreSQL:
+        </p>
+
+        <div class="translation-block">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-line"><span class="code-keyword">async</span> <span class="code-keyword">function</span> <span class="code-function">handleActivityToProgress</span>(payload) {</span>
+<span class="code-line">  <span class="code-keyword">const</span> { studentId, courseId, lectureId, totalLectures } = payload;</span>
+<span class="code-line">  <span class="code-keyword">if</span> (!studentId || !courseId || !lectureId) {</span>
+<span class="code-line">    logger.<span class="code-function">warn</span>(<span class="code-string">'CDC: missing fields'</span>, payload);</span>
+<span class="code-line">    <span class="code-keyword">return</span>;</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-comment">// 1. Mark lecture complete (idempotent)</span></span>
+<span class="code-line">  <span class="code-keyword">const</span> { alreadyCompleted } = <span class="code-keyword">await</span> progressRepository.<span class="code-function">markLectureComplete</span>(</span>
+<span class="code-line">    studentId, courseId, lectureId</span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">if</span> (alreadyCompleted) { <span class="code-keyword">return</span>; }</span>
+<span class="code-line">  <span class="code-comment">// 2. Upsert progress_summary</span></span>
+<span class="code-line">  <span class="code-keyword">const</span> lectureCount = totalLectures ?? <span class="code-number">0</span>;</span>
+<span class="code-line">  <span class="code-keyword">await</span> progressRepository.<span class="code-function">upsertProgressSummary</span>(</span>
+<span class="code-line">    studentId, courseId, lectureCount, lectureId</span>
+<span class="code-line">  );</span>
+<span class="code-line">}</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">Define a background job handler for syncing lecture activities...</p>
+              <p class="tl">Extract the student, course, lecture, and stats from the event data...</p>
+              <p class="tl">If any critical identifiers are missing from the data...</p>
+              <p class="tl">Log a warning message and stop execution to prevent errors...</p>
+              <p class="tl">Exit this job handler early...</p>
+              <p class="tl">End the check.</p>
+              <p class="tl">Save progress in the DB. The comment notes this is "idempotent" (no duplicate inserts)...</p>
+              <p class="tl">Call the database to mark this lecture as finished and wait for it...</p>
+              <p class="tl">Pass student, course, and lecture IDs to identify the record.</p>
+              <p class="tl">If this lecture was already marked complete previously...</p>
+              <p class="tl">Stop immediately so we don't recalculate stats redundantly.</p>
+              <p class="tl">Update the overall course progress totals next...</p>
+              <p class="tl">Get the lecture count, defaulting to 0 if it is null or undefined...</p>
+              <p class="tl">Update the student's progress summary table in PostgreSQL...</p>
+              <p class="tl">Send the progress numbers to Postgres to recalculate completion percentages.</p>
+              <p class="tl">Done updating progress.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Aha! What is an "idempotent" operation?</strong>
+            <p>
+              An operation is <span class="term" data-definition="Idempotent — an operation that can be run multiple times with the same result, without causing duplicate side effects.">idempotent</span> if running it 100 times has the exact same effect as running it once. For example, setting a switch to "ON" is idempotent. Toggling the switch is not. Idempotency is crucial for background sync queues because network glitches might cause the same job to be processed twice!
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Sync Queue Quiz -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Test Your Queue Steering</h2>
+        <p>
+          As a vibe coder steering an AI assistant, you must design background sync operations carefully:
+        </p>
+
+        <div class="quiz-container" id="quiz-module3">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="Exactly! If the sync script is not idempotent, processing a retried sync message would double-count progress, causing a student's completion rate to jump to 200%. Checking for previous completion prevents this."
+               data-explanation-wrong="Not quite. If you turn off retries, a single network hiccup will drop the progress event forever. If you run it synchronously on Express, you slow down the video player page. Try another look at idempotency.">
+            <h3 class="quiz-question">Scenario: A background job sync fails halfway through due to a temporary database disconnection. BullMQ retries it. If your sync worker code does NOT check 'alreadyCompleted' (idempotency check), what happens?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option A: The task drops and progress is permanently lost.</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option B: The lecture completion stats could be double-counted or corrupted.</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option C: The Drizzle ORM will throw a syntax error.</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">Check Answer</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">Try Again</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-4" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">High-Stakes Exams & Proctoring</h1>
+      <p class="module-subtitle">Real-time anti-cheat signals using WebSockets and event streaming</p>
+    </header>
+
+    <div class="module-body">
+      <!-- Screen 1: Real-Time Anti-Cheat -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The Silent Exam Hall Metaphor</h2>
+        <p>
+          During a high-stakes exam, a student's webcam and tab actions are monitored live. Rather than refreshing a database every second (which would crash the server), the app operates like a <strong>silent exam hall</strong>:
+        </p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">🔌</div>
+            <h4 class="pattern-title">The Dedicated Line (<span class="term" data-definition="WebSocket — a protocol providing full-duplex, real-time communication channels over a single persistent TCP connection.">WebSockets</span>)</h4>
+            <p class="pattern-desc">A continuous open pipe connects the browser directly to the server. Information flows instantly in both directions with zero request delays.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🎟️</div>
+            <h4 class="pattern-title">Exam Channels (<span class="term" data-definition="Namespace — a logical division of a WebSocket server that allows separating distinct communication channels, e.g., tracking vs chat.">Namespaces</span>)</h4>
+            <p class="pattern-desc">A special `/tracking` namespace separates tracking alerts from generic chat or exam question updates, keeping traffic clean.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">💓</div>
+            <h4 class="pattern-title">Keep-Alive check (<span class="term" data-definition="Heartbeat — a periodic signal sent between a client and server to verify that the connection remains active.">Heartbeat</span>)</h4>
+            <p class="pattern-desc">The browser sends a heartbeat every 30 seconds. If it stops, the system knows the student disconnected or closed the window.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: Flag Event Code translation -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Behind the Scenes: Streaming the Flags</h2>
+        <p>
+          Let's trace how the server handles anti-cheat event alerts via the WebSocket socket listener:
+        </p>
+
+        <div class="translation-block">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-line">socket.on(<span class="code-string">'flag:event'</span>, <span class="code-keyword">async</span> ({ attemptId, eventType, severity, metadata }) => {</span>
+<span class="code-line">  <span class="code-keyword">if</span> (!attemptId || !eventType || !severity) {</span>
+<span class="code-line">    socket.emit(<span class="code-string">'error'</span>, { message: <span class="code-string">'Missing fields'</span> });</span>
+<span class="code-line">    <span class="code-keyword">return</span>;</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">const</span> room = <span class="code-string">`tracking:${attemptId}`</span>;</span>
+<span class="code-line">  <span class="code-keyword">const</span> alert = { attemptId, eventType, severity, userId, timestamp: <span class="code-keyword">new</span> Date().toISOString() };</span>
+<span class="code-line">  <span class="code-keyword">try</span> {</span>
+<span class="code-line">    <span class="code-keyword">const</span> attempt = <span class="code-keyword">await</span> examAttemptRepository.findAttemptById(attemptId);</span>
+<span class="code-line">    <span class="code-keyword">await</span> proctoringService.ingestEvent({</span>
+<span class="code-line">      attemptId, examId: attempt.examId, studentId: attempt.studentId,</span>
+<span class="code-line">      type: normalizeEventType(eventType), severity: severity.toUpperCase()</span>
+<span class="code-line">    });</span>
+<span class="code-line">  } <span class="code-keyword">catch</span> (err) { logger.error(<span class="code-string">'Failed to persist flag'</span>, err); }</span>
+<span class="code-line">  <span class="code-comment">// Broadcast alerts</span></span>
+<span class="code-line">  trackingNS.to(room).emit(<span class="code-string">'flag:alert'</span>, alert);</span>
+<span class="code-line">  trackingNS.to(<span class="code-string">'admin:monitoring'</span>).emit(<span class="code-string">'flag:alert'</span>, alert);</span>
+<span class="code-line">});</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">Listen for a client incoming 'flag:event' message (e.g. face missing)...</p>
+              <p class="tl">Ensure we received the attempt ID, the event type, and severity...</p>
+              <p class="tl">If fields are missing, send an error reply back to that socket...</p>
+              <p class="tl">Stop execution of this event handler.</p>
+              <p class="tl">End validation check.</p>
+              <p class="tl">Format the room channel name specific to this student's exam session...</p>
+              <p class="tl">Construct a structured alert payload containing user, event, and current time...</p>
+              <p class="tl">Start a try block to save this violation in the database...</p>
+              <p class="tl">Find the specific exam session record to load context...</p>
+              <p class="tl">Save the violation event to MongoDB (e.g. tab-switch, phone-detected)...</p>
+              <p class="tl">Pass the normalized types, exam IDs, and severity levels.</p>
+              <p class="tl">End database storage parameters.</p>
+              <p class="tl">If database ingestion fails, print an error to the server console log...</p>
+              <p class="tl">Send alerts in real-time to other listeners...</p>
+              <p class="tl">Send (<span class="term" data-definition="Broadcast — sending a message to all connected clients or rooms at once.">broadcast</span>) the alert to the instructor monitoring the specific student...</p>
+              <p class="tl">Also broadcast the alert to the global admin dashboard for main dashboard logs.</p>
+              <p class="tl">Done handling the flag event.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Live Proctoring Conversation (Group Chat Animation) -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Live Proctoring Dialogue</h2>
+        <p>
+          Let's see how these actors communicate in real-time during an active exam violation:
+        </p>
+
+        <div class="chat-window" id="chat-module4">
+          <div class="chat-messages">
+            <div class="chat-message" data-msg="0" data-sender="student" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">S</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Student Browser</span>
+                <p>Establishing Socket connection. Joining tracking channel room: tracking:attempt_999.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="1" data-sender="server" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">SV</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">WebSocket Server</span>
+                <p>Accepted! You are now subscribed to the tracking room. Heartbeat clock started.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="2" data-sender="student" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">S</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Student Browser</span>
+                <p>Emitting flag:event { eventType: 'tab_switch', severity: 'medium' } (Student opened a new browser tab!).</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="3" data-sender="server" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">SV</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">WebSocket Server</span>
+                <p>Received! Writing event to MongoDB logs. Broadcasting flag:alert to room tracking:attempt_999 and admin:monitoring room.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="4" data-sender="proctor" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-3)">P</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-3)">Proctor Dashboard</span>
+                <p>Alert popped: Student switched tabs! Flag count updated to 1. Warning badge rendered on screen.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="5" data-sender="student" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">S</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">Student Browser</span>
+                <p>Sending periodic ping: proctoring:heartbeat { attemptId: 'attempt_999' }.</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="6" data-sender="server" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">SV</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">WebSocket Server</span>
+                <p>Received heartbeat. Resetting Redis expiration tracker to 45 seconds. Student connection is active.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-typing" id="chat-typing-module4" style="display:none">
+            <div class="chat-avatar" id="chat-module4-typing-avatar">?</div>
+            <div class="chat-typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+
+          <div class="chat-controls">
+            <button class="btn chat-next-btn">Next Message</button>
+            <button class="btn chat-all-btn">Play All</button>
+            <button class="btn chat-reset-btn">Replay</button>
+            <span class="chat-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 4: Real-Time Anti-Cheat Quiz -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Test Your Proctoring Logic</h2>
+        <p>
+          WebSockets make real-time features responsive, but require solid error handling:
+        </p>
+
+        <div class="quiz-container" id="quiz-module4">
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Exactly! Redis is extremely fast and stores key-value pairs with automatic expiration times. Setting a key like heartbeat:attemptId to expire in 45 seconds acts as a dead-man switch. If the student closes their laptop, the heartbeat stops, the key expires in Redis, and a background watcher marks the exam as disconnected."
+               data-explanation-wrong="Not quite. Saving each heartbeat in MongoDB would write to disk 20 times a minute per student, overloading the database. A WebSocket error event does not persist connection drops if the client crashes. Look at the Redis key expiration option.">
+            <h3 class="quiz-question">Scenario: You want to detect when a student closes their browser window entirely during an exam. The client cannot send a disconnect signal because the browser was killed instantly. How does the system handle this?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option A: The server expects a Redis heartbeat key which expires in 45 seconds; if expired, the attempt is marked offline.</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option B: The Express server logs every heartbeat into MongoDB and does a database count check every second.</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option C: Socket.io sends an automatic client-side popup command to force reopen the window.</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answer</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-5" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">05</span>
+      <h1 class="module-title">Placements Hub & Live GDs</h1>
+      <p class="module-subtitle">Verifying applicant qualifications and managing collaborative interview structures</p>
+    </header>
+
+    <div class="module-body">
+      <!-- Screen 1: The Gatekeeper Metaphor -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">The Gatekeeper Metaphor</h2>
+        <p>
+          Before a student is allowed to enter a restricted room on campus (the Placement Interview rooms), a <strong>Gatekeeper</strong> checks their pass:
+        </p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">📈</div>
+            <h4 class="pattern-title">The Pass Check (CGPA Cutoff)</h4>
+            <p class="pattern-desc">Every company sets a custom academic threshold. The gatekeeper verifies the student meets this requirement before booking slots.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">📄</div>
+            <h4 class="pattern-title">Portfolio Check (Resume Validation)</h4>
+            <p class="pattern-desc">No resume, no entry. The system ensures a valid resume URL is linked to the student profile to prevent empty profiles from reaching HR.</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-5)">
+            <div class="pattern-icon" style="background: var(--color-actor-5)">🔑</div>
+            <h4 class="pattern-title">Official Stamp (Postgres Registration)</h4>
+            <p class="pattern-desc">A transactional record is created in PostgreSQL with status set to 'registered', serving as the official ticket to proceed. Deleting a drive triggers a <span class="term" data-definition="Cascade Delete — a database constraint that automatically removes child records when their parent record is deleted to maintain data integrity.">Cascade Delete</span>, wiping out registrations in PostgreSQL to avoid orphan records.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-accent" style="margin-top: var(--space-8)">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Steering your AI Assistant</strong>
+            <p>
+              When requesting changes to placement eligibility rules (e.g. adding branch/major cutoffs), direct the AI specifically: "Modify the eligibility checks in the placement service to compare student branch with allowed branches from the drive configuration."
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: Let's Check the Gatekeeper's Code -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Behind the Scenes: The Gatekeeper Code</h2>
+        <p>
+          Let's trace the backend code checks in <code>placement.service.ts</code> that run when a student clicks register:
+        </p>
+
+        <div class="translation-block">
+          <div class="translation-code">
+            <span class="translation-label">CODE</span>
+            <pre><code><span class="code-line"><span class="code-keyword">export const</span> <span class="code-function">registerForDrive</span> = <span class="code-keyword">async</span> (studentId, data) => {</span>
+<span class="code-line">  <span class="code-keyword">const</span> drive = <span class="code-keyword">await</span> placementRepo.getDriveById(data.driveId);</span>
+<span class="code-line">  <span class="code-keyword">if</span> (!drive) {</span>
+<span class="code-line">    <span class="code-keyword">throw new</span> <span class="code-function">NotFoundError</span>(<span class="code-string">'Drive not found'</span>);</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">const</span> existing = <span class="code-keyword">await</span> placementRepo.getRegistration(studentId, data.driveId);</span>
+<span class="code-line">  <span class="code-keyword">if</span> (existing) {</span>
+<span class="code-line">    <span class="code-keyword">throw new</span> <span class="code-function">AppError</span>(<span class="code-string">'Student already registered'</span>, <span class="code-number">409</span>);</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">const</span> user = <span class="code-keyword">await</span> userRepo.findById(studentId);</span>
+<span class="code-line">  <span class="code-keyword">if</span> (!user) {</span>
+<span class="code-line">    <span class="code-keyword">throw new</span> <span class="code-function">NotFoundError</span>(<span class="code-string">'User not found'</span>);</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">if</span> (drive.eligibility &amp;&amp; drive.eligibility.cgpaCutoff !== <span class="code-keyword">undefined</span>) {</span>
+<span class="code-line">    <span class="code-keyword">const</span> cutoff = drive.eligibility.cgpaCutoff;</span>
+<span class="code-line">    <span class="code-keyword">const</span> userCgpa = user.cgpa ? <span class="code-function">Number</span>(user.cgpa) : <span class="code-number">0</span>;</span>
+<span class="code-line">    <span class="code-keyword">if</span> (userCgpa &lt; cutoff) {</span>
+<span class="code-line">      <span class="code-keyword">throw new</span> <span class="code-function">AppError</span>(<span class="code-string">'CGPA below required cutoff'</span>, <span class="code-number">422</span>);</span>
+<span class="code-line">    }</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">if</span> (!user.resumeUrl) {</span>
+<span class="code-line">    <span class="code-keyword">throw new</span> <span class="code-function">AppError</span>(<span class="code-string">'Resume is required'</span>, <span class="code-number">422</span>);</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">const</span> registration = <span class="code-keyword">await</span> placementRepo.insertRegistrationPg({</span>
+<span class="code-line">    studentId,</span>
+<span class="code-line">    driveId: data.driveId,</span>
+<span class="code-line">    status: <span class="code-string">'registered'</span></span>
+<span class="code-line">  });</span>
+<span class="code-line">  <span class="code-keyword">return</span> registration;</span>
+<span class="code-line">};</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">Define a function to register a student for a placement drive using their ID and registration details.</p>
+              <p class="tl">Find the specific placement drive details using its <span class="term" data-definition="UUID (Universally Unique Identifier) — a 128-bit label used to uniquely identify records across databases without central coordination.">UUID</span>.</p>
+              <p class="tl">If the drive does not exist in the database...</p>
+              <p class="tl">Stop and send back a 'Drive not found' error response.</p>
+              <p class="tl">End of drive existence check.</p>
+              <p class="tl">Check if the student has already registered for this placement drive...</p>
+              <p class="tl">If a registration is found...</p>
+              <p class="tl">Stop and send back a 'Student already registered' conflict error (code 409).</p>
+              <p class="tl">End of duplicate check.</p>
+              <p class="tl">Find the student's profile details from the user repository...</p>
+              <p class="tl">If no student profile exists for this ID...</p>
+              <p class="tl">Stop and send back a 'User not found' error response.</p>
+              <p class="tl">End of student profile check.</p>
+              <p class="tl">If the placement drive specifies a CGPA cutoff eligibility rule...</p>
+              <p class="tl">Load the exact minimum grade point cutoff required by the company...</p>
+              <p class="tl">Read the student's current CGPA (default to 0 if it is missing)...</p>
+              <p class="tl">If the student's CGPA is strictly lower than the company cutoff...</p>
+              <p class="tl">Stop and return a 'CGPA below cutoff' validation error (code 422).</p>
+              <p class="tl">End of CGPA eligibility validation.</p>
+              <p class="tl">End of eligibility outer check.</p>
+              <p class="tl">Ensure the student has uploaded their resume file link...</p>
+              <p class="tl">Stop and return a 'Resume is required' validation error (code 422).</p>
+              <p class="tl">End of resume check.</p>
+              <p class="tl">Create a new registration record in the Postgres database...</p>
+              <p class="tl">Set the student's ID.</p>
+              <p class="tl">Set the company's drive ID.</p>
+              <p class="tl">Set the default initial status value to 'registered'.</p>
+              <p class="tl">End database registration insertion parameters.</p>
+              <p class="tl">Return the completed registration record to the client.</p>
+              <p class="tl">Done registering student for drive.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Interactive Placement Flow (Message Flow Animation) -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Interactive Placement Registration Flow</h2>
+        <p>
+          Step through the message sequence that triggers when a student registers for a drive, checking CGPA, loading MongoDB workflow rules, and setting up PostgreSQL slots:
+        </p>
+
+        <div class="flow-animation" id="flow-placements" data-steps='[
+          {"label":"1. Student clicks Register for a placement drive on the UI dashboard.","highlight":"student","packet":true,"from":"student","to":"backend"},
+          {"label":"2. Backend API requests student profile information (CGPA and Resume URL) from PostgreSQL.","highlight":"backend","packet":true,"from":"backend","to":"postgres"},
+          {"label":"3. PostgreSQL returns the student record containing CGPA and Resume URL to the backend.","highlight":"postgres","packet":true,"from":"postgres","to":"backend"},
+          {"label":"4. Backend validates CGPA against cutoff and checks resume. If valid, it writes the registration to PostgreSQL.","highlight":"backend","packet":true,"from":"backend","to":"postgres"},
+          {"label":"5. Backend retrieves the polymorphic interview flow rules (e.g., round sequences) from MongoDB.","highlight":"backend","packet":true,"from":"backend","to":"mongo"},
+          {"label":"6. MongoDB returns the customized round structure (e.g., GD and Technical Rounds) back to the backend.","highlight":"mongo","packet":true,"from":"mongo","to":"backend"},
+          {"label":"7. Backend updates PostgreSQL with the student initial interview schedule slots.","highlight":"backend","packet":true,"from":"backend","to":"postgres"},
+          {"label":"8. Backend returns a successful registration response, rendering the placement dashboard on the student browser.","highlight":"student","packet":true,"from":"backend","to":"student"}
+        ]'>
+          <div class="flow-packet"></div>
+          
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-student">
+              <div class="flow-actor-icon" style="background: var(--color-actor-1); color: white;">💻</div>
+              <span>Student Browser</span>
+            </div>
+            
+            <div class="flow-actor" id="flow-backend">
+              <div class="flow-actor-icon" style="background: var(--color-actor-2); color: white;">⚙️</div>
+              <span>Backend API</span>
+            </div>
+            
+            <div class="flow-actor" id="flow-postgres">
+              <div class="flow-actor-icon" style="background: var(--color-actor-3); color: white;">🐘</div>
+              <span>PostgreSQL</span>
+            </div>
+            
+            <div class="flow-actor" id="flow-mongo">
+              <div class="flow-actor-icon" style="background: var(--color-actor-5); color: white;">🍃</div>
+              <span>MongoDB</span>
+            </div>
+          </div>
+
+          <div class="flow-step-label">Click "Next Step" to begin</div>
+          
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">Next Step</button>
+            <button class="btn flow-reset-btn">Reset Flow</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 4: Placement Readiness Quiz -->
+      <section class="screen animate-in" style="margin-top: var(--space-12)">
+        <h2 class="screen-heading">Test Your Placement Logic</h2>
+        <p>
+          Managing interview candidate paths requires strict logic. Answer the scenario check below:
+        </p>
+
+        <div class="quiz-container" id="quiz-module5">
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="Exactly! Enforcing transitions through a backend State Machine ensures data consistency and security. The frontend only displays the current state, while the backend validates that a student cannot leap from registered directly to hired without passing intermediate interview rounds."
+               data-explanation-wrong="Not quite. Enforcing state transitions on the client-side is highly insecure because a user could modify the network requests. Sending random socket broadcasts does not enforce database constraints. Look for the backend validation pattern using a State Machine.">
+            <h3 class="quiz-question">Scenario: You want to implement a strict interview pipeline where a student must pass the 'Group Discussion' round before they can transition to the 'Technical Interview'. Which design pattern keeps these status updates clean and prevents students from bypassing rounds?</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option A: Use a <span class="term" data-definition="State Machine — a behavioral pattern where an entity (like an interview session) is in one of several defined states and moves between them under strict rules.">State Machine</span> on the backend to validate and govern status <span class="term" data-definition="Transition — the process or rules governing how an entity moves from one state to another (e.g., from 'registered' to 'shortlisted').">transitions</span>.</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option B: Let the React frontend client update PostgreSQL directly without backend validation.</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>Option C: Broadcast random status updates via Socket.io namespaces and trust client-side handlers.</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">Check Answer</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">Try Again</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+  </main>
+
+</body>
+</html>

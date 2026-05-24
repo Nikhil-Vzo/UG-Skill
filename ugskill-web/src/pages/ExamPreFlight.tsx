@@ -2,11 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Checkbox } from '../components/ui/Checkbox';
-import { Camera, Mic, AlertTriangle, CheckCircle2, XCircle, Sun } from 'lucide-react';
+import { Camera, Mic, AlertTriangle, CheckCircle2, XCircle, Sun, UserCheck, Loader2, Smartphone } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 import { Skeleton } from '../components/loaders/Skeleton';
+import { ProctoringEngine, type ProctoringEngineStatus } from '../lib/proctoring/ProctoringEngine';
 import './ExamPreFlight.css';
 
 type FaceCheckStatus = 'idle' | 'checking' | 'detected' | 'no-face' | 'poor-lighting';
@@ -19,10 +20,20 @@ export const ExamPreFlight: React.FC = () => {
   const [agreed, setAgreed] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [micActive, setMicActive] = useState(false);
+  
+  // Real-time local proctoring states
   const [faceStatus, setFaceStatus] = useState<FaceCheckStatus>('idle');
+  const [phonePresent, setPhonePresent] = useState(false);
+  const [engineStatus, setEngineStatus] = useState<ProctoringEngineStatus>({
+    state: 'idle',
+    fps: 2,
+    faceReady: false,
+    objectReady: false,
+  });
+
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const faceCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const proctoringEngineRef = useRef<ProctoringEngine | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const { data: examData, isLoading } = useQuery({
     queryKey: ['exam', examId],
@@ -36,73 +47,65 @@ export const ExamPreFlight: React.FC = () => {
   const requestPermissions = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      streamRef.current = stream;
+      
       setCameraActive(stream.getVideoTracks().length > 0);
       setMicActive(stream.getAudioTracks().length > 0);
-      startFaceCheck();
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        // Wait for video element metadata to load before starting proctoring
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current?.play();
+            startRealProctoring();
+          } catch (e) {
+            console.error('Play video failed', e);
+          }
+        };
+      }
     } catch (err) {
-      console.error('Permission denied', err);
-      alert('Camera and microphone access is required to proceed with the exam.');
+      console.error('Permission denied or hardware error', err);
     }
   };
 
-  const startFaceCheck = () => {
-    if (!canvasRef.current) {
-      const c = document.createElement('canvas');
-      c.width = 320;
-      c.height = 240;
-      canvasRef.current = c;
+  const startRealProctoring = async () => {
+    if (!videoRef.current) return;
+
+    // Clean up old instance if exists
+    if (proctoringEngineRef.current) {
+      proctoringEngineRef.current.stop();
     }
 
-    let noFaceCount = 0;
-
-    const checkFace = async () => {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      if (!video || !canvas || video.readyState < 2) return;
-
-      setFaceStatus('checking');
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const frame = canvas.toDataURL('image/jpeg', 0.6);
-
-      try {
-        const res = await api.post('/proctoring/analyze-frame', {
-          attemptId: 'preflight',
-          frame,
-          capturedAt: new Date().toISOString(),
-        });
-        const result = res.data.data ?? res.data;
-
-        if (result.facePresent) {
-          noFaceCount = 0;
-          if (result.confidence < 0.5) {
-            setFaceStatus('poor-lighting');
-          } else {
-            setFaceStatus('detected');
-          }
+    const engine = new ProctoringEngine({
+      video: videoRef.current,
+      onIncident: (incident) => {
+        // Log incidents to preflight console for diagnostic visibility
+        console.log('Preflight Proctoring Incident:', incident);
+      },
+      onStatusChange: (status) => {
+        setEngineStatus(status);
+        
+        // Map presence status
+        if (status.facePresent !== undefined) {
+          setFaceStatus(status.facePresent ? 'detected' : 'no-face');
         } else {
-          noFaceCount++;
-          setFaceStatus('no-face');
+          setFaceStatus(status.state === 'loading' ? 'checking' : 'idle');
         }
-      } catch {
-        setFaceStatus('idle');
-      }
-    };
 
-    checkFace();
-    faceCheckIntervalRef.current = setInterval(checkFace, 3000);
+        if (status.phonePresent !== undefined) {
+          setPhonePresent(status.phonePresent);
+        }
+      },
+    });
 
-    return () => {
-      if (faceCheckIntervalRef.current) {
-        clearInterval(faceCheckIntervalRef.current);
-        faceCheckIntervalRef.current = null;
-      }
-    };
+    proctoringEngineRef.current = engine;
+    try {
+      await engine.initialize();
+      engine.start();
+    } catch (err) {
+      console.error('Failed to initialize local proctoring engine', err);
+    }
   };
 
   const handleStartExam = () => {
@@ -110,16 +113,22 @@ export const ExamPreFlight: React.FC = () => {
       navigate(`/app/exams/${examId}?admin=true`);
       return;
     }
-    if (agreed && cameraActive && micActive && faceStatus === 'detected') {
+    if (agreed && cameraActive && micActive) {
       navigate(`/app/exams/${examId}`);
     }
   };
 
-  // cleanup interval on unmount
+  // request permissions on load, cleanup on unmount
   useEffect(() => {
+    requestPermissions();
+
     return () => {
-      if (faceCheckIntervalRef.current) {
-        clearInterval(faceCheckIntervalRef.current);
+      if (proctoringEngineRef.current) {
+        proctoringEngineRef.current.stop();
+        proctoringEngineRef.current = null;
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
@@ -134,73 +143,170 @@ export const ExamPreFlight: React.FC = () => {
             {examData?.title ? `${examData.title} - Pre-Flight Check` : 'Pre-Flight Check'}
           </h1>
         )}
-        <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Ensure your hardware is working before entering the proctored environment.</p>
+        <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Ensure your hardware and proctoring models are ready before starting.</p>
       </header>
 
-      <Card title="Hardware Verification">
-        <div className="preflight-grid">
-          <div style={{ background: 'black', borderRadius: '8px', overflow: 'hidden', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-            <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            {!cameraActive && <Camera size={48} color="var(--text-muted)" style={{ position: 'absolute' }} />}
+      <Card title="Hardware & AI Verification Diagnostics">
+        <div className="preflight-layout">
+          {/* Live Video Preview Box */}
+          <div className="preview-column">
+            <div className="preview-container">
+              {cameraActive ? (
+                <video ref={videoRef} autoPlay playsInline muted className="preview-video" />
+              ) : (
+                <div className="preview-placeholder">
+                  <Camera size={48} className="placeholder-icon animate-pulse" />
+                  <p className="placeholder-text">Camera stream inactive</p>
+                </div>
+              )}
+              {cameraActive && (
+                <div className="preview-overlay">
+                  <span className="live-badge">LIVE</span>
+                </div>
+              )}
+            </div>
+            {!cameraActive && (
+              <Button onClick={requestPermissions} size="sm" style={{ marginTop: '1rem', width: '100%' }}>
+                Request Device Permissions
+              </Button>
+            )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ padding: '0.75rem', background: 'var(--surface-container-high)', borderRadius: '50%' }}>
-                <Camera size={24} color={cameraActive ? 'var(--success)' : 'var(--text-muted)'} />
-              </div>
-              <div>
-                <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)' }}>Webcam Check</h4>
-                <p style={{ margin: 0, color: cameraActive ? 'var(--success)' : 'var(--warning)', fontSize: '0.875rem' }}>
-                  {cameraActive ? 'Camera active' : 'Awaiting permission'}
-                </p>
+          {/* Simple Diagnostics Checklist Column */}
+          <div className="checklist-column">
+            {/* Camera Access Card */}
+            <div className={`diagnostic-card ${cameraActive ? 'status-success' : 'status-waiting'}`}>
+              <div className="card-header-row">
+                <div className="icon-wrapper">
+                  <Camera size={20} />
+                </div>
+                <div className="card-info">
+                  <h3 className="card-title">Video Feed Integrity</h3>
+                  <p className="card-desc">Webcam authorization checks</p>
+                </div>
+                <div className="card-status">
+                  {cameraActive ? (
+                    <span className="status-text success">
+                      <CheckCircle2 size={16} /> ACTIVE
+                    </span>
+                  ) : (
+                    <span className="status-text waiting animate-pulse">AWAITING LINK</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ padding: '0.75rem', background: 'var(--surface-container-high)', borderRadius: '50%' }}>
-                <Mic size={24} color={micActive ? 'var(--success)' : 'var(--text-muted)'} />
-              </div>
-              <div>
-                <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary)' }}>Microphone Check</h4>
-                <p style={{ margin: 0, color: micActive ? 'var(--success)' : 'var(--warning)', fontSize: '0.875rem' }}>
-                  {micActive ? 'Audio active' : 'Awaiting permission'}
-                </p>
+            {/* Microphone Access Card */}
+            <div className={`diagnostic-card ${micActive ? 'status-success' : 'status-waiting'}`}>
+              <div className="card-header-row">
+                <div className="icon-wrapper">
+                  <Mic size={20} />
+                </div>
+                <div className="card-info">
+                  <h3 className="card-title">Acoustic Input Status</h3>
+                  <p className="card-desc">Microphone input detection checks</p>
+                </div>
+                <div className="card-status">
+                  {micActive ? (
+                    <span className="status-text success">
+                      <CheckCircle2 size={16} /> ACTIVE
+                    </span>
+                  ) : (
+                    <span className="status-text waiting animate-pulse">AWAITING LINK</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* AI Face Detection Feedback */}
-            {cameraActive && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.5rem 0.875rem', borderRadius: '8px', fontSize: '0.8125rem', fontWeight: 600,
-                ...(faceStatus === 'detected'
-                  ? { background: 'rgba(34,197,94,0.1)', color: '#22c55e' }
-                  : faceStatus === 'no-face'
-                  ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444' }
-                  : faceStatus === 'poor-lighting'
-                  ? { background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }
-                  : { background: 'var(--surface-container-high)', color: 'var(--text-secondary)' }),
-              }}>
-                {faceStatus === 'detected' && <CheckCircle2 size={16} />}
-                {faceStatus === 'no-face' && <XCircle size={16} />}
-                {faceStatus === 'poor-lighting' && <Sun size={16} />}
-                {faceStatus === 'idle' || faceStatus === 'checking' ? (
-                  <span>AI camera check starting...</span>
-                ) : faceStatus === 'detected' ? (
-                  <span>Face detected</span>
-                ) : faceStatus === 'no-face' ? (
-                  <span>No face — look directly at camera</span>
-                ) : (
-                  <span>Poor lighting detected</span>
-                )}
+            {/* AI Model Loading Progress Indicator */}
+            <div className={`diagnostic-card ${
+              engineStatus.state === 'running' || engineStatus.state === 'ready' ? 'status-success'
+              : engineStatus.state === 'loading' ? 'status-warning'
+              : engineStatus.state === 'error' ? 'status-error'
+              : 'status-waiting'
+            }`}>
+              <div className="card-header-row">
+                <div className="icon-wrapper">
+                  <Loader2 size={20} className={engineStatus.state === 'loading' ? 'animate-spin' : ''} />
+                </div>
+                <div className="card-info">
+                  <h3 className="card-title">AI Proctoring Models</h3>
+                  <p className="card-desc">
+                    {engineStatus.state === 'loading'
+                      ? `Loading: ${!engineStatus.faceReady ? 'Face' : 'Object'} Model...`
+                      : 'Edge ML models cached in memory'}
+                  </p>
+                </div>
+                <div className="card-status">
+                  {engineStatus.state === 'running' || engineStatus.state === 'ready' ? (
+                    <span className="status-text success">
+                      <CheckCircle2 size={16} /> WARM & READY
+                    </span>
+                  ) : engineStatus.state === 'loading' ? (
+                    <span className="status-text scanning">
+                      <Loader2 size={16} className="animate-spin" /> LOADING...
+                    </span>
+                  ) : engineStatus.state === 'error' ? (
+                    <span className="status-text error">
+                      <XCircle size={16} /> LOAD ERROR
+                    </span>
+                  ) : (
+                    <span className="status-text waiting">AWAITING FEED</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Real-time Biometric Face Lock */}
+            {cameraActive && (engineStatus.state === 'running' || engineStatus.state === 'ready') && (
+              <div className={`diagnostic-card ${faceStatus === 'detected' ? 'status-success' : 'status-error'}`}>
+                <div className="card-header-row">
+                  <div className="icon-wrapper">
+                    <UserCheck size={20} />
+                  </div>
+                  <div className="card-info">
+                    <h3 className="card-title">Live Biometric Lock</h3>
+                    <p className="card-desc">AI facial presence detection</p>
+                  </div>
+                  <div className="card-status">
+                    {faceStatus === 'detected' ? (
+                      <span className="status-text success">
+                        <CheckCircle2 size={16} /> FACE VERIFIED
+                      </span>
+                    ) : (
+                      <span className="status-text error animate-pulse">
+                        <XCircle size={16} /> NO FACE DETECTED
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
-            {!cameraActive && (
-              <Button onClick={requestPermissions} style={{ alignSelf: 'flex-start' }}>
-                Grant Permissions
-              </Button>
+            {/* Real-time Phone Environment Scan */}
+            {cameraActive && (engineStatus.state === 'running' || engineStatus.state === 'ready') && (
+              <div className={`diagnostic-card ${!phonePresent ? 'status-success' : 'status-error'}`}>
+                <div className="card-header-row">
+                  <div className="icon-wrapper">
+                    {phonePresent ? <AlertTriangle size={20} /> : <Smartphone size={20} />}
+                  </div>
+                  <div className="card-info">
+                    <h3 className="card-title">Desk Environment Scan</h3>
+                    <p className="card-desc">Cell phone/device presence detection</p>
+                  </div>
+                  <div className="card-status">
+                    {!phonePresent ? (
+                      <span className="status-text success">
+                        <CheckCircle2 size={16} /> NO PHONES DETECTED
+                      </span>
+                    ) : (
+                      <span className="status-text error animate-pulse">
+                        <XCircle size={16} /> CELL PHONE DETECTED!
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -236,8 +342,9 @@ export const ExamPreFlight: React.FC = () => {
         </div>
 
         <Button
+          className="preflight-begin-btn"
           size="lg"
-          disabled={!isAdmin && (!agreed || !cameraActive || !micActive || faceStatus !== 'detected')}
+          disabled={!isAdmin && (!agreed || !cameraActive || !micActive)}
           onClick={handleStartExam}
           leftIcon={<CheckCircle2 size={20} />}
           style={{ paddingLeft: '3rem', paddingRight: '3rem' }}
@@ -249,9 +356,14 @@ export const ExamPreFlight: React.FC = () => {
             Admin Bypass Active: Hardware checks skipped.
           </p>
         )}
-        {!isAdmin && cameraActive && faceStatus !== 'detected' && faceStatus !== 'idle' && faceStatus !== 'checking' && (
-          <p style={{ color: 'var(--error)', fontSize: '0.8125rem', margin: 0 }}>
-            Face verification required before starting.
+        {!isAdmin && cameraActive && (engineStatus.state === 'running' || engineStatus.state === 'ready') && faceStatus !== 'detected' && (
+          <p style={{ color: 'var(--warning)', fontSize: '0.8125rem', margin: 0, textAlign: 'center' }}>
+            Note: If face verification is not locked, ensure you are well-lit and facing the camera directly.
+          </p>
+        )}
+        {!isAdmin && cameraActive && phonePresent && (
+          <p style={{ color: 'var(--error)', fontSize: '0.8125rem', margin: 0, textAlign: 'center', fontWeight: 'bold' }}>
+            Warning: Please remove your cell phone from the camera range before beginning.
           </p>
         )}
       </div>

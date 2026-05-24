@@ -1,6 +1,7 @@
 put sentry and bull mq
 
-
+## Temporary Feature Updates
+- **Hall of Fame**, **Community**, and **Peer Groups** have been temporarily removed from the student sidebar navigation and will be updated in a future release.
 
 The API CORS allowlist :
 

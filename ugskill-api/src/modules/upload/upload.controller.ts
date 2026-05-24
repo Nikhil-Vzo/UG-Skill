@@ -36,6 +36,11 @@ const CATEGORY_RULES: Record<string, { roles: string[], maxBytes: number, mimes:
     roles: ['*'], // All authenticated users
     maxBytes: 50 * MB,
     mimes: ['application/pdf', 'application/zip', 'application/x-zip-compressed', 'application/x-rar-compressed']
+  },
+  placement_resume: {
+    roles: ['*'], // All authenticated users
+    maxBytes: 10 * MB,
+    mimes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword']
   }
 };
 

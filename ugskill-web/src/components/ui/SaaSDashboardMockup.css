@@ -182,7 +182,7 @@
   transition: all 0.3s ease;
 }
 
-.stat-icon {
+.saas-stat-card .stat-icon {
   width: 16px;
   height: 16px;
   border-radius: 4px;
@@ -190,21 +190,21 @@
   border: 1px solid rgba(99, 102, 241, 0.5);
 }
 
-.stat-content {
+.saas-stat-card .stat-content {
   display: flex;
   flex-direction: column;
   gap: 4px;
   flex: 1;
 }
 
-.stat-value {
+.saas-stat-card .stat-value {
   width: 60%;
   height: 6px;
   background: #ffffff;
   border-radius: 2px;
 }
 
-.stat-label {
+.saas-stat-card .stat-label {
   width: 40%;
   height: 4px;
   background: rgba(255, 255, 255, 0.5);
