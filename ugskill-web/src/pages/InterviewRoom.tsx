@@ -95,6 +95,9 @@ const InterviewRoom: React.FC = () => {
       setJoined(true);
       queryClient.invalidateQueries({ queryKey: ['interview-session', sessionId] });
     },
+    onError: (err: any) => {
+      console.error('Failed to join interview room:', err?.response?.data || err);
+    }
   });
 
   const endMutation = useMutation({
@@ -435,7 +438,7 @@ const InterviewRoom: React.FC = () => {
               )}
             </div>
 
-            <div style={{ marginTop: 'auto' }}>
+             <div style={{ marginTop: 'auto' }}>
               <button
                 onClick={() => joinMutation.mutate()}
                 disabled={joinMutation.isPending}
@@ -444,6 +447,11 @@ const InterviewRoom: React.FC = () => {
                 {joinMutation.isPending ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Video size={18} />}
                 {joinMutation.isPending ? 'Joining…' : isHR ? 'Join & Admit Candidate' : 'Join Interview Room'}
               </button>
+              {joinMutation.isError && (
+                <div style={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem', textAlign: 'center', fontWeight: 500 }}>
+                  {(joinMutation.error as any)?.response?.data?.error?.message || (joinMutation.error as any)?.message || 'Failed to join the room.'}
+                </div>
+              )}
               <button onClick={() => navigate(isHR ? '/hr/dashboard' : '/app/placements')} style={styles.lobbyBackLink}>
                 <ArrowLeft size={14} /> Back to Dashboard
               </button>
