@@ -76,6 +76,9 @@ export const proctoringController = {
       // During active exam, queue the heavy AI workload and return immediately
       try {
         const { aiFrameQueue } = await import('../../config/queue');
+        if (!aiFrameQueue) {
+          throw new Error('aiFrameQueue is disabled (Redis unavailable)');
+        }
         await aiFrameQueue.add('analyze-frame', {
           attemptId,
           examId,
