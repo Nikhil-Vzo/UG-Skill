@@ -496,7 +496,7 @@ export const PlacementsHub: React.FC = () => {
   const { data: mySessions = [] } = useQuery<InterviewSession[]>({
     queryKey: ['my-interview-sessions', user?.id],
     queryFn: async () => {
-      const res = await api.get('/placements/sessions?studentId=me&active=true');
+      const res = await api.get('/placements/sessions?studentId=me&active=true&sessionType=live_interview');
       return res.data.data || res.data || [];
     },
     enabled: !!user?.id,
@@ -506,7 +506,7 @@ export const PlacementsHub: React.FC = () => {
   const { data: completedSessions = [] } = useQuery<InterviewSession[]>({
     queryKey: ['my-completed-interview-sessions', user?.id],
     queryFn: async () => {
-      const res = await api.get('/placements/sessions?studentId=me&status=completed');
+      const res = await api.get('/placements/sessions?studentId=me&status=completed&sessionType=live_interview');
       return res.data.data || res.data || [];
     },
     enabled: !!user?.id,
