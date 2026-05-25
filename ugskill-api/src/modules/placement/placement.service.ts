@@ -319,6 +319,8 @@ export const createPlacementSession = async (data: CreatePlacementSessionInput) 
     companyId: data.companyId,
     mongoFlowId: data.mongoFlowId,
     roundNumber: data.roundNumber,
+    scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
+    roundLabel: data.roundLabel,
     status: 'scheduled'
   });
 };
