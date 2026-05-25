@@ -520,12 +520,13 @@ export const updatePlacementSessionPg = async (
 };
 
 export const listPlacementSessionsPg = async (query: any) => {
-  const { studentId, driveId, status, active, page = 1, limit = 50 } = query || {};
+  const { studentId, driveId, status, active, sessionType, page = 1, limit = 50 } = query || {};
   const offset = (Number(page) - 1) * Number(limit);
   let conditions: any[] = [];
 
   if (studentId) conditions.push(eq(placementSessions.studentId, studentId));
   if (driveId) conditions.push(eq(placementSessions.driveId, driveId));
+  if (sessionType) conditions.push(eq(placementSessions.sessionType, sessionType));
   if (active === 'true') {
     conditions.push(inArray(placementSessions.status, ['scheduled', 'in_progress']));
   } else if (status?.includes(',')) {
