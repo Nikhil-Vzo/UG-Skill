@@ -52,8 +52,8 @@ export const Courses: React.FC = () => {
 
   return (
     <div className="courses-page">
-      <header className="courses-header">
-        <div className="courses-title-section">
+      <header className="courses-hero ugs-hero">
+        <div className="courses-hero-content">
           <div className="courses-badge">
             <BookOpen size={14} /> Learning Center
           </div>

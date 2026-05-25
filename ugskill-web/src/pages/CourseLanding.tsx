@@ -229,18 +229,19 @@ export const CourseLanding: React.FC = () => {
         {/* ─── Left Column ─── */}
         <div className="course-landing-left">
           {/* Hero */}
-          <div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+          <div className="course-landing-hero-banner ugs-hero">
+            <div className="course-landing-hero-inner">
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
               {course.category && <Badge variant="primary">{course.category}</Badge>}
               {course.level && <Badge variant="default">{course.level}</Badge>}
               {(course.tags ?? []).map(t => <Badge key={t} variant="outline" size="sm">{t}</Badge>)}
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-2">
+            <h1 className="course-landing-hero-title">
               {course.title}
             </h1>
-            {course.subtitle && <p className="text-lg text-secondary mb-4">{course.subtitle}</p>}
+            {course.subtitle && <p className="course-landing-hero-subtitle">{course.subtitle}</p>}
 
-            <div className="course-landing-hero-meta">
+            <div className="course-landing-hero-meta" style={{ color: 'rgba(255,255,255,0.92)' }}>
               {course.rating != null && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Star size={15} fill="var(--primary-glow)" color="var(--primary-glow)" />
@@ -263,6 +264,7 @@ export const CourseLanding: React.FC = () => {
                   <BookOpen size={15} /><span>Updated {course.lastUpdated}</span>
                 </div>
               )}
+            </div>
             </div>
           </div>
 

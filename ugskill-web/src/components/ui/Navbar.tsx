@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { IconButton } from './IconButton';
-import { Menu, Search, LogOut, Settings, Bell, ChevronDown } from 'lucide-react';
+import { Menu, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { GlobalNotifications } from './GlobalNotifications';
 import { Logo } from './Logo';
@@ -55,18 +55,6 @@ export const Navbar: React.FC<NavbarProps> = ({ className, onMenuClick }) => {
         />
         <div className="navbar-brand">
           <Logo size="sm" showText />
-        </div>
-      </div>
-
-      <div className="navbar-center hidden md:flex">
-        <div className="search-well">
-          <Search className="search-icon" size={16} strokeWidth={2.5} />
-          <input 
-            type="text" 
-            placeholder="Search commands, courses, students..." 
-            className="search-input"
-          />
-          <div className="search-shortcut">⌘K</div>
         </div>
       </div>
 
