@@ -1,6 +1,5 @@
 import { 
   Building2, 
-  BarChart3, 
   FileText, 
   Database, 
   GraduationCap, 
@@ -29,7 +28,6 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { icon: <Telescope size={18} strokeWidth={2.5} />, label: 'Discover', to: '/app/discover' },
   { icon: <GraduationCap size={18} strokeWidth={2.5} />, label: 'My Courses', to: '/app/courses' },
   { icon: <Building2 size={18} strokeWidth={2.5} />, label: 'Placements', to: '/app/placements' },
-  { icon: <BarChart3 size={18} strokeWidth={2.5} />, label: 'Leaderboards', to: '/app/leaderboards' },
   { icon: <FileText size={18} strokeWidth={2.5} />, label: 'Exams & Quizzes', to: '/app/exams' },
   { icon: <CalendarDays size={18} strokeWidth={2.5} />, label: 'Interview Prep', to: '/app/placements/prep' },
   { icon: <Radio size={18} strokeWidth={2.5} />, label: 'Live GD Sessions', to: '/app/live-gd', badge: 'Soon' },

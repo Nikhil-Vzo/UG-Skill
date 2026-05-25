@@ -4,14 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useDashboardStore } from '../store/dashboard.store';
 import { useAuthStore } from '../store/auth.store';
 import { Skeleton } from '../components/loaders/Skeleton';
-import { CourseCard } from '../components/features/course/CourseCard';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import {
   Flame, Clock, Calendar, AlertTriangle, BookOpen,
-  Award, Zap, Target, ArrowRight, PlayCircle, ChevronRight, Sparkles,
-  BarChart3, Trophy, Star, Activity, Shield, Swords, Crown, Gem,
-  TrendingUp, CheckCircle2, Circle, Lock, Briefcase, Building2, XCircle
+  Award, Zap, Target, ArrowRight, PlayCircle, ChevronRight,
+  Trophy, Star, Crown, CheckCircle2
 } from 'lucide-react';
 import api from '../lib/api';
 import './Dashboard.css';
@@ -199,78 +196,6 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 };
 
-interface PlacementCardProps {
-  drive: any;
-  onClick: () => void;
-  getStepState: (idx: number) => 'completed' | 'failed' | 'active' | 'pending';
-  steps: { label: string; key: string }[];
-  currentStatus: string;
-}
-
-const PlacementCard: React.FC<PlacementCardProps> = ({
-  drive,
-  onClick,
-  getStepState,
-  steps,
-  currentStatus,
-}) => {
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    card.style.setProperty('--mouse-x', `${x}px`);
-    card.style.setProperty('--mouse-y', `${y}px`);
-  };
-
-  return (
-    <div className="db-placement-card-wrapper" onMouseMove={handleMouseMove} onClick={onClick}>
-      <div className="db-placement-card-inner">
-        <div className="db-placement-card-header">
-          <div className="db-placement-logo-wrap">
-            <div className="db-placement-logo" style={{ backgroundColor: '#3b82f6' }}>
-              {drive.companyName?.[0] || 'D'}
-            </div>
-          </div>
-          <div className="db-placement-card-title-area">
-            <h3 className="db-placement-company">{drive.companyName}</h3>
-            <p className="db-placement-role">{drive.name || drive.targetRoles?.join(', ')}</p>
-          </div>
-          <div className="db-placement-badge-wrap">
-            <Badge variant={currentStatus === 'selected' ? 'success' : currentStatus === 'rejected' ? 'danger' : currentStatus === 'interview' ? 'warning' : 'primary'} size="sm">
-              {currentStatus.toUpperCase()}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="db-pipeline-tracker">
-          <div className="db-pipeline-steps">
-            {steps.map((step, idx) => {
-              const state = getStepState(idx);
-              const isLineActive = idx <= (currentStatus === 'rejected' ? 2 : (steps.findIndex(s => s.key === currentStatus) ?? 0));
-              return (
-                <React.Fragment key={step.key}>
-                  {idx > 0 && (
-                    <div className={`db-pipeline-line ${isLineActive ? 'active' : ''}`} />
-                  )}
-                  <div className={`db-pipeline-step ${state}`}>
-                    <div className="db-pipeline-dot">
-                      {state === 'completed' && <CheckCircle2 size={12} />}
-                      {state === 'failed' && <XCircle size={12} />}
-                      {state === 'active' && <Circle size={10} fill="currentColor" />}
-                    </div>
-                    <span className="db-pipeline-label">{step.label}</span>
-                  </div>
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { courses, assessments, topLeaders, examCount, isLoading, fetchDashboardData } = useDashboardStore();
@@ -297,20 +222,6 @@ export const Dashboard: React.FC = () => {
   const freezeCredits = streakData?.freezeCredits ?? 0;
   const lastActiveDate = streakData?.lastActiveDate;
 
-  // Fetch placement drives for the tracker
-  const { data: drives = [], isLoading: isDrivesLoading } = useQuery<any[]>({
-    queryKey: ['placement-drives-db'],
-    queryFn: async () => {
-      try {
-        const res = await api.get('/placements/drives');
-        return res.data.data?.drives ?? res.data.data ?? res.data ?? [];
-      } catch (e) {
-        return [];
-      }
-    },
-    staleTime: 60_000,
-  });
-
   // Fetch active interview sessions
   const { data: mySessions = [] } = useQuery<InterviewSession[]>({
     queryKey: ['my-interview-sessions-db', user?.id],
@@ -325,12 +236,6 @@ export const Dashboard: React.FC = () => {
     enabled: !!user?.id,
     refetchInterval: 10000,
   });
-
-  const appliedDrives = useMemo(() => {
-    return drives.filter((d: any) =>
-      ['applied', 'shortlisted', 'interview', 'selected', 'rejected'].includes(d.status)
-    );
-  }, [drives]);
 
   // Compute which days of current week are active
   const streakDays = useMemo<boolean[]>(() => {
@@ -561,39 +466,62 @@ export const Dashboard: React.FC = () => {
           </BentoCard>
 
 
-          {/* Active Courses */}
-          <section className="db-courses-section">
+          {/* Upcoming Exams */}
+          <section className="db-upcoming-exams-section">
             <div className="db-section-header">
               <h2 className="db-section-title font-serif">
-                <Activity size={16} className="text-emerald-400" /> Active Enrolled Courses
+                <Calendar size={16} className="text-emerald-400" /> Upcoming Exams
               </h2>
-              <button className="db-link-btn" onClick={() => navigate('/app/courses')}>
+              <button className="db-link-btn" onClick={() => navigate('/app/exams')}>
                 All →
               </button>
             </div>
-            <div className="db-courses-grid">
+            <div className="db-upcoming-exams-list">
               {isLoading ? (
-                Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="db-course-skeleton">
-                    <Skeleton variant="rectangular" height={120} />
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="db-upcoming-exam-skeleton">
+                    <Skeleton variant="rectangular" height={72} />
                   </div>
                 ))
-              ) : courses.length === 0 ? (
-                <div className="db-empty-courses">
-                  <p className="text-slate-400 text-sm mb-3">No enrolled courses yet.</p>
-                  <Button variant="primary" className="btn-3d-tactile btn-3d-green" onClick={() => navigate('/app/discover')}>Discover Courses</Button>
+              ) : assessments.length === 0 ? (
+                <div className="db-upcoming-exams-empty">
+                  <div className="db-upcoming-exam-icon">
+                    <Calendar size={18} />
+                  </div>
+                  <div>
+                    <p>No upcoming exams.</p>
+                    <span>Scheduled assessments will appear here.</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/app/exams')}>
+                    View exams
+                  </Button>
                 </div>
               ) : (
-                courses.slice(0, 2).map(course => (
-                  <CourseCard
-                    key={course.id}
-                    course={course}
-                    onContinue={(id) => navigate(`/app/courses/${id}/player`)}
-                  />
-                ))
+                assessments.slice(0, 4).map(assm => {
+                  const days = assm.closingDate ? daysUntil(assm.closingDate) : null;
+                  const overdue = days !== null && days < 0;
+                  const urgent = days !== null && days <= 2 && !overdue;
+                  return (
+                    <div
+                      key={assm.id}
+                      className={`db-upcoming-exam-item ${overdue ? 'overdue' : ''} ${urgent ? 'urgent' : ''}`}
+                      onClick={() => navigate('/app/exams')}
+                    >
+                      <div className="db-upcoming-exam-icon">
+                        {overdue ? <AlertTriangle size={16} /> : <Calendar size={16} />}
+                      </div>
+                      <div className="db-upcoming-exam-copy">
+                        <h3>{assm.title}</h3>
+                        <p>{assm.closingDate ? deadlineLabel(assm.closingDate) : 'No date set'}</p>
+                      </div>
+                      <ChevronRight size={16} className="db-upcoming-exam-arrow" />
+                    </div>
+                  );
+                })
               )}
             </div>
           </section>
+
         </div>
 
         {/* ── Sidebar Column (35%) ── */}
@@ -674,45 +602,6 @@ export const Dashboard: React.FC = () => {
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Upcoming Exams */}
-          <div className="db-exams-card">
-            <div className="db-exams-overlay-img-wrap">
-              <img src="/images/calendar-asset-trans.png" alt="Calendar watermark" className="db-exams-overlay-img" />
-            </div>
-            <div className="db-card-section-title font-mono text-[10px] tracking-widest uppercase text-slate-400 mb-3">
-              <Calendar size={12} className="text-amber-500 inline-block mr-1.5 align-text-bottom" />
-              UPCOMING EXAMS
-            </div>
-            <div className="db-deadlines-list">
-              {isLoading ? (
-                <Skeleton variant="rectangular" height={80} />
-              ) : assessments.length === 0 ? (
-                <div className="db-empty-state-sidebar font-mono text-[10px] text-slate-500">
-                  No upcoming exams.
-                </div>
-              ) : (
-                assessments.slice(0, 3).map(assm => {
-                  const days = assm.closingDate ? daysUntil(assm.closingDate) : null;
-                  const urgent = days !== null && days <= 2;
-                  return (
-                    <div key={assm.id} className={`db-deadline-item ${days !== null && days < 0 ? 'overdue' : ''} ${urgent ? 'urgent' : ''}`} onClick={() => navigate('/app/exams')}>
-                      <div className="db-deadline-icon">
-                        <Calendar size={12} />
-                      </div>
-                      <div className="db-deadline-info">
-                        <span className="db-deadline-title">{assm.title}</span>
-                        <span className={`db-deadline-date ${urgent ? 'urgent' : ''}`}>
-                          {assm.closingDate ? deadlineLabel(assm.closingDate) : 'No date'}
-                        </span>
-                      </div>
-                      <ChevronRight size={12} className="db-deadline-arrow" />
-                    </div>
-                  );
-                })
-              )}
             </div>
           </div>
         </div>

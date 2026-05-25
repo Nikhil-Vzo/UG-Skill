@@ -12,8 +12,8 @@
 
   /* Harmonious Palette Accents - Duolingo Brand Values */
   --db-teal: var(--duo-green);
-  --db-indigo: var(--duo-blue);
-  --db-purple: var(--duo-purple);
+  --db-indigo: var(--duo-green);
+  --db-purple: var(--duo-green-hover);
   --db-emerald: var(--duo-green);
   --db-amber: var(--duo-orange);
   --db-rose: var(--duo-red);
@@ -25,7 +25,7 @@
 }
 
 .text-blue-400 {
-  color: var(--primary) !important;
+  color: var(--duo-green) !important;
 }
 
 .text-amber-500 {
@@ -33,7 +33,7 @@
 }
 
 .text-indigo-400 {
-  color: var(--db-indigo) !important;
+  color: var(--duo-green) !important;
 }
 
 .text-rose-500 {
@@ -41,7 +41,7 @@
 }
 
 .text-purple-400 {
-  color: var(--db-purple) !important;
+  color: var(--duo-green-hover) !important;
 }
 
 .text-yellow-500 {
@@ -103,7 +103,7 @@
   padding: var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
   min-height: 100vh;
   background-color: var(--db-bg);
   overflow-x: hidden;
@@ -112,7 +112,7 @@
 @media (min-width: 600px) {
   .dashboard-content {
     padding: var(--space-5) var(--space-6);
-    gap: var(--space-6);
+    gap: var(--space-5);
   }
 }
 
@@ -207,7 +207,7 @@
 .db-layout-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-6);
+  gap: var(--space-5);
 }
 
 @media (min-width: 1024px) {
@@ -219,14 +219,14 @@
 .db-main-col {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-5);
   min-width: 0;
 }
 
 .db-sidebar-col {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-4);
   min-width: 0;
 }
 
@@ -241,7 +241,7 @@
   border: 2px solid var(--border-default) !important;
   border-bottom: 5px solid var(--border-default) !important;
   border-radius: var(--radius-lg) !important;
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-4) var(--space-5);
   box-shadow: var(--shadow-sm);
 }
 
@@ -265,9 +265,9 @@
 }
 
 .db-stat-value-prem {
-  font-size: 1.85rem;
+  font-size: 1.55rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
   font-family: var(--font-display);
 }
 
@@ -278,7 +278,7 @@
 }
 
 .db-stat-value-prem.text-blue-400 {
-  background: linear-gradient(135deg, var(--duo-blue-hover) 0%, var(--duo-blue) 100%);
+  background: linear-gradient(135deg, var(--duo-green-hover) 0%, var(--duo-green) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -290,7 +290,7 @@
 }
 
 .db-stat-value-prem.text-indigo-400 {
-  background: linear-gradient(135deg, var(--duo-purple-hover) 0%, var(--duo-purple) 100%);
+  background: linear-gradient(135deg, var(--duo-green-hover) 0%, var(--duo-green) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -338,11 +338,11 @@
 }
 
 .db-continue-learning-hero {
-  border: 2px solid var(--duo-blue) !important;
+  border: 2px solid var(--duo-green) !important;
   background-color: #ffffff !important;
-  border-bottom: 5px solid var(--duo-blue-hover) !important;
+  border-bottom: 5px solid var(--duo-green-hover) !important;
   border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 18px rgba(88, 204, 2, 0.1);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
 }
 
@@ -352,7 +352,7 @@
 }
 
 .db-continue-learning-hero .db-card-inner {
-  background: transparent !important;
+  background: #ffffff !important;
 }
 
 .db-card-wrapper::before {
@@ -360,7 +360,7 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(250px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
-      rgba(28, 176, 246, 0.08),
+      rgba(88, 204, 2, 0.1),
       transparent 65%);
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -377,7 +377,7 @@
   z-index: 1;
   border-radius: calc(var(--radius-lg) - 1px);
   background: var(--surface-1);
-  padding: var(--space-6);
+  padding: var(--space-5);
   height: 100%;
 }
 
@@ -410,8 +410,8 @@
 .db-continue-hero-thumb {
   flex-shrink: 0;
   width: 100%;
-  max-width: 220px;
-  height: 124px;
+  max-width: 180px;
+  height: 104px;
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--db-border);
@@ -472,14 +472,14 @@
 
 .db-continue-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--db-indigo) 0%, var(--db-purple) 100%);
+  background: linear-gradient(90deg, var(--duo-green) 0%, var(--duo-green-hover) 100%);
   border-radius: var(--radius-full);
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .db-continue-progress-pct {
   font-size: var(--font-size-xs);
-  color: var(--db-indigo);
+  color: var(--duo-green-hover);
   font-weight: 700;
   font-family: var(--font-mono);
 }
@@ -505,13 +505,6 @@
   max-width: 100%;
   object-fit: contain;
   filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.05));
-}
-
-/* Active Courses */
-.db-courses-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
 }
 
 .db-section-header {
@@ -549,35 +542,126 @@
   color: var(--primary-hover);
 }
 
-.db-courses-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
-}
-
-@media (min-width: 640px) {
-  .db-courses-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.db-course-skeleton {
-  background: var(--surface-1);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-}
-
-.db-empty-courses {
+/* Upcoming exams */
+.db-upcoming-exams-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: var(--space-8) var(--space-6);
-  background: var(--surface-1);
-  border: 1px dashed var(--border-default);
+  gap: var(--space-4);
+  background: #ffffff;
+  border: 2px solid var(--duo-border);
+  border-bottom: 5px solid var(--duo-green);
   border-radius: var(--radius-lg);
-  width: 100%;
+  padding: var(--space-5);
+  box-shadow: 0 6px 18px rgba(88, 204, 2, 0.07);
+}
+
+.db-upcoming-exams-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.db-upcoming-exam-item,
+.db-upcoming-exam-skeleton,
+.db-upcoming-exams-empty {
+  min-height: 72px;
+  background: #ffffff;
+  border: 2px solid var(--duo-border);
+  border-bottom: 4px solid var(--duo-green);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+}
+
+.db-upcoming-exam-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.db-upcoming-exam-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(88, 204, 2, 0.1);
+}
+
+.db-upcoming-exam-item.urgent {
+  border-bottom-color: var(--duo-orange);
+}
+
+.db-upcoming-exam-item.overdue {
+  border-bottom-color: var(--duo-red);
+}
+
+.db-upcoming-exam-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: var(--duo-green);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+}
+
+.db-upcoming-exam-item.urgent .db-upcoming-exam-icon {
+  background: var(--duo-orange);
+}
+
+.db-upcoming-exam-item.overdue .db-upcoming-exam-icon {
+  background: var(--duo-red);
+}
+
+.db-upcoming-exam-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.db-upcoming-exam-copy h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-upcoming-exam-copy p {
+  margin: 0.15rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-upcoming-exam-arrow {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.db-upcoming-exams-empty {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.db-upcoming-exams-empty p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.db-upcoming-exams-empty span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
 }
 
 /* ── Sidebar: RPG-Inspired Gamification Hub ──────────────── */
@@ -592,7 +676,7 @@
   border: 1px solid #d5e4eb; /* subtle border */
   border-bottom: 4px solid #cbd5e1; /* gentle depth */
   border-radius: var(--radius-lg) !important;
-  padding: var(--space-6);
+  padding: var(--space-5);
   box-shadow: 0 4px 12px -3px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
@@ -753,15 +837,15 @@
 
 /* Quests Sidebar Panel */
 .db-quests-card {
-  background: linear-gradient(180deg, #ffffff 0%, var(--duo-green-subtle) 100%) !important;
-  border: 2px solid var(--duo-green) !important;
-  border-bottom: 5px solid var(--duo-green-hover) !important;
+  background: #ffffff !important;
+  border: 2px solid rgba(88, 204, 2, 0.35) !important;
+  border-bottom: 5px solid var(--duo-green) !important;
   border-radius: var(--radius-lg) !important;
-  padding: var(--space-6);
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  box-shadow: 0 8px 24px rgba(88, 204, 2, 0.12);
+  box-shadow: 0 6px 18px rgba(88, 204, 2, 0.09);
   position: relative;
   overflow: hidden;
 }
@@ -772,18 +856,16 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--duo-green), var(--duo-blue));
-  opacity: 0.85;
+  height: 0;
 }
 
 /* Exams Sidebar Panel */
 .db-exams-card {
   background: #ffffff !important;
-  border: 2px solid var(--duo-orange) !important;
-  border-bottom: 5px solid var(--duo-orange-hover) !important;
+  border: 2px solid rgba(88, 204, 2, 0.32) !important;
+  border-bottom: 5px solid var(--duo-green) !important;
   border-radius: var(--radius-lg) !important;
-  padding: var(--space-6);
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -826,52 +908,46 @@
 .db-quest-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 0.625rem;
 }
 
 .db-quest-item {
   display: flex;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-2);
+  gap: 0.75rem;
+  padding: 0.75rem;
   align-items: flex-start;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, box-shadow 0.2s ease;
-  border-bottom: 1px solid var(--db-border) !important;
-  border-radius: var(--radius-md);
-}
-
-.db-quest-item:last-child {
-  border-bottom: none !important;
-  padding-bottom: 0;
-}
-
-.db-quest-item:first-child {
-  padding-top: 0;
+  border: 1px solid var(--duo-border) !important;
+  border-bottom: 3px solid var(--duo-border) !important;
+  border-radius: 10px;
+  background: var(--surface-2);
 }
 
 .db-quest-item:hover {
-  transform: translateX(4px);
-  background: rgba(255, 255, 255, 0.65);
-  box-shadow: 0 4px 12px rgba(88, 204, 2, 0.08);
+  transform: translateY(-1px);
+  background: #ffffff;
+  border-color: var(--duo-green) !important;
+  box-shadow: 0 6px 16px rgba(88, 204, 2, 0.1);
 }
 
 .db-quest-item.done {
-  opacity: 0.92;
-  background: rgba(255, 255, 255, 0.5);
+  opacity: 1;
+  background: var(--duo-green-subtle);
+  border-color: rgba(88, 204, 2, 0.35) !important;
 }
 
 .db-quest-icon-prem {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  border: 2px solid currentColor;
-  border-bottom-width: 3px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid currentColor;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   background: #ffffff;
   transition: transform 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
 }
 
 .db-quest-item:hover .db-quest-icon-prem {
@@ -882,7 +958,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .db-quest-header {
@@ -892,7 +968,7 @@
 }
 
 .db-quest-label {
-  font-size: var(--font-size-sm);
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -909,11 +985,11 @@
 }
 
 .db-quest-bar-track {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.8);
+  height: 5px;
+  background: #ffffff;
   border-radius: var(--radius-full);
   overflow: hidden;
-  margin-top: var(--space-1_5);
+  margin-top: 0.35rem;
   border: 1px solid var(--duo-border);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
 }
