@@ -1062,22 +1062,11 @@
 }
 
 .drive-expanded-grid {
-  display: grid;
-  grid-template-columns: 1fr 300px;
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
-  align-items: start;
 }
 
-@media (max-width: 768px) {
-  .drive-expanded-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Stack details vertically when rendered inside narrow Kanban columns */
-.kanban-board .drive-expanded-grid {
-  grid-template-columns: 1fr;
-}
 
 .drive-expanded-left {
   display: flex;
