@@ -98,6 +98,13 @@ export function registerInterviewNamespace(io: SocketServer): Namespace {
       logger.info(`[/interview] session:end emitted for sessionId=${sessionId}`);
     });
 
+    // ── WebRTC Signaling ──────────────────────────────────────────────────
+    socket.on('webrtc:signal', ({ sessionId, signal }: { sessionId: string; signal: any }) => {
+      if (!sessionId || !signal) return;
+      const room = `interview:${sessionId}`;
+      socket.to(room).emit('webrtc:signal', { signal, senderId: userId });
+    });
+
     // ── Cleanup on disconnect ─────────────────────────────────────────────
     socket.on('disconnect', async () => {
       logger.debug(`[/interview] Disconnected socketId=${socket.id} userId=${userId}`);

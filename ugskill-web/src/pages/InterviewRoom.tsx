@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuthStore } from '../store/auth.store';
+import { connectSocket, disconnectSocket } from '../lib/socket';
 
 // Suggested questions based on Candidate Branch
 const SUGGESTED_QUESTIONS: Record<string, string[]> = {
@@ -56,6 +57,17 @@ const InterviewRoom: React.FC = () => {
   // Proctoring states for Candidate
   const [tabSwitches, setTabSwitches] = useState(0);
 
+  // Chat and WebRTC states
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInputValue, setChatInputValue] = useState('');
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+  const chatSocketRef = useRef<any>(null);
+  const interviewSocketRef = useRef<any>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
   const { data: session, isLoading, error } = useQuery({
@@ -94,12 +106,24 @@ const InterviewRoom: React.FC = () => {
   });
 
   const submitEvaluationMutation = useMutation({
-    mutationFn: (payload: { score: number; maxScore: number; status: 'completed' }) =>
+    mutationFn: (payload: { score: number; maxScore: number; status: 'completed'; feedbackNotes?: string }) =>
       api.patch(`/placements/sessions/${sessionId}/status`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interview-session', sessionId] });
       navigate('/hr/dashboard');
     },
+  });
+
+  const sendProctoringEventMutation = useMutation({
+    mutationFn: (eventType: string) =>
+      api.post('/placements/proctoring-events', {
+        session_type: 'live_interview',
+        pg_session_id: sessionId,
+        event_type: eventType,
+        severity: 'medium',
+        timestamp: new Date().toISOString(),
+        metadata: { sessionId }
+      }),
   });
 
   // Load stream on mount for waiting room preview
@@ -141,17 +165,167 @@ const InterviewRoom: React.FC = () => {
     }
   }, [session?.status, isHR, navigate]);
 
-  // Tab switch proctoring logic for Candidate
+  // Tab switch proctoring logic for Candidate — sends event to backend
   useEffect(() => {
     if (isHR) return;
     const handleBlur = () => {
       setTabSwitches(prev => prev + 1);
+      if (joined) {
+        sendProctoringEventMutation.mutate('tab_switch');
+      }
     };
     window.addEventListener('blur', handleBlur);
     return () => {
       window.removeEventListener('blur', handleBlur);
     };
-  }, [isHR]);
+  }, [isHR, joined]);
+
+  const cleanupPeerConnection = () => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    setRemoteStream(null);
+  };
+
+  const getOrCreatePeerConnection = (socket: any) => {
+    if (peerConnectionRef.current) {
+      return peerConnectionRef.current;
+    }
+
+    console.log('[WebRTC] Creating RTCPeerConnection…');
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+      ]
+    });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('[WebRTC] Sending ICE candidate');
+        socket.emit('webrtc:signal', {
+          sessionId,
+          signal: { type: 'candidate', candidate: event.candidate }
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      console.log('[WebRTC] Remote track received', event.streams[0]);
+      setRemoteStream(event.streams[0]);
+    };
+
+    // Add local tracks
+    if (localStream) {
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+      });
+    } else {
+      console.warn('[WebRTC] No localStream available to add tracks');
+    }
+
+    peerConnectionRef.current = pc;
+    return pc;
+  };
+
+  // Socket Connections & WebRTC Signaling Setup
+  useEffect(() => {
+    if (!sessionId || !isLive) return;
+
+    console.log('[Sockets] Connecting to /chat and /interview namespaces…');
+    
+    const intSocket = connectSocket('/interview');
+    interviewSocketRef.current = intSocket;
+
+    const chatSocket = connectSocket('/chat');
+    chatSocketRef.current = chatSocket;
+
+    intSocket.emit('join:session', { sessionId });
+    chatSocket.emit('join:room', { room: `interview:${sessionId}` });
+
+    chatSocket.on('message:history', (history: any[]) => {
+      setChatMessages(history);
+    });
+
+    chatSocket.on('message:received', (msg: any) => {
+      setChatMessages(prev => [...prev, msg]);
+    });
+
+    intSocket.on('participant:joined', ({ userId, email }: { userId: string, email: string }) => {
+      console.log(`[Socket] Participant joined: ${email} (${userId})`);
+      const pc = getOrCreatePeerConnection(intSocket);
+      pc.createOffer()
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => {
+          console.log('[WebRTC] Sent offer to participant');
+          intSocket.emit('webrtc:signal', {
+            sessionId,
+            signal: { type: 'offer', offer: pc.localDescription }
+          });
+        })
+        .catch(err => console.error('[WebRTC] Offer creation failed', err));
+    });
+
+    intSocket.on('participant:left', ({ userId }: { userId: string }) => {
+      console.log(`[Socket] Participant left: ${userId}`);
+      cleanupPeerConnection();
+    });
+
+    intSocket.on('webrtc:signal', async ({ signal }: { signal: any, senderId: string }) => {
+      console.log('[WebRTC] Signal received of type:', signal.type);
+      try {
+        const pc = getOrCreatePeerConnection(intSocket);
+        
+        if (signal.type === 'offer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.offer));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          console.log('[WebRTC] Sent answer to participant');
+          intSocket.emit('webrtc:signal', {
+            sessionId,
+            signal: { type: 'answer', answer: pc.localDescription }
+          });
+        } else if (signal.type === 'answer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.answer));
+        } else if (signal.type === 'candidate' && signal.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        }
+      } catch (err) {
+        console.error('[WebRTC] Error handling signal', err);
+      }
+    });
+
+    intSocket.on('session:ended', () => {
+      console.log('[Socket] Session ended by interviewer');
+      navigate(isHR ? '/hr/dashboard' : '/app/placements');
+    });
+
+    return () => {
+      intSocket.off('participant:joined');
+      intSocket.off('participant:left');
+      intSocket.off('webrtc:signal');
+      intSocket.off('session:ended');
+      chatSocket.off('message:history');
+      chatSocket.off('message:received');
+      
+      disconnectSocket('/interview');
+      disconnectSocket('/chat');
+      cleanupPeerConnection();
+    };
+  }, [sessionId, isLive, localStream]);
+
+  // Bind remote stream to HTML video tag
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
+  // Scroll to bottom of chat when messages change
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, activeTab]);
 
   if (isLoading) {
     return (
@@ -223,10 +397,16 @@ const InterviewRoom: React.FC = () => {
               <h1 style={styles.lobbyTitle}>
                 {session.companyName ?? 'Placement Drive'}
               </h1>
-              <div style={{ color: '#2dd4bf', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ color: '#2dd4bf', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <Tv size={15} />
-                <span>Round {session.roundNumber || 1} · {session.driveName ?? 'Interview Session'}</span>
+                <span>Round {session.roundNumber || 1}{session.roundLabel ? ` · ${session.roundLabel}` : ` · ${session.driveName ?? 'Interview Session'}`}</span>
               </div>
+              {session.scheduledAt && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
+                  <Clock size={13} />
+                  <span>Scheduled: {new Date(session.scheduledAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                </div>
+              )}
 
               {isHR && (
                 <div style={styles.candidateDetailsCard}>
@@ -301,7 +481,8 @@ const InterviewRoom: React.FC = () => {
                   submitEvaluationMutation.mutate({
                     status: 'completed',
                     score: calculatedScore,
-                    maxScore: 10
+                    maxScore: 10,
+                    feedbackNotes: feedbackNotes || undefined
                   });
                 }
               }}
@@ -322,11 +503,20 @@ const InterviewRoom: React.FC = () => {
         {/* Video stream box */}
         <div style={styles.videoGrid}>
           <div style={styles.remoteVideoContainer}>
-            <div style={styles.remotePlaceholder}>
-              <User size={64} color="rgba(255,255,255,0.2)" />
-              <div style={styles.remoteNameBadge}>
-                {isHR ? (session.candidateName || 'Candidate') : 'Interviewer'}
+            {remoteStream ? (
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div style={styles.remotePlaceholder}>
+                <User size={64} color="rgba(255,255,255,0.2)" />
               </div>
+            )}
+            <div style={styles.remoteNameBadge}>
+              {isHR ? (session.candidateName || 'Candidate') : 'Interviewer'}
             </div>
           </div>
 
@@ -372,6 +562,12 @@ const InterviewRoom: React.FC = () => {
                   style={activeTab === 'guide' ? styles.sidebarTabActive : styles.sidebarTab}
                 >
                   AI Guide
+                </button>
+                <button 
+                  onClick={() => setActiveTab('chat')} 
+                  style={activeTab === 'chat' ? styles.sidebarTabActive : styles.sidebarTab}
+                >
+                  Chat
                 </button>
               </div>
 
@@ -488,7 +684,8 @@ const InterviewRoom: React.FC = () => {
                         submitEvaluationMutation.mutate({
                           status: 'completed',
                           score: calculatedScore,
-                          maxScore: 10
+                          maxScore: 10,
+                          feedbackNotes: feedbackNotes || undefined
                         });
                       }}
                       disabled={submitEvaluationMutation.isPending}
@@ -517,6 +714,59 @@ const InterviewRoom: React.FC = () => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {activeTab === 'chat' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', minHeight: 250 }}>
+                      <div style={styles.systemMessage}>AI proctor connected to room</div>
+                      {chatMessages.map((msg, i) => {
+                        const isSelf = msg.senderId === user?.id;
+                        return (
+                          <div
+                            key={msg._id || i}
+                            style={{
+                              alignSelf: isSelf ? 'flex-end' : 'flex-start',
+                              maxWidth: '85%',
+                              background: isSelf ? 'linear-gradient(135deg,#06b6d4,#3b82f6)' : 'rgba(255,255,255,0.06)',
+                              borderRadius: 12,
+                              padding: '0.625rem 0.875rem',
+                              border: isSelf ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                            }}
+                          >
+                            <div style={{ fontSize: '0.6875rem', color: isSelf ? 'rgba(255,255,255,0.7)' : '#94a3b8', fontWeight: 600, marginBottom: '0.25rem' }}>
+                              {isSelf ? 'You' : msg.senderEmail.split('@')[0]}
+                            </div>
+                            <div style={{ fontSize: '0.8125rem', color: '#f8fafc', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!chatInputValue.trim()) return;
+                        chatSocketRef.current?.emit('message:send', {
+                          room: `interview:${sessionId}`,
+                          content: chatInputValue.trim()
+                        });
+                        setChatInputValue('');
+                      }}
+                      style={styles.chatInputWrapper}
+                    >
+                      <input 
+                        type="text" 
+                        value={chatInputValue}
+                        onChange={(e) => setChatInputValue(e.target.value)}
+                        placeholder="Type message to candidate..." 
+                        style={{ ...styles.chatInput, background: 'rgba(255,255,255,0.04)' }} 
+                      />
+                    </form>
                   </div>
                 )}
               </div>
@@ -609,18 +859,55 @@ const InterviewRoom: React.FC = () => {
                 )}
 
                 {activeTab === 'chat' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <div style={styles.chatMessageList}>
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', minHeight: 250 }}>
                       <div style={styles.systemMessage}>AI proctor connected to room</div>
+                      {chatMessages.map((msg, i) => {
+                        const isSelf = msg.senderId === user?.id;
+                        return (
+                          <div
+                            key={msg._id || i}
+                            style={{
+                              alignSelf: isSelf ? 'flex-end' : 'flex-start',
+                              maxWidth: '85%',
+                              background: isSelf ? 'linear-gradient(135deg,#06b6d4,#3b82f6)' : 'rgba(255,255,255,0.06)',
+                              borderRadius: 12,
+                              padding: '0.625rem 0.875rem',
+                              border: isSelf ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                            }}
+                          >
+                            <div style={{ fontSize: '0.6875rem', color: isSelf ? 'rgba(255,255,255,0.7)' : '#94a3b8', fontWeight: 600, marginBottom: '0.25rem' }}>
+                              {isSelf ? 'You' : msg.senderEmail.split('@')[0]}
+                            </div>
+                            <div style={{ fontSize: '0.8125rem', color: '#f8fafc', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
                     </div>
-                    <div style={styles.chatInputWrapper}>
+
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!chatInputValue.trim()) return;
+                        chatSocketRef.current?.emit('message:send', {
+                          room: `interview:${sessionId}`,
+                          content: chatInputValue.trim()
+                        });
+                        setChatInputValue('');
+                      }}
+                      style={styles.chatInputWrapper}
+                    >
                       <input 
                         type="text" 
+                        value={chatInputValue}
+                        onChange={(e) => setChatInputValue(e.target.value)}
                         placeholder="Type message to interviewer..." 
-                        style={styles.chatInput} 
-                        disabled
+                        style={{ ...styles.chatInput, background: 'rgba(255,255,255,0.04)' }} 
                       />
-                    </div>
+                    </form>
                   </div>
                 )}
               </div>
@@ -639,7 +926,7 @@ const InterviewRoom: React.FC = () => {
             {videoOn ? <Video size={20} /> : <VideoOff size={20} />}
           </button>
           <button style={styles.controlBtn} title="Chat" onClick={() => {
-            setActiveTab(isHR ? 'grading' : 'chat');
+            setActiveTab('chat');
           }}>
             <MessageSquare size={20} />
           </button>
