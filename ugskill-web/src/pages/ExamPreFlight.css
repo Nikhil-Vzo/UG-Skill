@@ -1,4 +1,26 @@
-/* Simplified Preflight Layout */
+/* Exam Pre-Flight — Duo premium */
+
+.preflight-page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.preflight-hero {
+  padding: 1.75rem 2rem;
+  text-align: center;
+}
+
+.preflight-hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .preflight-layout {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
@@ -23,11 +45,12 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 12px;
-  background: #090a0f;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid var(--duo-blue);
+  border-bottom: 4px solid var(--duo-blue-hover);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 28px rgba(28, 176, 246, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,36 +111,39 @@
 
 .diagnostic-card {
   padding: 1.25rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  background: #ffffff;
+  border: 2px solid var(--duo-border);
+  border-bottom-width: 4px;
   transition: all 0.25s ease;
 }
 
 .diagnostic-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
 .diagnostic-card.status-success {
-  background: rgba(16, 185, 129, 0.04);
-  border-color: rgba(16, 185, 129, 0.15);
+  background: var(--duo-green-subtle);
+  border-color: var(--duo-green);
+  border-bottom-color: var(--duo-green-hover);
 }
 
 .diagnostic-card.status-warning {
-  background: rgba(245, 158, 11, 0.04);
-  border-color: rgba(245, 158, 11, 0.15);
+  background: var(--duo-orange-subtle);
+  border-color: var(--duo-orange);
+  border-bottom-color: var(--duo-orange-hover);
 }
 
 .diagnostic-card.status-error {
-  background: rgba(239, 68, 68, 0.04);
-  border-color: rgba(239, 68, 68, 0.15);
+  background: var(--duo-red-subtle);
+  border-color: var(--duo-red);
+  border-bottom-color: var(--duo-red-hover);
 }
 
 .diagnostic-card.status-waiting {
-  background: rgba(255, 255, 255, 0.01);
-  opacity: 0.75;
+  background: #ffffff;
+  opacity: 0.9;
 }
 
 .card-header-row {
@@ -133,9 +159,9 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  color: var(--text-muted);
+  background: var(--duo-blue-subtle);
+  border: 2px solid rgba(28, 176, 246, 0.25);
+  color: var(--duo-blue);
 }
 
 .status-success .icon-wrapper {

@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/loaders/Skeleton';
-import { Calendar, Video, Clock, AlertCircle } from 'lucide-react';
-import '../components/ui/Primitives.css';
+import { Calendar, Video, Clock, AlertCircle, MessageSquare, Sparkles } from 'lucide-react';
 import api from '../lib/api';
+import './InterviewPrep.css';
 
 interface Session {
   id: string;
-  type: string;
-  scheduledAt: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  sessionId?: string;
+  sessionType: 'live_interview' | 'mock_interview' | 'group_discussion';
+  createdAt: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  companyName?: string;
+  driveName?: string;
 }
 
 interface GDSession {
@@ -50,7 +50,6 @@ export const InterviewPrep: React.FC = () => {
     mutationFn: () => api.post('/placements/sessions/mock'),
     onSuccess: (res) => {
       setShowMockModal(false);
-      // If the API returns a session ID, navigate to the live interview room
       const sessionId = res.data?.data?.session?.id ?? res.data?.data?.id ?? res.data?.id;
       if (sessionId) navigate(`/app/live-interview/${sessionId}`);
     },
@@ -81,16 +80,22 @@ export const InterviewPrep: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col" style={{ padding: '2rem', gap: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <header className="flex" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <h1 className="text-3xl font-bold" style={{ margin: 0, color: 'var(--text-high)' }}>Interview Prep Dashboard</h1>
-        <p style={{ margin: 0, color: 'var(--text-low)' }}>Schedule mock interviews, participate in group discussions, and track your performance.</p>
+    <div className="interview-prep-page">
+      <header className="interview-prep-hero ugs-hero">
+        <div className="interview-prep-hero-content">
+          <div className="ugs-hero-badge"><Sparkles size={14} /> Interview Lab</div>
+          <h1 className="ugs-hero-title">Interview Prep</h1>
+          <p className="ugs-hero-subtitle">Schedule mock interviews, join group discussions, and track upcoming sessions.</p>
+        </div>
       </header>
 
-      {/* Action Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        <Card title="Mock Interviews">
-          <p style={{ color: 'var(--text-low)', marginBottom: '1.5rem' }}>Practice 1-on-1 with industry experts across different tech stacks.</p>
+      <div className="interview-prep-actions">
+        <div className="interview-prep-action-card interview-prep-action-card--mock">
+          <div className="interview-prep-action-icon">
+            <Calendar size={22} />
+          </div>
+          <h3 className="interview-prep-action-title">Mock Interviews</h3>
+          <p className="interview-prep-action-desc">Practice 1-on-1 with industry experts across different tech stacks.</p>
           <Button
             variant="primary"
             leftIcon={<Calendar size={18} />}
@@ -101,14 +106,18 @@ export const InterviewPrep: React.FC = () => {
             {scheduleMockMutation.isPending ? 'Scheduling...' : 'Schedule Mock'}
           </Button>
           {scheduleMockMutation.isError && (
-            <p style={{ color: 'var(--error)', fontSize: '0.8125rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <p className="interview-prep-action-error">
               <AlertCircle size={14} /> Failed to schedule. Please try again.
             </p>
           )}
-        </Card>
+        </div>
 
-        <Card title="Group Discussions">
-          <p style={{ color: 'var(--text-low)', marginBottom: '1.5rem' }}>Join live peer-to-peer discussion rooms to refine communication skills.</p>
+        <div className="interview-prep-action-card interview-prep-action-card--gd">
+          <div className="interview-prep-action-icon">
+            <MessageSquare size={22} />
+          </div>
+          <h3 className="interview-prep-action-title">Group Discussions</h3>
+          <p className="interview-prep-action-desc">Join live peer rooms to refine communication and teamwork skills.</p>
           <Button
             variant="secondary"
             leftIcon={<Video size={18} />}
@@ -118,16 +127,15 @@ export const InterviewPrep: React.FC = () => {
           >
             {loadingGdSessions ? 'Checking Sessions...' : 'Join Live GD'}
           </Button>
-        </Card>
+        </div>
       </div>
 
-      {/* Mock scheduling modal */}
       {showMockModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-panel" style={{ padding: '2rem', maxWidth: 420, width: '90%', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <h2 style={{ margin: 0, color: 'var(--text-high)', fontFamily: 'var(--font-display)' }}>Schedule a Mock Interview</h2>
-            <p style={{ color: 'var(--text-low)', fontSize: '0.875rem' }}>A mock interview will be created and matched with an available interviewer. You'll receive a notification once matched.</p>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+        <div className="interview-prep-modal-backdrop">
+          <div className="interview-prep-modal">
+            <h2>Schedule a Mock Interview</h2>
+            <p>A mock interview will be created and matched with an available interviewer. You&apos;ll receive a notification once matched.</p>
+            <div className="interview-prep-modal-actions">
               <Button variant="ghost" onClick={() => setShowMockModal(false)}>Cancel</Button>
               <Button variant="primary" onClick={() => scheduleMockMutation.mutate()} disabled={scheduleMockMutation.isPending}>
                 {scheduleMockMutation.isPending ? 'Scheduling...' : 'Confirm'}
@@ -137,42 +145,46 @@ export const InterviewPrep: React.FC = () => {
         </div>
       )}
 
-      {/* Upcoming Sessions */}
-      <Card title="Upcoming Sessions" style={{ flexGrow: 1 }}>
+      <section className="interview-prep-sessions">
+        <h2 className="interview-prep-sessions-title"><Calendar size={18} /> Upcoming Sessions</h2>
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {[1, 2].map(i => <Skeleton key={i} variant="rectangular" height={72} />)}
           </div>
         ) : error ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--error)', fontSize: '0.875rem' }}>
+          <div className="interview-prep-error-banner">
             <AlertCircle size={18} /> Failed to load sessions. Please refresh.
           </div>
         ) : sessions.length > 0 ? (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <ul className="interview-prep-session-list">
             {sessions.map((session) => (
-              <li key={session.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--surface-highest)', borderRadius: '0px', background: 'var(--surface-well)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ padding: '0.75rem', background: 'var(--primary-low)', borderRadius: '0px', color: 'var(--primary-glow)' }}>
-                    {session.type.toLowerCase().includes('mock') || session.type.toLowerCase().includes('interview') ? <Calendar size={24} /> : <Video size={24} />}
+              <li key={session.id} className="interview-prep-session-item">
+                <div className="interview-prep-session-body">
+                  <div className="interview-prep-session-icon">
+                    {session.sessionType === 'mock_interview' || session.sessionType === 'live_interview' ? <Calendar size={24} /> : <Video size={24} />}
                   </div>
-                  <div>
-                    <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--text-high)' }}>{session.type}</h4>
-                    <p style={{ margin: 0, color: 'var(--text-low)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Clock size={14} /> {formatTime(session.scheduledAt)}
-                    </p>
+                  <div className="interview-prep-session-info">
+                    <h4>
+                      {session.sessionType === 'mock_interview'
+                        ? 'Mock Interview'
+                        : session.sessionType === 'live_interview'
+                        ? `${session.companyName || 'Live'} Interview`
+                        : 'Group Discussion'}
+                    </h4>
+                    <p><Clock size={14} /> {formatTime(session.createdAt)}</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="interview-prep-session-actions">
                   <Badge
                     variant={session.status === 'scheduled' ? 'outline' : session.status === 'completed' ? 'success' : 'warning'}
                   >
                     {session.status}
                   </Badge>
-                  {session.sessionId && session.status === 'scheduled' && (
+                  {session.id && (session.status === 'scheduled' || session.status === 'in_progress') && (
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => navigate(`/app/live-interview/${session.sessionId}`)}
+                      onClick={() => navigate(`/app/live-interview/${session.id}`)}
                     >
                       Join
                     </Button>
@@ -182,13 +194,13 @@ export const InterviewPrep: React.FC = () => {
             ))}
           </ul>
         ) : (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-lowest)' }}>
-            <Calendar size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
-            <p style={{ margin: 0 }}>No upcoming sessions scheduled.</p>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem' }}>Use the buttons above to schedule a mock interview or join a live GD.</p>
+          <div className="interview-prep-empty">
+            <Calendar size={36} />
+            <p>No upcoming sessions scheduled.</p>
+            <p className="interview-prep-empty-hint">Use the cards above to schedule a mock interview or join a live GD.</p>
           </div>
         )}
-      </Card>
+      </section>
     </div>
   );
 };
