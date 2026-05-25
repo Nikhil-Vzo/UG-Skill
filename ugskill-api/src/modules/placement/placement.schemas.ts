@@ -204,6 +204,7 @@ export const updatePlacementSessionStatusSchema = z.object({
     mongoAttemptId: z.string().optional(),
     recordingUrl: z.string().url().optional(),
     proctoringVerdict: z.string().optional(),
+    feedbackNotes: z.string().optional(),
     startedAt: z.string().datetime().optional(),
     endedAt: z.string().datetime().optional()
   })
