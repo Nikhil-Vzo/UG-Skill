@@ -343,6 +343,7 @@ export const ExamInterface: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const aiMonitoringRef = useRef<boolean>(true);
   const proctoringEngineRef = useRef<ProctoringEngine | null>(null);
+  const isSubmittingRef = useRef<boolean>(false);
 
   // Toast dispatch
   const showToast = useCallback((type: string, message?: string, severity: string = 'medium') => {
@@ -371,6 +372,10 @@ export const ExamInterface: React.FC = () => {
       setSubmitted(true);
       setShowSubmitModal(false);
     },
+    onError: (err: any) => {
+      isSubmittingRef.current = false;
+      showToast('submit_error', err.response?.data?.message || err.message || 'Submission failed. Please try again.', 'HIGH');
+    }
   });
 
   // ── Fetch Result (after submission) ──
@@ -385,6 +390,7 @@ export const ExamInterface: React.FC = () => {
 
   const handleSubmit = useCallback(() => {
     if (submitted || submitMut.isPending) return;
+    isSubmittingRef.current = true;
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     }
@@ -450,6 +456,7 @@ export const ExamInterface: React.FC = () => {
   // Proctoring: track tab visibility change
   useEffect(() => {
     const onVisibilityChange = () => {
+      if (isSubmittingRef.current || submitted) return;
       if (document.hidden && !submitted && attemptId) {
         setTabSwitchWarning(true);
         setTimeout(() => setTabSwitchWarning(false), 5000);
@@ -504,6 +511,7 @@ export const ExamInterface: React.FC = () => {
   }, []);
 
   const handleAiIncident = useCallback((incident: ProctoringIncident) => {
+    if (isSubmittingRef.current || submitted) return;
     const shouldCapture = incident.severity === 'HIGH' || incident.severity === 'CRITICAL';
     const snapshotBase64 = shouldCapture ? captureEvidenceFrame() : undefined;
 
@@ -535,7 +543,7 @@ export const ExamInterface: React.FC = () => {
         capturedLocally: Boolean(snapshotBase64),
       },
     }).catch(() => { /* Keep exam running if logging has a transient failure. */ });
-  }, [attemptId, captureEvidenceFrame, examId, showToast]);
+  }, [attemptId, captureEvidenceFrame, examId, showToast, submitted]);
 
   // ── Edge AI Proctoring Loop ──
   useEffect(() => {
@@ -613,6 +621,7 @@ export const ExamInterface: React.FC = () => {
     if (submitted || !attemptId || !examId) return;
 
     const logEvent = (type: string, severity: string, metadata: any) => {
+      if (isSubmittingRef.current || submitted) return;
       api.post('/proctoring/events', {
         attemptId,
         examId,
@@ -624,6 +633,7 @@ export const ExamInterface: React.FC = () => {
     };
 
     const onVisibilityChange = () => {
+      if (isSubmittingRef.current || submitted) return;
       if (document.visibilityState === 'hidden') {
         logEvent('tab_switch', 'HIGH', { action: 'hidden' });
         setProctoringEvents(evs => [...evs, {
@@ -634,6 +644,7 @@ export const ExamInterface: React.FC = () => {
     };
 
     const onFullscreenChange = () => {
+      if (isSubmittingRef.current || submitted) return;
       if (!document.fullscreenElement) {
         logEvent('fullscreen_exit', 'MEDIUM', { action: 'exit' });
         setProctoringEvents(evs => [...evs, {
@@ -646,6 +657,7 @@ export const ExamInterface: React.FC = () => {
     };
 
     const onClipboard = (e: ClipboardEvent) => {
+      if (isSubmittingRef.current || submitted) return;
       logEvent('copy_paste', 'MEDIUM', { action: e.type });
       setProctoringEvents(evs => [...evs, {
         type: 'copy_paste', severity: 'MEDIUM', message: `Clipboard ${e.type} detected`, ts: Date.now()
