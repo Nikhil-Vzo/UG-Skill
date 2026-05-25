@@ -189,7 +189,9 @@ export const createPlacementSessionSchema = z.object({
     driveId: z.string().uuid().optional(),
     companyId: z.string().uuid().optional(),
     mongoFlowId: z.string().optional(),
-    roundNumber: z.number().int().optional()
+    roundNumber: z.number().int().optional(),
+    scheduledAt: z.string().datetime().optional(),
+    roundLabel: z.string().max(80).optional(),
   })
 });
 
