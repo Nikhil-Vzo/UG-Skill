@@ -48,6 +48,9 @@ export const CompanyDetail: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['drive', driveId] });
       queryClient.invalidateQueries({ queryKey: ['placement-drives'] });
     },
+    onError: (err: any) => {
+      console.error('Apply error:', err?.response?.data);
+    },
   });
 
   const hasApplied = company?.myStatus && company.myStatus !== 'none';
@@ -331,7 +334,9 @@ export const CompanyDetail: React.FC = () => {
               )}
               {applyMutation.isError && (
                 <div className="text-center mt-2 font-mono text-[10px] text-red-400 uppercase">
-                  Submission failed. Try again.
+                  {(applyMutation.error as any)?.response?.data?.error?.message ||
+                   (applyMutation.error as any)?.message ||
+                   'Submission failed. Please try again.'}
                 </div>
               )}
             </div>
