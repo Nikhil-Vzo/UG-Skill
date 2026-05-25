@@ -79,6 +79,7 @@ const InterviewRoom: React.FC = () => {
 
   const isHR = user?.roles?.some(r => ['hr', 'admin', 'super_admin', 'placement_coordinator'].includes(r));
   const isStudent = user?.roles?.includes('student');
+  const isLive = session?.status === 'in_progress' || joined;
 
   useEffect(() => {
     if (isHR) {
@@ -352,7 +353,7 @@ const InterviewRoom: React.FC = () => {
     );
   }
 
-  const isLive = session.status === 'in_progress' || joined;
+
 
   if (!isLive) {
     // Waiting room UI - Beautiful split-screen camera preview and lobby card
