@@ -216,7 +216,8 @@ export const placementSessionQuerySchema = z.object({
     companyId: z.string().uuid().optional(),
     type: z.string().optional(),
     status: z.string().optional(),
-    active: z.union([z.literal('true'), z.literal('false')]).optional()
+    active: z.union([z.literal('true'), z.literal('false')]).optional(),
+    sessionType: z.enum(['live_interview', 'mock_interview', 'group_discussion']).optional()
   })
 });
 
