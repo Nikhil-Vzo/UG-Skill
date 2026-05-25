@@ -134,16 +134,21 @@ export const ExamPreFlight: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <header style={{ textAlign: 'center' }}>
-        {isLoading ? (
-          <Skeleton variant="text" width="50%" height="2.5rem" style={{ margin: '0 auto 0.5rem' }} />
-        ) : (
-          <h1 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '2rem' }}>
-            {examData?.title ? `${examData.title} - Pre-Flight Check` : 'Pre-Flight Check'}
-          </h1>
-        )}
-        <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Ensure your hardware and proctoring models are ready before starting.</p>
+    <div className="preflight-page">
+      <header className="preflight-hero ugs-hero">
+        <div className="preflight-hero-content">
+          {isLoading ? (
+            <Skeleton variant="text" width="60%" height="2rem" style={{ margin: '0 auto' }} />
+          ) : (
+            <>
+              <div className="ugs-hero-badge">Pre-Flight Check</div>
+              <h1 className="ugs-hero-title">
+                {examData?.title ? examData.title : 'Exam Setup'}
+              </h1>
+            </>
+          )}
+          <p className="ugs-hero-subtitle">Ensure your camera, mic, and proctoring checks pass before you begin.</p>
+        </div>
       </header>
 
       <Card title="Hardware & AI Verification Diagnostics">
