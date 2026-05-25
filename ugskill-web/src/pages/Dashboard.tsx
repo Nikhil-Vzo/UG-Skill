@@ -316,7 +316,7 @@ export const Dashboard: React.FC = () => {
     queryKey: ['my-interview-sessions-db', user?.id],
     queryFn: async () => {
       try {
-        const res = await api.get('/placements/sessions?studentId=me&active=true');
+        const res = await api.get('/placements/sessions?studentId=me&active=true&sessionType=live_interview');
         return res.data.data || res.data || [];
       } catch (e) {
         return [];
@@ -451,12 +451,9 @@ export const Dashboard: React.FC = () => {
         onJoin={(sessionId) => navigate(`/app/placements/interview/${sessionId}`)} 
       />
 
-      {/* ── Header ──────────────────────────────────────────── */}
-      <header className="db-header">
-        <div className="db-welcome">
-          <div className="db-badge">
-            <Sparkles size={13} /> Learning Overview
-          </div>
+      {/* ── Header Card ──────────────────────────────────────── */}
+      <header className="db-header-card">
+        <div className="db-header-welcome">
           <h1 className="db-title">
             Welcome back, <span className="db-name">{user?.fullName?.split(' ')[0] || 'Student'}</span>
           </h1>
@@ -464,11 +461,12 @@ export const Dashboard: React.FC = () => {
             Your learning, assessment, and placement readiness in one focused workspace.
           </p>
         </div>
+
         <div className="db-header-actions">
-          <Button variant="primary" size="sm" leftIcon={<PlayCircle size={16} />} onClick={() => navigate('/app/discover')}>
+          <Button variant="primary" className="btn-3d-tactile btn-3d-blue" size="sm" leftIcon={<PlayCircle size={16} />} onClick={() => navigate('/app/discover')}>
             Explore Courses
           </Button>
-          <Button variant="outline" size="sm" leftIcon={<Target size={16} />} onClick={() => navigate('/app/placements')}>
+          <Button variant="outline" className="btn-3d-tactile btn-3d-secondary" size="sm" leftIcon={<Target size={16} />} onClick={() => navigate('/app/placements')}>
             Placements
           </Button>
         </div>
@@ -527,7 +525,7 @@ export const Dashboard: React.FC = () => {
                   <div className="db-continue-hero-thumb">
                     {courses[0].thumbnail
                       ? <img src={courses[0].thumbnail} alt={courses[0].title} />
-                      : <div className="db-course-thumb-placeholder"><BookOpen size={24} color="#6366f1" /></div>
+                      : <div className="db-course-thumb-placeholder"><BookOpen size={24} color="#0284c7" /></div>
                     }
                   </div>
                   <div className="db-continue-hero-info">
@@ -541,6 +539,7 @@ export const Dashboard: React.FC = () => {
                     </div>
                     <Button
                       variant="primary"
+                      className="btn-3d-tactile btn-3d-blue"
                       size="sm"
                       onClick={() => navigate(`/app/courses/${courses[0].id}/player`)}
                       rightIcon={<ArrowRight size={14} />}
@@ -551,9 +550,11 @@ export const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="db-continue-empty">
-                  <BookOpen size={32} className="text-slate-600 mb-2" />
+                  <div className="db-empty-illustration">
+                    <img src="/images/book-asset-trans.png" alt="Empty state books" className="db-empty-img" />
+                  </div>
                   <p className="text-sm text-slate-400 mb-3">No active courses yet. Start your journey!</p>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/app/discover')}>Explore Catalog</Button>
+                  <Button variant="primary" className="btn-3d-tactile btn-3d-blue" size="sm" onClick={() => navigate('/app/discover')}>Explore Catalog</Button>
                 </div>
               )}
             </div>
@@ -580,7 +581,7 @@ export const Dashboard: React.FC = () => {
               ) : courses.length === 0 ? (
                 <div className="db-empty-courses">
                   <p className="text-slate-400 text-sm mb-3">No enrolled courses yet.</p>
-                  <Button variant="primary" onClick={() => navigate('/app/discover')}>Discover Courses</Button>
+                  <Button variant="primary" className="btn-3d-tactile btn-3d-green" onClick={() => navigate('/app/discover')}>Discover Courses</Button>
                 </div>
               ) : (
                 courses.slice(0, 2).map(course => (
@@ -601,7 +602,7 @@ export const Dashboard: React.FC = () => {
           {/* RPG-Inspired Gamification Hub */}
           <div className="db-rpg-card">
             <div className="db-rpg-header">
-              <div className="db-rpg-level-badge" style={{ background: `${levelColor}22`, borderColor: `${levelColor}55`, color: levelColor }}>
+              <div className="db-rpg-level-badge" style={{ background: levelColor, borderColor: levelColor, color: '#ffffff', boxShadow: '0 3px 0 rgba(0,0,0,0.15)' }}>
                 <span className="font-mono text-xs tracking-wider">LEVEL</span>
                 <span className="db-rpg-level-number font-serif"><CountUp end={level} /></span>
               </div>
@@ -648,7 +649,7 @@ export const Dashboard: React.FC = () => {
           {/* Daily Quests */}
           <div className="db-quests-card">
             <div className="db-card-section-title font-mono text-[10px] tracking-widest uppercase text-slate-400 mb-3">
-              <Target size={12} className="text-purple-400 inline-block mr-1.5 align-text-bottom" />
+              <Target size={12} className="text-indigo-400 inline-block mr-1.5 align-text-bottom" />
               DAILY QUESTS
             </div>
             <div className="db-quest-list">
@@ -678,6 +679,9 @@ export const Dashboard: React.FC = () => {
 
           {/* Upcoming Exams */}
           <div className="db-exams-card">
+            <div className="db-exams-overlay-img-wrap">
+              <img src="/images/calendar-asset-trans.png" alt="Calendar watermark" className="db-exams-overlay-img" />
+            </div>
             <div className="db-card-section-title font-mono text-[10px] tracking-widest uppercase text-slate-400 mb-3">
               <Calendar size={12} className="text-amber-500 inline-block mr-1.5 align-text-bottom" />
               UPCOMING EXAMS
