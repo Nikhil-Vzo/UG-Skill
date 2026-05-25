@@ -3,7 +3,7 @@ import { tokenStore } from './api';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
 
-export type SocketNamespace = '/exam' | '/tracking' | '/interview' | '/gd' | '/leaderboard';
+export type SocketNamespace = '/exam' | '/tracking' | '/interview' | '/gd' | '/leaderboard' | '/chat';
 
 const sockets: Map<SocketNamespace, Socket> = new Map();
 

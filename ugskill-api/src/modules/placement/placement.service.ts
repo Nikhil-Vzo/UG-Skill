@@ -367,6 +367,7 @@ export const updatePlacementSessionStatus = async (id: string, data: UpdatePlace
     mongoAttemptId: data.mongoAttemptId,
     recordingUrl: data.recordingUrl,
     proctoringVerdict: data.proctoringVerdict,
+    feedbackNotes: data.feedbackNotes,
     startedAt: data.startedAt ? new Date(data.startedAt) : undefined,
     endedAt: data.endedAt ? new Date(data.endedAt) : undefined
   });
