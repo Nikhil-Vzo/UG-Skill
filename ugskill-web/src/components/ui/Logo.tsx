@@ -4,9 +4,10 @@ import { motion } from 'framer-motion';
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
+  tone?: 'indigo' | 'green';
 }
 
-export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
+export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, tone = 'indigo' }) => {
   const dimensions = {
     sm: { box: 36, font: '0.8rem', text: '1.125rem', gap: '0.75rem' },
     md: { box: 52, font: '1rem', text: '1.625rem', gap: '1.25rem' },
@@ -14,6 +15,27 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
   };
 
   const { box, text, gap } = dimensions[size];
+  const palette = tone === 'green'
+    ? {
+        ringA: 'rgba(88, 204, 2, 0.22)',
+        ringB: 'rgba(28, 176, 246, 0.2)',
+        shell: 'radial-gradient(circle at top left, rgba(88, 204, 2, 0.16), transparent)',
+        icon: 'linear-gradient(135deg, #58cc02 0%, #46a302 100%)',
+        shadow: '0 8px 16px rgba(88, 204, 2, 0.28), inset 0 2px 4px rgba(255, 255, 255, 0.3)',
+        accent: '#d7ffb8',
+        wordmark: 'linear-gradient(to right, #3c3c3c 30%, #58cc02 100%)',
+        subtitle: '#58cc02',
+      }
+    : {
+        ringA: 'rgba(129, 140, 248, 0.2)',
+        ringB: 'rgba(56, 189, 248, 0.2)',
+        shell: 'radial-gradient(circle at top left, rgba(99, 102, 241, 0.15), transparent)',
+        icon: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+        shadow: '0 8px 16px rgba(79, 70, 229, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3)',
+        accent: '#A5B4FC',
+        wordmark: 'linear-gradient(to right, #fff 30%, #a5b4fc 100%)',
+        subtitle: '#818cf8',
+      };
 
   return (
     <div className="ugskill-logo-wrap" style={{ display: 'flex', alignItems: 'center', gap: gap }}>
@@ -36,9 +58,9 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
           style={{
             position: 'absolute',
             inset: 0,
-            border: '1px solid rgba(129, 140, 248, 0.2)',
+            border: `1px solid ${palette.ringA}`,
             borderRadius: '35% 65% 70% 30% / 30% 30% 70% 70%',
-            background: 'radial-gradient(circle at top left, rgba(99, 102, 241, 0.15), transparent)',
+            background: palette.shell,
           }}
         />
         <motion.div
@@ -47,7 +69,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
           style={{
             position: 'absolute',
             inset: '4px',
-            border: '1px solid rgba(56, 189, 248, 0.2)',
+            border: `1px solid ${palette.ringB}`,
             borderRadius: '65% 35% 30% 70% / 70% 70% 30% 30%',
           }}
         />
@@ -58,12 +80,12 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
             position: 'relative',
             width: '80%',
             height: '80%',
-            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+            background: palette.icon,
             borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 8px 16px rgba(79, 70, 229, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3)',
+            boxShadow: palette.shadow,
             zIndex: 2,
             overflow: 'hidden'
           }}
@@ -94,7 +116,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
             />
             <path 
               d="M30 20V22C30 26.4183 26.4183 30 22 30" 
-              stroke="#A5B4FC" 
+              stroke={palette.accent} 
               strokeWidth="3.5" 
               strokeLinecap="round"
             />
@@ -126,7 +148,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
               fontWeight: 900, 
               color: '#fff', 
               letterSpacing: '-0.05em',
-              background: 'linear-gradient(to right, #fff 30%, #a5b4fc 100%)',
+              background: palette.wordmark,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -135,7 +157,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true }) => {
           </span>
           <span style={{ 
             fontSize: size === 'sm' ? '0.55rem' : '0.65rem', 
-            color: '#818cf8', 
+            color: palette.subtitle, 
             fontWeight: 700, 
             letterSpacing: '0.25em', 
             textTransform: 'uppercase', 

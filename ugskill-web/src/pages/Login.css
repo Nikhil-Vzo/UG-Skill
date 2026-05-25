@@ -4,7 +4,7 @@
   display: flex;
   background-color: #02020a;
   color: #f1f5f9;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   overflow: hidden;
 }
 
@@ -33,7 +33,7 @@
   left: -20%;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(28, 176, 246, 0.06) 0%, transparent 70%);
   pointer-events: none;
   filter: blur(100px);
 }
@@ -141,7 +141,7 @@
   right: -5%;
   width: 50%;
   height: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(28, 176, 246, 0.06) 0%, transparent 70%);
   filter: blur(80px);
   pointer-events: none;
 }
@@ -152,7 +152,7 @@
   left: 10%;
   width: 40%;
   height: 40%;
-  background: radial-gradient(circle, rgba(192, 132, 252, 0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(88, 204, 2, 0.04) 0%, transparent 70%);
   filter: blur(80px);
   pointer-events: none;
 }
