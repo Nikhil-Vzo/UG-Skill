@@ -24,6 +24,7 @@ interface Exam {
   score?: number;
   maxScore: number;
   isProctored: boolean;
+  attemptId?: string;
 }
 
 /* ─────────── Config ─────────── */
@@ -50,9 +51,8 @@ function formatScheduled(isoStr: string): string {
     return isoStr;
   }
 }
-
 /* ─────────── ExamCard ─────────── */
-const ExamCard: React.FC<{ exam: Exam; onEnter: () => void }> = ({ exam, onEnter }) => {
+const ExamCard: React.FC<{ exam: Exam; onEnter: () => void; onViewReport?: () => void }> = ({ exam, onEnter, onViewReport }) => {
   const cfg = STATUS_CFG[exam.status as ExamStatus] || { label: exam.status || 'Unknown', variant: 'secondary', color: 'var(--text-low)' };
   const canEnter = exam.status === 'live' || exam.status === 'upcoming';
 
@@ -85,7 +85,7 @@ const ExamCard: React.FC<{ exam: Exam; onEnter: () => void }> = ({ exam, onEnter
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.25rem', borderTop: '1px solid var(--duo-border)' }}>
         {exam.status === 'completed' && (
-          <Button variant="ghost" size="sm" leftIcon={<BarChart2 size={14} />}>View Report</Button>
+          <Button variant="ghost" size="sm" leftIcon={<BarChart2 size={14} />} onClick={onViewReport}>View Report</Button>
         )}
         {canEnter && (
           <Button
@@ -135,7 +135,6 @@ export const Exams: React.FC = () => {
     { label: 'Completed', val: exams.filter(e => e.status === 'completed').length, color: 'var(--text-secondary)' },
     { label: 'Missed', val: exams.filter(e => e.status === 'missed').length, color: 'var(--duo-red)' },
   ];
-
   const handleEnter = (exam: Exam) => {
     const finalId = exam.id || exam._id;
     // Admins can always enter/preview
@@ -143,6 +142,12 @@ export const Exams: React.FC = () => {
       navigate(`/app/exams/${finalId}/pre-flight?admin=${isAdmin}`);
     } else {
       navigate(`/app/exams/${finalId}`);
+    }
+  };
+
+  const handleViewReport = (exam: Exam) => {
+    if (exam.attemptId) {
+      navigate(`/app/exams/results/${exam.attemptId}`);
     }
   };
 
@@ -204,7 +209,7 @@ export const Exams: React.FC = () => {
           </div>
         ) : (
           filtered.map(e => (
-            <ExamCard key={e.id || e._id} exam={e} onEnter={() => handleEnter(e)} />
+            <ExamCard key={e.id || e._id} exam={e} onEnter={() => handleEnter(e)} onViewReport={() => handleViewReport(e)} />
           ))
         )}
       </div>
