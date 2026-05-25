@@ -31,7 +31,6 @@ import { ExamPreFlight } from './pages/ExamPreFlight';
 import { LiveGD } from './pages/LiveGD';
 import { LiveInterview } from './pages/LiveInterview';
 import InterviewRoom from './pages/InterviewRoom';
-import { Leaderboards } from './pages/Leaderboards';
 import { ResumeBuilder } from './pages/ResumeBuilder';
 import { HRDashboard } from './pages/hr/HRDashboard';
 import { Notifications } from './pages/Notifications';
@@ -112,7 +111,6 @@ function App() {
               <Route path="certificates/:id" element={<CertificateViewer />} />
               <Route path="live-gd" element={<LiveGD />} />
               <Route path="live-gd/:sessionId" element={<LiveGD />} />
-              <Route path="leaderboards" element={<Leaderboards />} />
 
               {/* Admin Routes */}
               <Route path="admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin', 'hr', 'creator', 'faculty']}><Outlet /></ProtectedRoute>}>

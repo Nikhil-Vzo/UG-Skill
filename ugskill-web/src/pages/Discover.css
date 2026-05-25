@@ -1,6 +1,6 @@
 /* Discover Page Styles */
 
-.discover-container { display: flex; flex-direction: column; gap: 2rem; }
+.discover-container { display: flex; flex-direction: column; gap: 1.35rem; }
 
 /* ─── Hero (Dashboard header treatment) ───────────────────────────────────── */
 .discover-hero {
@@ -16,7 +16,7 @@
     linear-gradient(135deg, #1cb0f6 0%, #58cc02 100%);
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-bottom: 5px solid rgba(0, 0, 0, 0.2);
-  padding: 3.5rem 2.5rem;
+  padding: 2rem 2rem;
   box-shadow: 0 10px 25px -5px rgba(28, 176, 246, 0.3);
   text-align: center;
 }
@@ -70,7 +70,7 @@
 
 .discover-hero-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(1.75rem, 4vw, 2.45rem);
   font-weight: 900;
   color: #ffffff;
   margin-bottom: 0.75rem;
@@ -82,9 +82,9 @@
 .discover-hero-subtitle {
   color: rgba(255, 255, 255, 0.95);
   max-width: 720px;
-  margin: 0 auto 2rem;
-  font-size: 1.125rem;
-  line-height: 1.65;
+  margin: 0 auto 1.25rem;
+  font-size: 0.98rem;
+  line-height: 1.5;
   font-weight: 500;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
@@ -92,7 +92,7 @@
 /* Search */
 .discover-search-wrapper {
   width: 100%;
-  max-width: 640px;
+  max-width: 560px;
   margin: 0 auto;
 }
 
@@ -103,7 +103,7 @@
   background: #ffffff;
   border: 2px solid rgba(255, 255, 255, 0.9);
   border-radius: 14px;
-  padding: 1rem 1.125rem;
+  padding: 0.75rem 0.875rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
@@ -127,7 +127,7 @@
 .discover-section-icon { color: var(--duo-yellow); }
 .discover-section-count { font-size: 0.875rem; color: var(--text-tertiary); }
 
-.discover-featured-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.discover-featured-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
 @media (max-width: 1024px) { .discover-featured-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .discover-featured-grid { grid-template-columns: 1fr; } }
 
@@ -136,7 +136,7 @@
   flex-direction: column;
   background: var(--surface-1);
   border: 2px solid rgba(255, 200, 0, 0.45);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
@@ -156,7 +156,7 @@
   border-color: var(--duo-yellow);
 }
 
-.discover-featured-thumbnail { position: relative; height: 190px; overflow: hidden; }
+.discover-featured-thumbnail { position: relative; height: 132px; overflow: hidden; }
 .discover-featured-thumbnail img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
 .discover-featured-card:hover .discover-featured-thumbnail img { transform: scale(1.05); }
 
@@ -190,10 +190,10 @@
   letter-spacing: -0.02em;
 }
 
-.discover-featured-content { padding: 1rem 1.25rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-.discover-featured-title { color: var(--text-primary); font-size: 1.0625rem; font-weight: 700; line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.discover-featured-content { padding: 0.875rem 1rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
+.discover-featured-title { color: var(--text-primary); font-size: 0.95rem; font-weight: 700; line-height: 1.3; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .discover-featured-instructor { color: var(--text-tertiary); font-size: 0.8125rem; margin: 0; }
-.discover-featured-meta { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; }
+.discover-featured-meta { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 0.45rem; }
 .discover-featured-rating { display: flex; align-items: center; gap: 0.25rem; color: var(--duo-orange); font-size: 0.875rem; font-weight: 600; }
 
 /* ─── Categories ──────────────────────────────────────────────────────────── */
@@ -363,8 +363,8 @@
 .discover-error { display: flex; align-items: center; gap: 0.5rem; color: var(--color-error); padding: 1rem; background: var(--color-error-subtle); border-radius: 8px; }
 
 /* Grid/List */
-.discover-grid { display: grid; gap: 1.5rem; }
-.discover-grid.grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.discover-grid { display: grid; gap: 1rem; }
+.discover-grid.grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .discover-grid.list { grid-template-columns: 1fr; }
 
 /* ─── Course Card ─────────────────────────────────────────────────────────── */
@@ -372,8 +372,9 @@
   position: relative;
   display: flex;
   background: var(--surface-1);
-  border: 1px solid var(--border-default);
-  border-radius: 12px;
+  border: 2px solid var(--duo-border);
+  border-bottom: 4px solid var(--duo-border);
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
@@ -394,8 +395,8 @@
 .discover-course-card.accent-purple .discover-course-accent { background: linear-gradient(90deg, var(--duo-purple) 0%, #a855f7 100%); }
 
 .discover-course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 14px 36px rgba(28, 176, 246, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(28, 176, 246, 0.1), 0 6px 18px rgba(0, 0, 0, 0.06);
   border-color: var(--duo-blue);
 }
 
@@ -408,14 +409,14 @@
 .discover-course-thumbnail { position: relative; overflow: hidden; }
 
 .discover-course-card.grid .discover-course-thumbnail {
-  height: 180px;
+  height: 128px;
   background: linear-gradient(180deg, var(--duo-blue-subtle) 0%, var(--surface-1) 100%);
 }
 
 .discover-course-card.list .discover-course-thumbnail {
-  width: 280px;
-  min-width: 280px;
-  height: 180px;
+  width: 200px;
+  min-width: 200px;
+  height: 132px;
   background: linear-gradient(180deg, var(--duo-blue-subtle) 0%, var(--surface-1) 100%);
 }
 
@@ -456,20 +457,20 @@
 .discover-course-tag { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); color: white; font-size: 0.6875rem; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 500; }
 .discover-course-category { position: absolute; top: 0.75rem; right: 0.75rem; }
 
-.discover-course-content { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; flex: 1; }
+.discover-course-content { padding: 0.95rem; display: flex; flex-direction: column; gap: 0.6rem; flex: 1; }
 .discover-course-card.list .discover-course-content { justify-content: center; }
 
 .discover-course-header { display: flex; flex-direction: column; gap: 0.25rem; }
-.discover-course-title { color: var(--text-primary); font-size: 1.0625rem; font-weight: 600; line-height: 1.4; margin: 0; }
+.discover-course-title { color: var(--text-primary); font-size: 0.95rem; font-weight: 700; line-height: 1.3; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .discover-course-instructor { color: var(--text-tertiary); font-size: 0.8125rem; margin: 0; }
 
-.discover-course-stats { display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; color: var(--text-secondary); }
+.discover-course-stats { display: flex; align-items: center; gap: 0.75rem; font-size: 0.78rem; color: var(--text-secondary); flex-wrap: wrap; }
 .discover-course-stat { display: flex; align-items: center; gap: 0.375rem; }
 .discover-course-clock { color: var(--duo-orange); flex-shrink: 0; }
 .discover-course-rating-value { color: var(--text-primary); font-weight: 600; }
 .discover-course-reviews { color: var(--text-tertiary); }
 
-.discover-course-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; }
+.discover-course-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 0.5rem; gap: 0.75rem; }
 
 /* Skeleton */
 .discover-skeleton-thumbnail { height: 100%; }
@@ -482,7 +483,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .discover-hero { padding: 2.5rem 1.5rem; }
+  .discover-hero { padding: 1.5rem 1.25rem; }
   .discover-hero-subtitle { font-size: 1rem; }
   .discover-toolbar { flex-direction: column; align-items: flex-start; }
   .discover-grid.grid { grid-template-columns: 1fr; }

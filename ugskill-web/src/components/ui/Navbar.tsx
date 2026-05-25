@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { IconButton } from './IconButton';
-import { Menu, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { GlobalNotifications } from './GlobalNotifications';
 import { Logo } from './Logo';
@@ -47,14 +46,8 @@ export const Navbar: React.FC<NavbarProps> = ({ className, onMenuClick }) => {
   return (
     <nav className={cn('ug-navbar', className)}>
       <div className="navbar-left">
-        <IconButton 
-          icon={<Menu size={20} />} 
-          aria-label="Toggle Sidebar" 
-          variant="ghost" 
-          onClick={onMenuClick}
-        />
         <div className="navbar-brand">
-          <Logo size="sm" showText />
+          <Logo size="sm" showText tone="green" />
         </div>
       </div>
 
@@ -72,6 +65,10 @@ export const Navbar: React.FC<NavbarProps> = ({ className, onMenuClick }) => {
           >
             <div className="user-monogram">
               {getMonogram(user?.fullName)}
+            </div>
+            <div className="user-avatar-copy">
+              <span className="user-avatar-name">{user?.fullName?.split(' ')[0] || 'User'}</span>
+              <span className="user-avatar-role">{user?.roles?.[0] || 'Member'}</span>
             </div>
             <ChevronDown 
               size={14} 

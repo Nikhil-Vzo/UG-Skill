@@ -275,6 +275,7 @@
 
 @media (max-width: 640px) {
   .interview-prep-hero { padding: 1.25rem; }
+  .interview-prep-action-card { padding: 1.25rem; }
   .interview-prep-session-item { flex-direction: column; align-items: stretch; }
   .interview-prep-session-actions { justify-content: flex-end; }
 }

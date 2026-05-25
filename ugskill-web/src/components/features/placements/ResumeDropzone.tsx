@@ -29,6 +29,7 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
   const existingResumeName = existingResumeUrl 
     ? decodeURIComponent(existingResumeUrl.substring(existingResumeUrl.lastIndexOf('/') + 1)).split('?')[0] 
     : null;
+  const hasResume = success || Boolean(existingResumeUrl);
 
   // Drag handlers
   const handleDragEnter = (e: React.DragEvent) => {
@@ -163,7 +164,7 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
         this.y = y;
         this.baseX = x;
         this.baseY = y;
-        this.color = 'rgba(99, 102, 241, 0.15)';
+        this.color = 'rgba(88, 204, 2, 0.16)';
         this.size = 1.2;
       }
 
@@ -172,7 +173,7 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
           // Spring back to base position
           this.x += (this.baseX - this.x) * 0.1;
           this.y += (this.baseY - this.y) * 0.1;
-          this.color = 'rgba(99, 102, 241, 0.15)';
+          this.color = 'rgba(88, 204, 2, 0.16)';
           this.size = 1.2;
           return;
         }
@@ -190,13 +191,13 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
           
           // Glow effects
           const ratio = (maxDist - dist) / maxDist;
-          this.color = `rgba(99, 102, 241, ${0.15 + ratio * 0.75})`;
+          this.color = `rgba(88, 204, 2, ${0.18 + ratio * 0.72})`;
           this.size = 1.2 + ratio * 2.2;
         } else {
           // Spring back
           this.x += (this.baseX - this.x) * 0.15;
           this.y += (this.baseY - this.y) * 0.15;
-          this.color = 'rgba(99, 102, 241, 0.15)';
+          this.color = 'rgba(88, 204, 2, 0.16)';
           this.size = 1.2;
         }
       }
@@ -267,7 +268,7 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
         }
 
         // Draw cursor connection web (magnetic lines)
-        ctx.strokeStyle = 'rgba(99, 102, 241, 0.08)';
+        ctx.strokeStyle = 'rgba(88, 204, 2, 0.1)';
         ctx.lineWidth = 1;
         dots.forEach(dot => {
           const dx = dragCoords.current.x - dot.x;
@@ -290,7 +291,7 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
         p.life++;
 
         const alpha = 1 - p.life / p.maxLife;
-        ctx.fillStyle = `rgba(165, 180, 252, ${alpha * 0.7})`;
+        ctx.fillStyle = `rgba(126, 214, 48, ${alpha * 0.72})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
@@ -345,11 +346,12 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
               <div className="resume-dropzone-label">Uploading Resume</div>
               <div className="resume-dropzone-sub">{fileName || 'Syncing credentials...'}</div>
             </div>
-          ) : success ? (
+          ) : hasResume ? (
             <div className="resume-dropzone-state success">
               <CheckCircle className="resume-dropzone-icon icon-success" />
-              <div className="resume-dropzone-label font-serif font-bold text-lg">Resume Uploaded!</div>
-              <div className="resume-dropzone-sub">Your credentials are updated.</div>
+              <div className="resume-dropzone-label">Resume on file</div>
+              <div className="resume-dropzone-sub">{fileName || existingResumeName || 'Your PDF is linked to placements.'}</div>
+              <div className="resume-dropzone-formats">Click to replace resume</div>
             </div>
           ) : (
             <div className="resume-dropzone-state">
@@ -375,9 +377,9 @@ export const ResumeDropzone: React.FC<ResumeDropzoneProps> = ({ onUploadSuccess,
         </div>
       )}
 
-      {existingResumeUrl && !uploading && !success && (
+      {existingResumeUrl && !uploading && (
         <div className="existing-resume-pill">
-          <FileText size={14} className="text-indigo-400" />
+          <FileText size={14} />
           <span className="existing-resume-name">{existingResumeName || 'Linked Resume'}</span>
           <a href={existingResumeUrl} target="_blank" rel="noreferrer" className="existing-resume-link">
             View / Verify

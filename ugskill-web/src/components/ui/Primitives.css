@@ -239,7 +239,7 @@
 
 .ug-select {
   appearance: none;
-  background-color: var(--surface-well);
+  background-color: #ffffff;
   border: 1px solid var(--outline);
   border-radius: 8px;
   padding: 0.75rem 2.5rem 0.75rem 1rem;
