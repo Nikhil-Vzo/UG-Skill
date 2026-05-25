@@ -9,7 +9,7 @@ import { proctoringService } from '../proctoring/proctoring.service';
 import { AppError, NotFoundError, ValidationError } from '../../lib/errors';
 import { db } from '../../config/postgres';
 import { and, count, desc, eq, gte, inArray } from 'drizzle-orm';
-import { examAttempts, exams } from '../../db/pg/schema/exam';
+import { examAttempts, exams, examScores } from '../../db/pg/schema/exam';
 import { logger } from '../../lib/logger';
 import mongoose from 'mongoose';
 
@@ -98,11 +98,16 @@ export class ExamService {
     const result = await examRepository.findMany(filters);
     logger.info(`Repository returned ${result.data.length} exams`);
     
-    // Fetch user attempts if studentId is provided
+    // Fetch user attempts and scores if studentId is provided
     let userAttemptsMap = new Map<string, any>();
+    let userScoresMap = new Map<string, any>();
 
     if (filters.studentId) {
-      const attempts = await examAttemptRepository.findManyAttempts({ studentId: filters.studentId, limit: 1000 });
+      const [attempts, scores] = await Promise.all([
+        examAttemptRepository.findManyAttempts({ studentId: filters.studentId, limit: 1000 }),
+        db.select().from(examScores).where(eq(examScores.studentId, filters.studentId))
+      ]);
+      
       attempts.data.forEach(a => {
         // Keep the latest/highest status. For MVP we just care if ANY attempt is submitted/terminated
         if (a.status === 'submitted' || a.status === 'terminated') {
@@ -111,8 +116,10 @@ export class ExamService {
           userAttemptsMap.set(a.examId, a);
         }
       });
-    } else {
-      // Admin view: attempt counts fetched below
+
+      scores.forEach(s => {
+        userScoresMap.set(s.attemptId, s);
+      });
     }
 
     // Inject virtual statuses for student consumption
@@ -150,12 +157,18 @@ export class ExamService {
         virtualStatus = 'missed';
       }
 
-      // If completed, attach score info if available
-      let score = undefined;
-      // Note: Full score might require another query or joining, but frontend expects score and maxScore
-      // The attempt might not hold score directly, but we at least mark it completed.
+      // If completed, attach score info and attemptId if available
+      const userScore = userAttempt ? userScoresMap.get(userAttempt.id) : null;
 
-      return { ...exam, status: virtualStatus, originalStatus: exam.status, scheduledAt: startsAt?.toISOString?.() };
+      return {
+        ...exam,
+        status: virtualStatus,
+        originalStatus: exam.status,
+        scheduledAt: startsAt?.toISOString?.(),
+        attemptId: userAttempt?.id,
+        score: userScore ? Number(userScore.totalScore) : undefined,
+        maxScore: userScore ? Number(userScore.maxScore) : undefined
+      };
     }));
 
     return { ...result, data: enrichedData };
@@ -495,6 +508,40 @@ export class ExamService {
     return questionsList;
   }
 
+  private async getFullAttemptQuestions(examId: string) {
+    const def = await examDefinitionRepository.findByPgExamId(examId);
+    let questionsList: any[] = [];
+    if (def && def.sections) {
+      const qIds: string[] = [];
+      def.sections.forEach((s: any) => {
+        if (s.question_sequence) {
+          qIds.push(...s.question_sequence);
+        }
+      });
+
+      if (qIds.length > 0) {
+        try {
+          const { ExamQuestionBankModel } = require('../../db/mongo/models/exam');
+          const rawQs = await ExamQuestionBankModel.find({ _id: { $in: qIds } }).lean();
+
+          questionsList = qIds.map(qid => {
+            const q: any = rawQs.find((rq: any) => rq._id.toString() === qid.toString());
+            if (!q) return null;
+            return {
+              ...q,
+              id: q._id.toString()
+            };
+          }).filter(Boolean);
+        } catch (qErr: any) {
+          logger.warn('Failed to fetch full questions from bank', { error: qErr.message, examId });
+        }
+      }
+    }
+
+    return questionsList;
+  }
+
+
   async saveIncrementalResponse(studentId: string, attemptId: string, data: any) {
     const attempt = await examAttemptRepository.findAttemptById(attemptId);
     if (attempt.studentId !== studentId) throw new ValidationError('Cannot modify another student attempt');
@@ -724,7 +771,7 @@ export class ExamService {
     const score = await examAttemptRepository.getScoreByAttempt(attemptId);
     const response = await examResponseRepository.findByAttemptId(attemptId);
 
-    const questionsList = await this.getAttemptQuestions(attempt.examId);
+    const questionsList = await this.getFullAttemptQuestions(attempt.examId);
     const responseMap = new Map<string, any>((response?.responses || []).map((r: any) => [String(r.question_id || r.questionId || ''), r]));
 
     const formattedQuestions = questionsList.map((q: any) => {
