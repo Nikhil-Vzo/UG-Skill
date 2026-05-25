@@ -1074,6 +1074,11 @@
   }
 }
 
+/* Stack details vertically when rendered inside narrow Kanban columns */
+.kanban-board .drive-expanded-grid {
+  grid-template-columns: 1fr;
+}
+
 .drive-expanded-left {
   display: flex;
   flex-direction: column;

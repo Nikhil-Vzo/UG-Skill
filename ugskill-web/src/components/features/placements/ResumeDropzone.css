@@ -124,10 +124,12 @@
 .resume-dropzone-sub {
   font-size: 0.725rem;
   color: var(--text-secondary);
-  max-width: 260px;
+  max-width: 100%;
+  padding: 0 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .resume-dropzone-error {
