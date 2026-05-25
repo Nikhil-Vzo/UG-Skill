@@ -44,18 +44,18 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onContinue, view
 
   // Grid mode (default)
   return (
-    <div className="surface-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="course-card-grid surface-card">
       <div>
-        <h3 style={{ color: 'var(--on-surface)', fontSize: '1.125rem', marginBottom: '0.25rem' }}>{course.title}</h3>
-        <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>Instructor: {course.instructor}</p>
+        <h3 className="course-card-grid__title">{course.title}</h3>
+        <p className="course-card-grid__instructor">Instructor: {course.instructor}</p>
       </div>
       
       <div style={{ margin: '0.5rem 0' }}>
         <AuraProgress progress={course.progress} size="sm" />
       </div>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-        <span style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
+      <div className="course-card-grid__footer">
+        <span className="course-card-grid__meta">
           Last active: {new Date(course.lastAccessed).toLocaleDateString()}
         </span>
         <Button 
