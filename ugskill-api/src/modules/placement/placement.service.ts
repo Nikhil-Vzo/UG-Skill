@@ -170,14 +170,18 @@ export const registerForDrive = async (studentId: string, data: RegisterForDrive
 
   if (drive.eligibility && (drive.eligibility as any).cgpaCutoff !== undefined) {
     const cutoff = (drive.eligibility as any).cgpaCutoff;
-    const userCgpa = user.cgpa ? Number(user.cgpa) : 0;
-    if (userCgpa < cutoff) {
-      throw new AppError('CGPA below required cutoff', 422);
+    // Only enforce CGPA cutoff if the student has actually set their CGPA.
+    // Students with no CGPA on file should be allowed to apply and flagged manually.
+    if (user.cgpa !== null && user.cgpa !== undefined) {
+      const userCgpa = Number(user.cgpa);
+      if (userCgpa < cutoff) {
+        throw new AppError(`CGPA ${userCgpa} is below the required cutoff of ${cutoff}`, 422);
+      }
     }
   }
 
   if (!user.resumeUrl) {
-    throw new AppError('Resume is required', 422);
+    throw new AppError('Please upload your resume before applying to a drive', 422);
   }
 
   const registration = await placementRepo.insertRegistrationPg({
