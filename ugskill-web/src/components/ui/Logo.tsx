@@ -144,12 +144,14 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, tone =
           <span 
             className="ugskill-logo-name" 
             style={{ 
+              display: 'inline-block',
               fontSize: text, 
               fontWeight: 900, 
               color: '#fff', 
               letterSpacing: '-0.05em',
               background: palette.wordmark,
               WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
           >
