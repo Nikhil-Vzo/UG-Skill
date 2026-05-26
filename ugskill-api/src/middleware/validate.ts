@@ -19,11 +19,13 @@ export const validate = (schema: ZodObject<ZodRawShape>) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
+        const firstError = error.errors[0];
+        const message = firstError ? firstError.message : 'Invalid input data';
         res.status(400).json({
           success: false,
           error: {
             code: 'VALIDATION_ERROR',
-            message: 'Invalid input data',
+            message: message,
             details: error.format(),
           },
         });

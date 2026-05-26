@@ -11,6 +11,7 @@ export const Signup: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [validationError, setValidationError] = useState('');
   const { register, isLoading, error, isAuthenticated, clearError } = useAuthStore();
   const navigate = useNavigate();
 
@@ -24,11 +25,25 @@ export const Signup: React.FC = () => {
   // Clear errors when user edits any field
   useEffect(() => {
     if (error) clearError();
+    if (validationError) setValidationError('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullName, email, password]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 8) {
+      setValidationError('Password must be at least 8 characters');
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setValidationError('Password must contain at least one uppercase letter');
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setValidationError('Password must contain at least one number');
+      return;
+    }
+    setValidationError('');
     await register({ fullName, email, password });
   };
 
@@ -139,7 +154,8 @@ export const Signup: React.FC = () => {
               required
             />
 
-            {error && <div className="auth-error-message">{error}</div>}
+            {validationError && <div className="auth-error-message">{validationError}</div>}
+            {error && !validationError && <div className="auth-error-message">{error}</div>}
 
             <Button
               type="submit"
