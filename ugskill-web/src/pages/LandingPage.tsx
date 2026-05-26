@@ -1,7 +1,7 @@
 import React, { useRef, useLayoutEffect, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, GraduationCap, Menu, ShieldCheck, Sparkles, X } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useAuthStore } from '../store/auth.store';
@@ -152,20 +152,20 @@ export const LandingPage: React.FC = () => {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="hero-badge-tech"
               >
-                <div className="tech-tag">RELEASE</div>
-                <span className="tech-version">v1.0.0</span>
+                <div className="tech-tag">LIVE</div>
+                <span className="tech-version">Learning + Placement OS</span>
                 <div className="tech-divider"></div>
-                <span className="tech-text">India's First Cognitive Ecosystem</span>
+                <span className="tech-text">Built for career-ready outcomes</span>
                 <div className="tech-chevron">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
               </motion.div>
 
-              <div className="hero-title-wrap">
-                {["Master", "Your", "Future"].map((word, i) => (
+              <h1 className="hero-title-wrap">
+                {["UGSkill", "Career", "Ecosystem"].map((word, i) => (
                   <motion.span
                     key={i}
-                    className={`hero-word ${i === 2 ? 'accent' : ''}`}
+                    className={`hero-word ${i === 0 ? 'accent' : ''}`}
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 + i * 0.15, ease: [0.215, 0.61, 0.355, 1] }}
@@ -173,7 +173,7 @@ export const LandingPage: React.FC = () => {
                     {word}
                   </motion.span>
                 ))}
-              </div>
+              </h1>
 
               <motion.h2
                 className="hero-subtitle"
@@ -181,7 +181,7 @@ export const LandingPage: React.FC = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1, delay: 1 }}
               >
-                Unlock your true potential with <span>AI-driven roadmaps</span>, proctored assessments, and direct placement opportunities.
+                Move from skill-building to placement readiness with <span>AI-guided learning</span>, secure proctored assessments, live interview practice, and direct hiring workflows.
               </motion.h2>
 
               <motion.div
@@ -199,6 +199,7 @@ export const LandingPage: React.FC = () => {
                   <>
                     <Link to="/signup" className="hero-cta-main">
                       <span>Start Learning Free</span>
+                      <ArrowRight size={18} />
                       <div className="cta-glow"></div>
                     </Link>
                     <Link to="/login" className="hero-cta-secondary">
@@ -206,6 +207,26 @@ export const LandingPage: React.FC = () => {
                     </Link>
                   </>
                 )}
+              </motion.div>
+
+              <motion.div
+                className="hero-proof-grid"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.35 }}
+              >
+                <div className="hero-proof-item">
+                  <GraduationCap size={18} />
+                  <span>Adaptive roadmaps</span>
+                </div>
+                <div className="hero-proof-item">
+                  <ShieldCheck size={18} />
+                  <span>AI proctoring</span>
+                </div>
+                <div className="hero-proof-item">
+                  <BriefcaseBusiness size={18} />
+                  <span>Placement pipeline</span>
+                </div>
               </motion.div>
             </div>
 
@@ -215,7 +236,15 @@ export const LandingPage: React.FC = () => {
                 <SaaSDashboardMockup />
               ) : (
                 /* PC/Tablet 3D WebGL Scene */
-                <>
+                <div className="hero-visual-shell">
+                  <div className="hero-visual-chip hero-visual-chip-top">
+                    <Sparkles size={14} />
+                    Readiness score live
+                  </div>
+                  <div className="hero-visual-chip hero-visual-chip-bottom">
+                    <ShieldCheck size={14} />
+                    Secure assessment mode
+                  </div>
                   <Suspense fallback={<div className="hero-3d-placeholder" />}>
                     <HeroScene />
                   </Suspense>
@@ -234,7 +263,7 @@ export const LandingPage: React.FC = () => {
                       <div className="scanning-line"></div>
                     </div>
                   </motion.div>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -341,7 +370,7 @@ export const LandingPage: React.FC = () => {
             >
               <div className="bento-content">
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }}></span>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#1cb0f6', display: 'inline-block' }}></span>
                   Proctored Exams & AI Leaderboard
                 </h3>
                 <p>Compete on India's first real-time AI Leaderboard in highly secure, anti-cheat environments.</p>
@@ -409,7 +438,7 @@ export const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: "-20%" }}
             >
-              <div className="deep-dive-tag" style={{ color: '#f87171' }}>02 / The Assessment Engine</div>
+              <div className="deep-dive-tag" style={{ color: '#1cb0f6' }}>02 / The Assessment Engine</div>
               <h2 className="deep-dive-title">Pioneering the AI Leaderboard.</h2>
               <p className="deep-dive-desc">Prove your knowledge in live, highly secure environments. Compete on our real-time AI Leaderboard—the first of its kind—and get granular, unbiased analytics on your performance gaps.</p>
             </motion.div>
