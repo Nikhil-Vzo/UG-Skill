@@ -373,7 +373,7 @@ export const LandingPage: React.FC = () => {
         {/* ── Deep Dives (Sticky Stacking) ───────────────── */}
         <div className="deep-dive-container">
 
-          <section className="deep-dive-section" style={{ background: '#050510', zIndex: 1 }}>
+          <section className="deep-dive-section deep-dive-1">
             <motion.div
               className="deep-dive-text"
               initial={{ opacity: 0, y: 50 }}
@@ -394,7 +394,7 @@ export const LandingPage: React.FC = () => {
             </motion.div>
           </section>
 
-          <section className="deep-dive-section" style={{ background: '#080814', zIndex: 2, boxShadow: '0 -20px 50px rgba(0,0,0,0.5)' }}>
+          <section className="deep-dive-section deep-dive-2">
             <motion.div
               className="deep-dive-visual"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -415,7 +415,7 @@ export const LandingPage: React.FC = () => {
             </motion.div>
           </section>
 
-          <section className="deep-dive-section" style={{ background: '#0a0a1a', zIndex: 3, boxShadow: '0 -20px 50px rgba(0,0,0,0.5)' }}>
+          <section className="deep-dive-section deep-dive-3">
             <motion.div
               className="deep-dive-text"
               initial={{ opacity: 0, y: 50 }}
