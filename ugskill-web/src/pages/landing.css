@@ -441,7 +441,7 @@
 
 .hero-actions .hero-cta-main,
 .hero-actions .hero-cta-secondary {
-  padding: 1.25rem 2.5rem !important;
+  padding: 1.1rem 2.5rem !important;
   margin: 0 !important;
   font-size: 1.05rem !important;
   font-weight: 800;
@@ -450,6 +450,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-family: 'Outfit', sans-serif !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hero-actions .hero-cta-main:active,
+.hero-actions .hero-cta-secondary:active {
+  transform: translateY(4px) !important;
+  border-bottom-width: 0px !important;
 }
 
 /* Mascot guide bubble */
