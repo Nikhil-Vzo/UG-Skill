@@ -30,23 +30,28 @@
   letter-spacing: 0.05em;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.1s ease, border-bottom-width 0.1s ease, background-color 0.15s ease;
-  transform: translateY(0);
+  border: none;
   outline: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+  transform: translateY(0);
 }
 
 .btn-3d:active {
-  transform: translateY(4px) !important;
-  border-bottom-width: 0px !important;
+  transform: translateY(5px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5);
+}
+
+.btn-3d-large {
+  padding: 1.25rem 3rem;
+  font-size: 1.25rem;
 }
 
 /* 3D Button Color Variants */
 .btn-3d-green,
 .hero-cta-main {
+  --btn-shadow-color: var(--duo-green-hover, #46a302);
   background-color: var(--duo-green, #58cc02);
-  border: none;
-  border-bottom: 5px solid var(--duo-green-hover, #46a302);
   color: #ffffff !important;
 }
 
@@ -56,9 +61,8 @@
 }
 
 .btn-3d-blue {
+  --btn-shadow-color: var(--duo-blue-hover, #1899d6);
   background-color: var(--duo-blue, #1cb0f6);
-  border: none;
-  border-bottom: 5px solid var(--duo-blue-hover, #1899d6);
   color: #ffffff !important;
 }
 
@@ -67,9 +71,8 @@
 }
 
 .btn-3d-red {
+  --btn-shadow-color: var(--duo-red-hover, #ea2b2b);
   background-color: var(--duo-red, #ff4b4b);
-  border: none;
-  border-bottom: 5px solid var(--duo-red-hover, #ea2b2b);
   color: #ffffff !important;
 }
 
@@ -78,9 +81,8 @@
 }
 
 .btn-3d-purple {
+  --btn-shadow-color: var(--duo-purple-hover, #aa60eb);
   background-color: var(--duo-purple, #ce82ff);
-  border: none;
-  border-bottom: 5px solid var(--duo-purple-hover, #aa60eb);
   color: #ffffff !important;
 }
 
@@ -89,9 +91,8 @@
 }
 
 .btn-3d-orange {
+  --btn-shadow-color: var(--duo-orange-hover, #e07b00);
   background-color: var(--duo-orange, #ff9600);
-  border: none;
-  border-bottom: 5px solid var(--duo-orange-hover, #e07b00);
   color: #ffffff !important;
 }
 
@@ -101,10 +102,17 @@
 
 .btn-3d-secondary,
 .hero-cta-secondary {
+  --btn-shadow-color: var(--duo-border, #e5e5e5);
   background-color: #ffffff;
   border: 2px solid var(--duo-border, #e5e5e5);
-  border-bottom: 5px solid var(--duo-border, #e5e5e5);
   color: var(--duo-text-dark, #3c3c3c) !important;
+  box-shadow: 0 3px 0 var(--duo-border, #e5e5e5);
+}
+
+.btn-3d-secondary:active,
+.hero-cta-secondary:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--duo-border, #e5e5e5);
 }
 
 .btn-3d-secondary:hover,
@@ -441,24 +449,9 @@
 
 .hero-actions .hero-cta-main,
 .hero-actions .hero-cta-secondary {
-  padding: 1.1rem 2.5rem !important;
-  margin: 0 !important;
-  font-size: 1.05rem !important;
-  font-weight: 800;
-  border-radius: 18px !important;
+  border-radius: 18px;
   min-height: 56px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Outfit', sans-serif !important;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.hero-actions .hero-cta-main:active,
-.hero-actions .hero-cta-secondary:active {
-  transform: translateY(4px) !important;
-  border-bottom-width: 0px !important;
+  font-size: 1.05rem;
 }
 
 /* Mascot guide bubble */
@@ -1529,9 +1522,8 @@
 
   .hero-actions .hero-cta-main,
   .hero-actions .hero-cta-secondary {
-    width: 100% !important;
-    padding: 1.1rem 2rem !important;
-    margin: 0 !important;
+    width: 100%;
+    padding: 1.1rem 2rem;
   }
 
   .unit-flex-split {

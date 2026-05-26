@@ -766,11 +766,11 @@ export const LandingPage: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             {isAuthenticated ? (
-              <Link to={getDashboardRoute()} className="btn-3d btn-3d-green" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
+              <Link to={getDashboardRoute()} className="btn-3d btn-3d-green btn-3d-large">
                 Enter the Dashboard
               </Link>
             ) : (
-              <Link to="/signup" className="btn-3d btn-3d-green" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
+              <Link to="/signup" className="btn-3d btn-3d-green btn-3d-large">
                 Create Your Account
               </Link>
             )}
