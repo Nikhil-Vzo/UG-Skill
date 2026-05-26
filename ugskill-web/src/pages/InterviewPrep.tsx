@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/loaders/Skeleton';
-import { Calendar, Video, Clock, AlertCircle, MessageSquare, Sparkles } from 'lucide-react';
+import { Calendar, Video, Clock, AlertCircle, Sparkles } from 'lucide-react';
 import api from '../lib/api';
 import './InterviewPrep.css';
 
@@ -17,15 +17,8 @@ interface Session {
   driveName?: string;
 }
 
-interface GDSession {
-  id: string;
-  topic: string;
-  status: string;
-}
-
 export const InterviewPrep: React.FC = () => {
   const navigate = useNavigate();
-  const [showMockModal, setShowMockModal] = useState(false);
 
   const { data: sessions = [], isLoading, error } = useQuery<Session[]>({
     queryKey: ['placement-sessions-upcoming'],
@@ -35,34 +28,6 @@ export const InterviewPrep: React.FC = () => {
     },
     retry: 1,
   });
-
-  const { data: gdSessions = [], isLoading: loadingGdSessions } = useQuery<GDSession[]>({
-    queryKey: ['gd-sessions-open'],
-    queryFn: async () => {
-      const res = await api.get('/placements/gd-sessions?status=scheduled&limit=5');
-      const payload = res.data.data ?? res.data;
-      return payload.data ?? payload.sessions ?? payload ?? [];
-    },
-    retry: 1,
-  });
-
-  const scheduleMockMutation = useMutation({
-    mutationFn: () => api.post('/placements/sessions/mock'),
-    onSuccess: (res) => {
-      setShowMockModal(false);
-      const sessionId = res.data?.data?.session?.id ?? res.data?.data?.id ?? res.data?.id;
-      if (sessionId) navigate(`/app/live-interview/${sessionId}`);
-    },
-  });
-
-  const handleJoinGd = () => {
-    const nextSession = gdSessions[0];
-    if (nextSession?.id) {
-      navigate(`/app/live-gd/${nextSession.id}`);
-      return;
-    }
-    navigate('/app/live-gd');
-  };
 
   const formatTime = (iso: string) => {
     try {
@@ -85,7 +50,7 @@ export const InterviewPrep: React.FC = () => {
         <div className="interview-prep-hero-content">
           <div className="ugs-hero-badge"><Sparkles size={14} /> Interview Lab</div>
           <h1 className="ugs-hero-title">Interview Prep</h1>
-          <p className="ugs-hero-subtitle">Schedule mock interviews, join group discussions, and track upcoming sessions.</p>
+          <p className="ugs-hero-subtitle">Practice with AI, schedule mock interviews, and track upcoming sessions.</p>
         </div>
       </header>
 
@@ -100,50 +65,12 @@ export const InterviewPrep: React.FC = () => {
             variant="primary"
             leftIcon={<Calendar size={18} />}
             fullWidth
-            onClick={() => setShowMockModal(true)}
-            disabled={scheduleMockMutation.isPending}
+            onClick={() => window.location.href = "https://interviewer-flame-six.vercel.app/call/hritik's-organization-hr"}
           >
-            {scheduleMockMutation.isPending ? 'Scheduling...' : 'Schedule Mock'}
-          </Button>
-          {scheduleMockMutation.isError && (
-            <p className="interview-prep-action-error">
-              <AlertCircle size={14} /> Failed to schedule. Please try again.
-            </p>
-          )}
-        </div>
-
-        <div className="interview-prep-action-card interview-prep-action-card--gd">
-          <div className="interview-prep-action-icon">
-            <MessageSquare size={22} />
-          </div>
-          <h3 className="interview-prep-action-title">Group Discussions</h3>
-          <p className="interview-prep-action-desc">Join live peer rooms to refine communication and teamwork skills.</p>
-          <Button
-            variant="secondary"
-            leftIcon={<Video size={18} />}
-            fullWidth
-            onClick={handleJoinGd}
-            disabled={loadingGdSessions}
-          >
-            {loadingGdSessions ? 'Checking Sessions...' : 'Join Live GD'}
+            Prepare for interview
           </Button>
         </div>
       </div>
-
-      {showMockModal && (
-        <div className="interview-prep-modal-backdrop">
-          <div className="interview-prep-modal">
-            <h2>Schedule a Mock Interview</h2>
-            <p>A mock interview will be created and matched with an available interviewer. You&apos;ll receive a notification once matched.</p>
-            <div className="interview-prep-modal-actions">
-              <Button variant="ghost" onClick={() => setShowMockModal(false)}>Cancel</Button>
-              <Button variant="primary" onClick={() => scheduleMockMutation.mutate()} disabled={scheduleMockMutation.isPending}>
-                {scheduleMockMutation.isPending ? 'Scheduling...' : 'Confirm'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <section className="interview-prep-sessions">
         <h2 className="interview-prep-sessions-title"><Calendar size={18} /> Upcoming Sessions</h2>
@@ -197,7 +124,7 @@ export const InterviewPrep: React.FC = () => {
           <div className="interview-prep-empty">
             <Calendar size={36} />
             <p>No upcoming sessions scheduled.</p>
-            <p className="interview-prep-empty-hint">Use the cards above to schedule a mock interview or join a live GD.</p>
+            <p className="interview-prep-empty-hint">Use the cards above to schedule a mock interview or practice.</p>
           </div>
         )}
       </section>
