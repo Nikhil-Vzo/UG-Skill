@@ -189,6 +189,8 @@
 
 .landing-nav-actions.desktop-only {
   display: none;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 @media (min-width: 1024px) {
