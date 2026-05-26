@@ -73,7 +73,7 @@ const InteractiveLessonCard: React.FC = () => {
       <div className="lesson-header">
         <span className="lesson-badge">ACTIVE LESSON PREVIEW</span>
         <div className="lesson-progress-bar">
-          <div className="lesson-progress-fill" style={{ width: '70%' }}></div>
+          <div className="lesson-progress-fill lesson-progress-fill-preview"></div>
         </div>
       </div>
 
@@ -377,7 +377,12 @@ export const LandingPage: React.FC = () => {
                     <ShieldCheck size={14} />
                     Secure assessment mode
                   </div>
-                  <Suspense fallback={<div className="hero-3d-placeholder" />}>
+                  <Suspense fallback={
+                    <div className="hero-3d-placeholder">
+                      <div className="loading-spinner-duo"></div>
+                      <span className="loading-text-duo">Summoning UG Bot...</span>
+                    </div>
+                  }>
                     <HeroScene />
                   </Suspense>
 

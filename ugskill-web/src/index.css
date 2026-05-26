@@ -555,7 +555,7 @@ button.btn-3d-gradient:hover:not(:disabled),
 }
 
 /* Adjust general status and outline-soon classes */
-.nav-badge-soon {
+.nav-header-container .nav-badge-soon {
   margin-left: auto;
   font-size: 9px;
   font-weight: 700;
@@ -564,7 +564,7 @@ button.btn-3d-gradient:hover:not(:disabled),
   padding: 1px 6px;
   background: var(--duo-blue-subtle) !important;
   border: 1px solid rgba(28, 176, 246, 0.2) !important;
-  color: var(--duo-blue) !important;
+  color: var(--duo-blue);
   border-radius: var(--radius-sm);
 }
 
