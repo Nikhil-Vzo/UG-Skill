@@ -232,6 +232,7 @@
   }
 
   .user-avatar-copy,
+  .user-avatar-wrapper,
   .navbar-sep {
     display: none;
   }
