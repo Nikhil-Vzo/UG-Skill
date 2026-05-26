@@ -672,8 +672,17 @@
   gap: 1rem;
   width: 240px;
   top: 50%;
-  transform: translateY(-50%);
-  transition: transform 0.3s ease;
+  transform: translateY(-50%) scale(0.95);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.roadmap-step-item.active .roadmap-mascot-bubble-wrap,
+.roadmap-step-item:hover .roadmap-mascot-bubble-wrap {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
 }
 
 /* Bubble to left of center node */
@@ -766,12 +775,22 @@
 
 /* Hover effects */
 .roadmap-step-item:hover .roadmap-mascot-bubble-wrap {
-  transform: translateY(-3px) translateY(-50%);
+  transform: translateY(-50%) scale(1.03);
 }
 
 .roadmap-step-item.active .roadmap-node-btn {
   transform: scale(1.1);
-  box-shadow: 0 6px 0 var(--btn-shadow-color);
+  box-shadow: 0 0 0 6px rgba(88, 204, 2, 0.3), 0 6px 0 var(--btn-shadow-color);
+  animation: active-node-pulse 2s infinite ease-in-out;
+}
+
+@keyframes active-node-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(88, 204, 2, 0.3), 0 6px 0 var(--btn-shadow-color);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(88, 204, 2, 0.5), 0 6px 0 var(--btn-shadow-color);
+  }
 }
 
 /* --- Interactive Lesson Card Style --- */

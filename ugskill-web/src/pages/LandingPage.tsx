@@ -182,7 +182,7 @@ export const LandingPage: React.FC = () => {
       color: '#ff4b4b',
       darkColor: '#ea2b2b',
       sectionId: 'unit-2-assessments',
-      align: 'right',
+      align: 'left',
       cx: '425px',
       cy: '250px',
       icon: <ShieldCheck size={24} />
@@ -194,7 +194,7 @@ export const LandingPage: React.FC = () => {
       color: '#ce82ff',
       darkColor: '#aa60eb',
       sectionId: 'unit-3-community',
-      align: 'left',
+      align: 'right',
       cx: '300px',
       cy: '410px',
       icon: <Users size={24} />
