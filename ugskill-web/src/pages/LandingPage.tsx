@@ -348,16 +348,16 @@ export const LandingPage: React.FC = () => {
                 transition={{ duration: 0.8, delay: 0.7 }}
               >
                 {isAuthenticated ? (
-                  <Link to={getDashboardRoute()} className="hero-cta-main">
+                  <Link to={getDashboardRoute()} className="btn-3d btn-3d-green hero-cta-main">
                     <span>Go to Dashboard</span>
                   </Link>
                 ) : (
                   <>
-                    <Link to="/signup" className="hero-cta-main">
+                    <Link to="/signup" className="btn-3d btn-3d-green hero-cta-main">
                       <span>Start Learning Free</span>
                       <ArrowRight size={18} />
                     </Link>
-                    <Link to="/login" className="hero-cta-secondary">
+                    <Link to="/login" className="btn-3d btn-3d-secondary hero-cta-secondary">
                       Sign In
                     </Link>
                   </>
