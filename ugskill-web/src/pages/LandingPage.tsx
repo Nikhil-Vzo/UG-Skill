@@ -13,8 +13,6 @@ import {
   Briefcase, 
   CheckCircle2
 } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useAuthStore } from '../store/auth.store';
 import { SmoothScroll } from '../components/ui/SmoothScroll';
 
@@ -34,8 +32,6 @@ import {
 import { NavHeader } from '../components/ui/NavHeader';
 import { Logo } from '../components/ui/Logo';
 import './landing.css';
-
-gsap.registerPlugin(ScrollTrigger);
 
 // --- Interactive Lesson Card (Duolingo Style) ---
 const InteractiveLessonCard: React.FC = () => {
@@ -504,7 +500,7 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="roadmap-mobile-container">
+              <div className="roadmap-path-wrapper">
                 <div className="roadmap-line-connector"></div>
                 <div className="roadmap-steps-mobile">
                   {steps.map((step, idx) => {
