@@ -207,6 +207,7 @@ export const LandingPage: React.FC = () => {
                     </Link>
                   </>
                 )}
+              </motion.div>
             </div>
 
             <div className="hero-3d-side">
