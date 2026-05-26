@@ -171,3 +171,66 @@
   color: var(--duo-orange-hover, #e07b00);
   border-radius: 6px;
 }
+
+/* Responsive Account Section in Sidebar */
+.sidebar-account-section {
+  display: none;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--surface-2, rgba(0, 0, 0, 0.03));
+  border: 2px solid var(--duo-border);
+  border-radius: 12px;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sidebar-account-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0.35rem;
+}
+
+.sidebar-account-profile .user-monogram {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--duo-green), var(--duo-green-hover));
+  border-bottom: 3px solid rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.sidebar-account-profile .user-avatar-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.sidebar-account-profile .user-avatar-name {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-account-profile .user-avatar-role {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .sidebar-account-section {
+    display: flex;
+  }
+}
