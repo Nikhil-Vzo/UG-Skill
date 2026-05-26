@@ -366,7 +366,13 @@ export const LandingPage: React.FC = () => {
 
             <div className="hero-3d-side">
               {isMobile ? (
-                <InteractiveLessonCard />
+                <div className="hero-mobile-visual-wrap">
+                  <img 
+                    src="/images/hero-mobile.webp" 
+                    alt="UG Bot Mascot" 
+                    className="hero-mobile-image" 
+                  />
+                </div>
               ) : (
                 <div className="hero-visual-shell">
                   <div className="hero-visual-chip hero-visual-chip-top">
