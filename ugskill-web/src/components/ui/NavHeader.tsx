@@ -15,7 +15,6 @@ export function NavHeader() {
     >
       <Tab setPosition={setPosition}>Home</Tab>
       <Tab setPosition={setPosition}>Ecosystem</Tab>
-      <Tab setPosition={setPosition}>Pricing</Tab>
 
       <Cursor position={position} />
     </ul>

@@ -31,8 +31,6 @@ import {
   GroupDiscussionSVG
 } from '../components/svgs/CustomSVGs';
 
-import { ModernPricingPage } from '../components/ui/AnimatedPricing';
-import type { PricingCardProps } from '../components/ui/AnimatedPricing';
 import { NavHeader } from '../components/ui/NavHeader';
 import { Logo } from '../components/ui/Logo';
 import './landing.css';
@@ -145,26 +143,6 @@ const InteractiveLessonCard: React.FC = () => {
   );
 };
 
-const ugskillPricingPlans: PricingCardProps[] = [
-  {
-    planName: 'Explorer',
-    description: 'Perfect for getting started with basic skills.',
-    price: '0',
-    features: ['Access to free foundational courses', 'Community forum access', 'Basic readiness score'],
-    buttonText: 'Get Started Free',
-    buttonVariant: 'secondary'
-  },
-  {
-    planName: 'Pro',
-    description: 'Everything you need to land your dream job.',
-    price: '4999',
-    features: ['All advanced structured courses', 'Unlimited proctored mock exams', 'Live Group Discussions', 'Direct application to placement drives', 'AI Interview Prep'],
-    buttonText: 'Upgrade to Pro',
-    isPopular: true,
-    buttonVariant: 'primary'
-  }
-];
-
 export const LandingPage: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -197,9 +175,9 @@ export const LandingPage: React.FC = () => {
       darkColor: '#46a302',
       sectionId: 'unit-1-learning',
       align: 'left',
-      // Winding coordinates (x out of 500, y out of 800)
-      cx: '250px',
-      cy: '80px',
+      // Coordinates inside the fixed 600px width / 800px height container
+      cx: '300px',
+      cy: '90px',
       icon: <BookOpen size={24} />
     },
     {
@@ -210,7 +188,7 @@ export const LandingPage: React.FC = () => {
       darkColor: '#ea2b2b',
       sectionId: 'unit-2-assessments',
       align: 'right',
-      cx: '325px',
+      cx: '425px',
       cy: '250px',
       icon: <ShieldCheck size={24} />
     },
@@ -222,7 +200,7 @@ export const LandingPage: React.FC = () => {
       darkColor: '#aa60eb',
       sectionId: 'unit-3-community',
       align: 'left',
-      cx: '250px',
+      cx: '300px',
       cy: '410px',
       icon: <Users size={24} />
     },
@@ -246,7 +224,7 @@ export const LandingPage: React.FC = () => {
       darkColor: '#1899d6',
       sectionId: 'unit-5-placements',
       align: 'left',
-      cx: '250px',
+      cx: '300px',
       cy: '730px',
       icon: <Briefcase size={24} />
     }
@@ -306,7 +284,6 @@ export const LandingPage: React.FC = () => {
               <div className="mobile-menu-links">
                 <a href="#" onClick={() => { setIsMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Home</a>
                 <a href="#ecosystem" onClick={() => setIsMobileMenuOpen(false)}>Ecosystem</a>
-                <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)}>Pricing</a>
 
                 <div className="mobile-menu-divider"></div>
 
@@ -454,70 +431,111 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="roadmap-path-wrapper">
-            {/* Connection winding path line - Curved SVG */}
-            <svg className="roadmap-svg-line desktop-only" viewBox="0 0 500 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path 
-                d="M 250,90 C 350,150 350,190 325,250 C 300,310 200,350 250,410 C 300,470 150,510 175,570 C 200,630 200,670 250,730" 
-                stroke="#e5e5e5" 
-                strokeWidth="12" 
-                strokeLinecap="round" 
-              />
-              <path 
-                d="M 250,90 C 350,150 350,190 325,250 C 300,310 200,350 250,410 C 300,470 150,510 175,570 C 200,630 200,670 250,730" 
-                stroke="#58cc02" 
-                strokeWidth="12" 
-                strokeLinecap="round" 
-                strokeDasharray="1000"
-                strokeDashoffset={1000 - (activeStep + 1) * 200}
-                style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-              />
-            </svg>
+            <div className="roadmap-centered-content desktop-only">
+              {/* Connection winding path line - Curved SVG */}
+              <svg className="roadmap-svg-line" viewBox="0 0 600 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730" 
+                  stroke="#e5e5e5" 
+                  strokeWidth="12" 
+                  strokeLinecap="round" 
+                />
+                <path 
+                  d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730" 
+                  stroke="#58cc02" 
+                  strokeWidth="12" 
+                  strokeLinecap="round" 
+                  strokeDasharray="1000"
+                  strokeDashoffset={1000 - (activeStep + 1) * 200}
+                  style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                />
+              </svg>
 
-            {/* Mobile straight line fallback */}
-            <div className="roadmap-line-connector mobile-only"></div>
-
-            <div className="roadmap-steps">
-              {steps.map((step, idx) => {
-                const isActive = idx === activeStep;
-                return (
-                  <div 
-                    key={idx} 
-                    className={`roadmap-step-item ${step.align} ${isActive ? 'active' : ''}`}
-                    style={{
-                      // Position absolute coordinates on desktop
-                      '--node-top': step.cy,
-                      '--node-left': step.cx,
-                    } as React.CSSProperties}
-                  >
-                    {/* Node circle */}
-                    <button
-                      className="roadmap-node-btn"
-                      onClick={() => handleNodeClick(step.sectionId, idx)}
+              <div className="roadmap-steps">
+                {steps.map((step, idx) => {
+                  const isActive = idx === activeStep;
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`roadmap-step-item ${step.align} ${isActive ? 'active' : ''}`}
                       style={{
-                        backgroundColor: step.color,
-                        borderBottom: `6px solid ${step.darkColor}`,
-                      }}
-                      aria-label={`Scroll to ${step.title}`}
+                        top: step.cy,
+                        left: step.cx,
+                      } as React.CSSProperties}
                     >
-                      <span className="node-icon-wrap">{step.icon}</span>
-                      <span className="node-badge-num">{idx + 1}</span>
-                    </button>
+                      {/* Node circle */}
+                      <button
+                        className="roadmap-node-btn"
+                        onClick={() => handleNodeClick(step.sectionId, idx)}
+                        style={{
+                          backgroundColor: step.color,
+                          borderBottom: `6px solid ${step.darkColor}`,
+                        }}
+                        aria-label={`Scroll to ${step.title}`}
+                      >
+                        <span className="node-icon-wrap">{step.icon}</span>
+                        <span className="node-badge-num">{idx + 1}</span>
+                      </button>
 
-                    {/* Mascot dialogue speech bubble */}
-                    <div className="roadmap-mascot-bubble-wrap">
-                      <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
-                        <div className="mascot-face">🤖</div>
-                      </div>
-                      <div className="roadmap-dialogue-bubble">
-                        <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
-                        <h4 className="bubble-title">{step.title}</h4>
-                        <p className="bubble-text">{step.mascotText}</p>
-                        <div className="bubble-arrow"></div>
+                      {/* Mascot dialogue speech bubble */}
+                      <div className="roadmap-mascot-bubble-wrap">
+                        <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
+                          <div className="mascot-face">🤖</div>
+                        </div>
+                        <div className="roadmap-dialogue-bubble">
+                          <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
+                          <h4 className="bubble-title">{step.title}</h4>
+                          <p className="bubble-text">{step.mascotText}</p>
+                          <div className="bubble-arrow"></div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Mobile straight line fallback */}
+            <div className="mobile-only">
+              <div className="roadmap-line-connector"></div>
+              <div className="roadmap-steps-mobile">
+                {steps.map((step, idx) => {
+                  const isActive = idx === activeStep;
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`roadmap-step-item-mobile ${isActive ? 'active' : ''}`}
+                    >
+                      {/* Node circle */}
+                      <button
+                        className="roadmap-node-btn-mobile"
+                        onClick={() => handleNodeClick(step.sectionId, idx)}
+                        style={{
+                          backgroundColor: step.color,
+                          borderBottom: `6px solid ${step.darkColor}`,
+                        }}
+                        aria-label={`Scroll to ${step.title}`}
+                      >
+                        <span className="node-icon-wrap">{step.icon}</span>
+                        <span className="node-badge-num">{idx + 1}</span>
+                      </button>
+
+                      {/* Mascot dialogue speech bubble */}
+                      <div className="roadmap-mascot-bubble-wrap-mobile">
+                        <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
+                          <div className="mascot-face">🤖</div>
+                        </div>
+                        <div className="roadmap-dialogue-bubble">
+                          <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
+                          <h4 className="bubble-title">{step.title}</h4>
+                          <p className="bubble-text">{step.mascotText}</p>
+                          <div className="bubble-arrow"></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
@@ -734,16 +752,6 @@ export const LandingPage: React.FC = () => {
             </div>
           </section>
 
-        </div>
-
-        {/* ── Pricing Section (Animated Glassy) ─────────────── */}
-        <div className="super-pricing-container">
-          <div className="super-glass-shimmer"></div>
-          <ModernPricingPage
-            title={<>Simple, <span className="blue-word">transparent</span> pricing.</>}
-            subtitle="Invest in your career today. Start for free, then upgrade to unlock powerful AI features."
-            plans={ugskillPricingPlans}
-          />
         </div>
 
         {/* ── Footer CTA ──────────────────────────────────── */}
