@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { LogOut, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 import { GlobalNotifications } from './GlobalNotifications';
 import { Logo } from './Logo';
@@ -46,6 +46,16 @@ export const Navbar: React.FC<NavbarProps> = ({ className, onMenuClick }) => {
   return (
     <nav className={cn('ug-navbar', className)}>
       <div className="navbar-left">
+        {onMenuClick && (
+          <button 
+            type="button"
+            className="menu-toggle-btn" 
+            onClick={onMenuClick}
+            aria-label="Toggle Navigation Menu"
+          >
+            <Menu size={20} />
+          </button>
+        )}
         <div className="navbar-brand">
           <Logo size="sm" showText tone="green" />
         </div>
