@@ -113,7 +113,6 @@ const InteractiveLessonCard: React.FC = () => {
             className="btn-3d btn-3d-green check-btn"
             onClick={handleCheck}
             disabled={selectedOption === null}
-            style={{ width: '100%' }}
           >
             Check Answer
           </button>
@@ -447,7 +446,6 @@ export const LandingPage: React.FC = () => {
                   strokeLinecap="round" 
                   strokeDasharray="1000"
                   strokeDashoffset={1000 - (activeStep + 1) * 200}
-                  style={{ transition: 'stroke-dashoffset 0.6s ease' }}
                 />
               </svg>
 
@@ -469,8 +467,8 @@ export const LandingPage: React.FC = () => {
                         onClick={() => handleNodeClick(step.sectionId, idx)}
                         style={{
                           backgroundColor: step.color,
-                          borderBottom: `6px solid ${step.darkColor}`,
-                        }}
+                          '--btn-shadow-color': step.darkColor,
+                        } as React.CSSProperties}
                         aria-label={`Scroll to ${step.title}`}
                       >
                         <span className="node-icon-wrap">{step.icon}</span>
@@ -512,8 +510,8 @@ export const LandingPage: React.FC = () => {
                         onClick={() => handleNodeClick(step.sectionId, idx)}
                         style={{
                           backgroundColor: step.color,
-                          borderBottom: `6px solid ${step.darkColor}`,
-                        }}
+                          '--btn-shadow-color': step.darkColor,
+                        } as React.CSSProperties}
                         aria-label={`Scroll to ${step.title}`}
                       >
                         <span className="node-icon-wrap">{step.icon}</span>
