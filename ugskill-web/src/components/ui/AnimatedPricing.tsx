@@ -52,7 +52,7 @@ export const AnimatedPricingCard = ({
         <p className="anim-pricing-desc">{description}</p>
       </div>
       <div className="anim-pricing-price-wrap">
-        <span className="anim-pricing-price">${price}</span>
+        <span className="anim-pricing-price">₹{price}</span>
         <span className="anim-pricing-period">/mo</span>
       </div>
       <div className="anim-pricing-divider"></div>
