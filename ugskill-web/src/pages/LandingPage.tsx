@@ -1,4 +1,4 @@
-import React, { useRef, useLayoutEffect, useState, useEffect, lazy, Suspense } from 'react';
+import React, { useRef, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -11,9 +11,7 @@ import {
   Users, 
   Mic, 
   Briefcase, 
-  CheckCircle2, 
-  Award,
-  Zap
+  CheckCircle2
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -37,10 +35,115 @@ import { ModernPricingPage } from '../components/ui/AnimatedPricing';
 import type { PricingCardProps } from '../components/ui/AnimatedPricing';
 import { NavHeader } from '../components/ui/NavHeader';
 import { Logo } from '../components/ui/Logo';
-import { SaaSDashboardMockup } from '../components/ui/SaaSDashboardMockup';
 import './landing.css';
 
 gsap.registerPlugin(ScrollTrigger);
+
+// --- Interactive Lesson Card (Duolingo Style) ---
+const InteractiveLessonCard: React.FC = () => {
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [isChecked, setIsChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+
+  const options = [
+    "Collaborative Filtering System",
+    "Random Matching Algorithm",
+    "AI Readiness & Placement Matcher"
+  ];
+
+  const correctIndex = 2;
+
+  const handleOptionClick = (idx: number) => {
+    if (isChecked) return;
+    setSelectedOption(idx);
+  };
+
+  const handleCheck = () => {
+    if (selectedOption === null) return;
+    setIsChecked(true);
+    setIsCorrect(selectedOption === correctIndex);
+  };
+
+  const handleReset = () => {
+    setSelectedOption(null);
+    setIsChecked(false);
+    setIsCorrect(false);
+  };
+
+  return (
+    <div className="interactive-lesson-card">
+      <div className="lesson-header">
+        <span className="lesson-badge">ACTIVE LESSON PREVIEW</span>
+        <div className="lesson-progress-bar">
+          <div className="lesson-progress-fill" style={{ width: '70%' }}></div>
+        </div>
+      </div>
+
+      <div className="lesson-question-box">
+        <div className="lesson-mascot-avatar">🤖</div>
+        <div className="lesson-bubble">
+          <p>Which system matches your verified skills directly with placement drives?</p>
+        </div>
+      </div>
+
+      <div className="lesson-options-list">
+        {options.map((opt, idx) => {
+          let className = "lesson-option-btn";
+          if (selectedOption === idx) className += " selected";
+          if (isChecked) {
+            if (idx === correctIndex) className += " correct";
+            else if (selectedOption === idx) className += " incorrect";
+          }
+
+          return (
+            <button
+              key={idx}
+              className={className}
+              onClick={() => handleOptionClick(idx)}
+              disabled={isChecked}
+            >
+              <span className="option-letter">{String.fromCharCode(65 + idx)}</span>
+              <span className="option-text">{opt}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="lesson-footer">
+        {!isChecked ? (
+          <button
+            className="btn-3d btn-3d-green check-btn"
+            onClick={handleCheck}
+            disabled={selectedOption === null}
+            style={{ width: '100%' }}
+          >
+            Check Answer
+          </button>
+        ) : (
+          <div className={`lesson-result-drawer ${isCorrect ? 'correct' : 'incorrect'}`}>
+            <div className="result-text-wrap">
+              <span className="result-icon">{isCorrect ? '🎉' : '⚠️'}</span>
+              <div className="result-text-block">
+                <h4 className="result-status">{isCorrect ? 'Correct! Excellent job.' : 'Incorrect! Try again.'}</h4>
+                <p className="result-explanation">
+                  {isCorrect 
+                    ? 'AI Placement Matcher checks your readiness score against recruiter targets.' 
+                    : 'The correct answer is C. Try resetting to see why!'}
+                </p>
+              </div>
+            </div>
+            <button
+              className={`btn-3d ${isCorrect ? 'btn-3d-green' : 'btn-3d-red'} continue-btn`}
+              onClick={handleReset}
+            >
+              Continue
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const ugskillPricingPlans: PricingCardProps[] = [
   {
@@ -94,6 +197,9 @@ export const LandingPage: React.FC = () => {
       darkColor: '#46a302',
       sectionId: 'unit-1-learning',
       align: 'left',
+      // Winding coordinates (x out of 500, y out of 800)
+      cx: '250px',
+      cy: '80px',
       icon: <BookOpen size={24} />
     },
     {
@@ -104,6 +210,8 @@ export const LandingPage: React.FC = () => {
       darkColor: '#ea2b2b',
       sectionId: 'unit-2-assessments',
       align: 'right',
+      cx: '325px',
+      cy: '250px',
       icon: <ShieldCheck size={24} />
     },
     {
@@ -114,6 +222,8 @@ export const LandingPage: React.FC = () => {
       darkColor: '#aa60eb',
       sectionId: 'unit-3-community',
       align: 'left',
+      cx: '250px',
+      cy: '410px',
       icon: <Users size={24} />
     },
     {
@@ -124,6 +234,8 @@ export const LandingPage: React.FC = () => {
       darkColor: '#e07b00',
       sectionId: 'unit-4-interviews',
       align: 'right',
+      cx: '175px',
+      cy: '570px',
       icon: <Mic size={24} />
     },
     {
@@ -134,6 +246,8 @@ export const LandingPage: React.FC = () => {
       darkColor: '#1899d6',
       sectionId: 'unit-5-placements',
       align: 'left',
+      cx: '250px',
+      cy: '730px',
       icon: <Briefcase size={24} />
     }
   ];
@@ -142,7 +256,7 @@ export const LandingPage: React.FC = () => {
     setActiveStep(index);
     const element = document.getElementById(sectionId);
     if (element) {
-      const yOffset = -100; // offset for nav bar
+      const yOffset = -100;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -224,10 +338,7 @@ export const LandingPage: React.FC = () => {
                 <div className="tech-tag">LIVE</div>
                 <span className="tech-version">Learning + Placement OS</span>
                 <div className="tech-divider"></div>
-                <span className="tech-text">Built for career outcomes</span>
-                <div className="tech-chevron">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </div>
+                <span className="tech-text">Built for outcomes</span>
               </motion.div>
 
               <h1 className="hero-title-wrap">
@@ -279,7 +390,7 @@ export const LandingPage: React.FC = () => {
 
             <div className="hero-3d-side">
               {isMobile ? (
-                <SaaSDashboardMockup />
+                <InteractiveLessonCard />
               ) : (
                 <div className="hero-visual-shell">
                   <div className="hero-visual-chip hero-visual-chip-top">
@@ -343,14 +454,41 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div className="roadmap-path-wrapper">
-            {/* Connection winding path line */}
-            <div className="roadmap-line-connector"></div>
+            {/* Connection winding path line - Curved SVG */}
+            <svg className="roadmap-svg-line desktop-only" viewBox="0 0 500 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path 
+                d="M 250,90 C 350,150 350,190 325,250 C 300,310 200,350 250,410 C 300,470 150,510 175,570 C 200,630 200,670 250,730" 
+                stroke="#e5e5e5" 
+                strokeWidth="12" 
+                strokeLinecap="round" 
+              />
+              <path 
+                d="M 250,90 C 350,150 350,190 325,250 C 300,310 200,350 250,410 C 300,470 150,510 175,570 C 200,630 200,670 250,730" 
+                stroke="#58cc02" 
+                strokeWidth="12" 
+                strokeLinecap="round" 
+                strokeDasharray="1000"
+                strokeDashoffset={1000 - (activeStep + 1) * 200}
+                style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+              />
+            </svg>
+
+            {/* Mobile straight line fallback */}
+            <div className="roadmap-line-connector mobile-only"></div>
 
             <div className="roadmap-steps">
               {steps.map((step, idx) => {
                 const isActive = idx === activeStep;
                 return (
-                  <div key={idx} className={`roadmap-step-item ${step.align} ${isActive ? 'active' : ''}`}>
+                  <div 
+                    key={idx} 
+                    className={`roadmap-step-item ${step.align} ${isActive ? 'active' : ''}`}
+                    style={{
+                      // Position absolute coordinates on desktop
+                      '--node-top': step.cy,
+                      '--node-left': step.cx,
+                    } as React.CSSProperties}
+                  >
                     {/* Node circle */}
                     <button
                       className="roadmap-node-btn"
@@ -384,28 +522,24 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* ── PC Dashboard Showcase ──────────────────────── */}
-        {!isMobile && (
-          <section className="pc-showcase-section">
-            <div className="showcase-container">
-              <motion.div 
-                className="showcase-text"
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-              >
-                <div className="showcase-tag">Platform Preview</div>
-                <h2 className="showcase-title">Your career progress, centralized.</h2>
-                <p className="showcase-desc">One interface to track your course completions, assessment results, debate history, and job applications.</p>
-              </motion.div>
-              <div className="showcase-visual">
-                <div className="showcase-mockup-wrap-pc">
-                  <SaaSDashboardMockup />
-                </div>
-              </div>
+        {/* ── Interactive Lesson Card Showcase (Replacing SaaS Mockup) ── */}
+        <section className="pc-showcase-section">
+          <div className="showcase-container">
+            <motion.div 
+              className="showcase-text"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="showcase-tag">Interactive Preview</div>
+              <h2 className="showcase-title">Gamified skill metrics. Alive in your browser.</h2>
+              <p className="showcase-desc">Give it a try right now! Click the correct option and hit check to test our responsive outcome matcher engine interface.</p>
+            </motion.div>
+            <div className="showcase-visual">
+              <InteractiveLessonCard />
             </div>
-          </section>
-        )}
+          </div>
+        </section>
 
         {/* ── Winding Story Chapters (Unit Sections) ───────── */}
         <div className="story-chapters-container">
