@@ -440,7 +440,7 @@ export const LandingPage: React.FC = () => {
 
         {/* ── Pricing Section (Animated Glassy) ─────────────── */}
         <ModernPricingPage
-          title={<>Simple, <span style={{ color: '#6366f1' }}>transparent</span> pricing.</>}
+          title={<>Simple, <span style={{ color: '#1cb0f6' }}>transparent</span> pricing.</>}
           subtitle="Invest in your career today. Start for free, then upgrade to unlock powerful AI features."
           plans={ugskillPricingPlans}
         />
