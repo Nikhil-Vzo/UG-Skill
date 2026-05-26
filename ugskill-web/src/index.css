@@ -398,6 +398,36 @@ a:hover { color: var(--primary-hover); }
 }
 
 /* ─── Tactile 3D Buttons ─────────────────────────────────────────────── */
+.btn-3d {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.1rem 2.5rem;
+  border-radius: 16px;
+  font-family: var(--font-display, 'Outfit', sans-serif);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+  transform: translateY(0);
+}
+
+.btn-3d:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5);
+}
+
+.btn-3d-large {
+  padding: 1.25rem 3rem;
+  font-size: 1.25rem;
+}
+
 .btn-3d-tactile {
   border: none !important;
   border-radius: var(--radius-md) !important;
@@ -405,69 +435,123 @@ a:hover { color: var(--primary-hover); }
   font-weight: 700 !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  transition: transform 0.1s ease, border-bottom-width 0.1s ease, background-color 0.15s ease !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-bottom-width 0.1s ease, background-color 0.15s ease !important;
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
 }
 
 .btn-3d-tactile:active:not(:disabled) {
-  transform: translateY(4px) !important;
+  transform: translateY(5px) !important;
+  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5) !important;
   border-bottom-width: 0px !important;
 }
 
-/* Green Duolingo Variant */
-.btn-3d-green {
-  background-color: var(--duo-green) !important;
-  border-bottom: 4px solid var(--duo-green-hover) !important;
-  color: #ffffff !important;
-}
-.btn-3d-green:hover:not(:disabled) {
-  background-color: #61e002 !important;
+/* 3D Button Color Variants with increased selector specificity to remove !important */
+a.btn-3d, button.btn-3d, .btn-3d {
+  color: #ffffff;
 }
 
-/* Blue Duolingo Variant (Default primary) */
-.btn-3d-blue {
-  background-color: var(--duo-blue) !important;
-  border-bottom: 4px solid var(--duo-blue-hover) !important;
-  color: #ffffff !important;
+a.btn-3d-green, button.btn-3d-green, .btn-3d-green,
+a.hero-cta-main, button.hero-cta-main, .hero-cta-main {
+  --btn-shadow-color: var(--duo-green-hover, #46a302);
+  background-color: var(--duo-green, #58cc02);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
 }
+a.btn-3d-green:hover:not(:disabled),
+a.hero-cta-main:hover:not(:disabled),
+button.btn-3d-green:hover:not(:disabled),
+button.hero-cta-main:hover:not(:disabled),
+.btn-3d-green:hover:not(:disabled),
+.hero-cta-main:hover:not(:disabled) {
+  background-color: #61e002;
+}
+
+a.btn-3d-blue, button.btn-3d-blue, .btn-3d-blue {
+  --btn-shadow-color: var(--duo-blue-hover, #1899d6);
+  background-color: var(--duo-blue, #1cb0f6);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-blue:hover:not(:disabled),
+button.btn-3d-blue:hover:not(:disabled),
 .btn-3d-blue:hover:not(:disabled) {
-  background-color: #24beff !important;
+  background-color: #24beff;
 }
 
-/* Orange Duolingo Variant */
-.btn-3d-orange {
-  background-color: var(--duo-orange) !important;
-  border-bottom: 4px solid var(--duo-orange-hover) !important;
-  color: #ffffff !important;
+a.btn-3d-red, button.btn-3d-red, .btn-3d-red {
+  --btn-shadow-color: var(--duo-red-hover, #ea2b2b);
+  background-color: var(--duo-red, #ff4b4b);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
 }
+a.btn-3d-red:hover:not(:disabled),
+button.btn-3d-red:hover:not(:disabled),
+.btn-3d-red:hover:not(:disabled) {
+  background-color: #ff6666;
+}
+
+a.btn-3d-purple, button.btn-3d-purple, .btn-3d-purple {
+  --btn-shadow-color: var(--duo-purple-hover, #aa60eb);
+  background-color: var(--duo-purple, #ce82ff);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-purple:hover:not(:disabled),
+button.btn-3d-purple:hover:not(:disabled),
+.btn-3d-purple:hover:not(:disabled) {
+  background-color: #db9cff;
+}
+
+a.btn-3d-orange, button.btn-3d-orange, .btn-3d-orange {
+  --btn-shadow-color: var(--duo-orange-hover, #e07b00);
+  background-color: var(--duo-orange, #ff9600);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-orange:hover:not(:disabled),
+button.btn-3d-orange:hover:not(:disabled),
 .btn-3d-orange:hover:not(:disabled) {
-  background-color: #ffa41a !important;
+  background-color: #ffa41a;
 }
 
-/* Secondary Duolingo Variant (White with grey base) */
-.btn-3d-secondary {
-  background-color: #ffffff !important;
-  border: 2px solid var(--duo-border) !important;
-  border-bottom: 4px solid var(--duo-border) !important;
-  color: var(--text-primary) !important;
+a.btn-3d-secondary, button.btn-3d-secondary, .btn-3d-secondary,
+a.hero-cta-secondary, button.hero-cta-secondary, .hero-cta-secondary {
+  --btn-shadow-color: var(--duo-border, #e5e5e5);
+  background-color: #ffffff;
+  border: 2px solid var(--duo-border, #e5e5e5);
+  color: var(--duo-text-dark, #3c3c3c);
+  box-shadow: 0 3px 0 var(--btn-shadow-color);
 }
-.btn-3d-secondary:hover:not(:disabled) {
-  background-color: #f7f7f7 !important;
+a.btn-3d-secondary:hover:not(:disabled),
+a.hero-cta-secondary:hover:not(:disabled),
+button.btn-3d-secondary:hover:not(:disabled),
+button.hero-cta-secondary:hover:not(:disabled),
+.btn-3d-secondary:hover:not(:disabled),
+.hero-cta-secondary:hover:not(:disabled) {
+  background-color: #f7f7f7;
 }
-.btn-3d-secondary:active:not(:disabled) {
-  transform: translateY(4px) !important;
-  border-bottom-width: 0px !important;
+a.btn-3d-secondary:active:not(:disabled),
+a.hero-cta-secondary:active:not(:disabled),
+button.btn-3d-secondary:active:not(:disabled),
+button.hero-cta-secondary:active:not(:disabled),
+.btn-3d-secondary:active:not(:disabled),
+.hero-cta-secondary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color);
 }
 
 /* Gradient Duolingo Variant */
-.btn-3d-gradient {
-  background: var(--gradient-primary) !important;
-  border-bottom: 4px solid #ea2b2b !important;
-  color: #ffffff !important;
+a.btn-3d-gradient, button.btn-3d-gradient, .btn-3d-gradient {
+  --btn-shadow-color: #ea2b2b;
+  background: var(--gradient-primary);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
 }
+a.btn-3d-gradient:hover:not(:disabled),
+button.btn-3d-gradient:hover:not(:disabled),
 .btn-3d-gradient:hover:not(:disabled) {
-  background: var(--gradient-primary-dark) !important;
+  background: var(--gradient-primary-dark);
 }
 
 /* Adjust general status and outline-soon classes */

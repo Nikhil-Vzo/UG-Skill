@@ -16,109 +16,7 @@
   padding-top: 80px; /* Offset for nav */
 }
 
-/* --- Tactile 3D Button Class Base --- */
-.btn-3d {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 1.1rem 2.5rem;
-  border-radius: 16px;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-decoration: none;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
-  transform: translateY(0);
-}
-
-.btn-3d:active {
-  transform: translateY(5px);
-  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5);
-}
-
-.btn-3d-large {
-  padding: 1.25rem 3rem;
-  font-size: 1.25rem;
-}
-
-/* 3D Button Color Variants */
-.btn-3d-green,
-.hero-cta-main {
-  --btn-shadow-color: var(--duo-green-hover, #46a302);
-  background-color: var(--duo-green, #58cc02);
-  color: #ffffff !important;
-}
-
-.btn-3d-green:hover,
-.hero-cta-main:hover {
-  background-color: #61e002;
-}
-
-.btn-3d-blue {
-  --btn-shadow-color: var(--duo-blue-hover, #1899d6);
-  background-color: var(--duo-blue, #1cb0f6);
-  color: #ffffff !important;
-}
-
-.btn-3d-blue:hover {
-  background-color: #24beff;
-}
-
-.btn-3d-red {
-  --btn-shadow-color: var(--duo-red-hover, #ea2b2b);
-  background-color: var(--duo-red, #ff4b4b);
-  color: #ffffff !important;
-}
-
-.btn-3d-red:hover {
-  background-color: #ff6666;
-}
-
-.btn-3d-purple {
-  --btn-shadow-color: var(--duo-purple-hover, #aa60eb);
-  background-color: var(--duo-purple, #ce82ff);
-  color: #ffffff !important;
-}
-
-.btn-3d-purple:hover {
-  background-color: #db9cff;
-}
-
-.btn-3d-orange {
-  --btn-shadow-color: var(--duo-orange-hover, #e07b00);
-  background-color: var(--duo-orange, #ff9600);
-  color: #ffffff !important;
-}
-
-.btn-3d-orange:hover {
-  background-color: #ffa41a;
-}
-
-.btn-3d-secondary,
-.hero-cta-secondary {
-  --btn-shadow-color: var(--duo-border, #e5e5e5);
-  background-color: #ffffff;
-  border: 2px solid var(--duo-border, #e5e5e5);
-  color: var(--duo-text-dark, #3c3c3c) !important;
-  box-shadow: 0 3px 0 var(--duo-border, #e5e5e5);
-}
-
-.btn-3d-secondary:active,
-.hero-cta-secondary:active {
-  transform: translateY(3px);
-  box-shadow: 0 0 0 var(--duo-border, #e5e5e5);
-}
-
-.btn-3d-secondary:hover,
-.hero-cta-secondary:hover {
-  background-color: #f7f7f7;
-}
+/* Inherits tactile 3D button class base and color variants from index.css naturally */
 
 /* --- Tactile Navigation --- */
 .landing-nav {
@@ -214,7 +112,6 @@
   padding: 0.6rem 1.25rem;
   background-color: var(--duo-green, #58cc02);
   border: none;
-  border-bottom: 4px solid var(--duo-green-hover, #46a302);
   border-radius: 12px;
   font-size: 0.8rem;
   font-family: 'Outfit', sans-serif;
@@ -223,7 +120,9 @@
   text-decoration: none;
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform 0.1s ease;
+  box-shadow: 0 4px 0 var(--btn-shadow-color, var(--duo-green-hover, #46a302));
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transform: translateY(0);
 }
 
 .landing-nav-cta:hover {
@@ -231,8 +130,8 @@
 }
 
 .landing-nav-cta:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color, var(--duo-green-hover, #46a302));
 }
 
 /* --- Mobile Menu Overlay --- */
@@ -654,6 +553,10 @@
   pointer-events: none;
 }
 
+.roadmap-svg-line path {
+  transition: stroke-dashoffset 0.6s ease;
+}
+
 .roadmap-steps {
   position: absolute;
   top: 0;
@@ -686,13 +589,13 @@
   color: #ffffff;
   position: relative;
   z-index: 10;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), border-bottom-width 0.1s ease;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 0 var(--btn-shadow-color);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s ease;
 }
 
 .roadmap-node-btn:active {
-  transform: translateY(4px);
-  border-bottom-width: 0px !important;
+  transform: translateY(6px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color) !important;
 }
 
 .node-icon-wrap {
@@ -825,7 +728,7 @@
 
 .roadmap-step-item.active .roadmap-node-btn {
   transform: scale(1.1);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 0 var(--btn-shadow-color);
 }
 
 /* --- Interactive Lesson Card Style --- */
@@ -1053,6 +956,7 @@
 .check-btn, .continue-btn {
   padding: 0.85rem;
   font-size: 0.95rem;
+  width: 100%;
 }
 
 /* --- PC Showcase Section --- */
@@ -1465,25 +1369,26 @@
   }
 
   .roadmap-node-btn-mobile {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #ffffff;
-    position: relative;
-    z-index: 10;
-    flex-shrink: 0;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  }
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+  box-shadow: 0 6px 0 var(--btn-shadow-color);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s ease;
+}
 
-  .roadmap-node-btn-mobile:active {
-    transform: translateY(3px);
-    border-bottom-width: 0px !important;
-  }
+.roadmap-node-btn-mobile:active {
+  transform: translateY(6px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color) !important;
+}
 
   .roadmap-mascot-bubble-wrap-mobile {
     display: flex;
