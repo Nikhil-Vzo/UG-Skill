@@ -7,7 +7,7 @@ interface LogoProps {
   tone?: 'indigo' | 'green';
 }
 
-export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, tone = 'indigo' }) => {
+export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, tone = 'green' }) => {
   const dimensions = {
     sm: { box: 36, font: '0.8rem', text: '1.125rem', gap: '0.75rem' },
     md: { box: 52, font: '1rem', text: '1.625rem', gap: '1.25rem' },

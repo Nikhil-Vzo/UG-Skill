@@ -13,7 +13,11 @@
 }
 
 /* Tactile 3D Button Class Base */
-.btn-3d {
+.btn-3d,
+.hero-cta-main,
+.hero-cta-secondary,
+.anim-pricing-btn,
+.landing-footer-cta .landing-nav-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -29,30 +33,45 @@
   transform: translateY(0);
 }
 
-.btn-3d:active {
+.btn-3d:active,
+.hero-cta-main:active,
+.hero-cta-secondary:active,
+.anim-pricing-btn:active,
+.landing-footer-cta .landing-nav-cta:active {
   transform: translateY(3px);
   border-bottom-width: 1px !important;
 }
 
-.btn-3d-green {
+.btn-3d-green,
+.hero-cta-main,
+.anim-pricing-btn.primary,
+.landing-footer-cta .landing-nav-cta {
   background-color: var(--duo-green, #58cc02);
   border: none;
   border-bottom: 4px solid var(--duo-green-hover, #46a302);
   color: #ffffff;
 }
 
-.btn-3d-green:hover {
+.btn-3d-green:hover,
+.hero-cta-main:hover,
+.anim-pricing-btn.primary:hover,
+.landing-footer-cta .landing-nav-cta:hover {
   background-color: #61e002;
+  color: #ffffff;
 }
 
-.btn-3d-secondary {
+.btn-3d-secondary,
+.hero-cta-secondary,
+.anim-pricing-btn.secondary {
   background-color: #ffffff;
   border: 2px solid var(--duo-border, #e5e5e5);
   border-bottom: 5px solid var(--duo-border, #e5e5e5);
   color: var(--duo-text-dark, #3c3c3c);
 }
 
-.btn-3d-secondary:hover {
+.btn-3d-secondary:hover,
+.hero-cta-secondary:hover,
+.anim-pricing-btn.secondary:hover {
   background-color: #f7f7f7;
 }
 
@@ -135,6 +154,7 @@
 }
 
 .nav-header-container {
+  position: relative;
   display: flex;
   background: #ffffff;
   border: 2px solid var(--duo-border, #e5e5e5);
@@ -145,6 +165,8 @@
 }
 
 .nav-tab {
+  position: relative;
+  z-index: 1;
   cursor: pointer;
   padding: 0.4rem 1.1rem;
   font-size: 0.75rem;
@@ -387,13 +409,11 @@
 }
 
 .hero-cta-main {
-  composes: btn-3d btn-3d-green;
   padding: 1rem 2.25rem;
   font-size: 1rem;
 }
 
 .hero-cta-secondary {
-  composes: btn-3d btn-3d-secondary;
   padding: 0.95rem 2.25rem;
   font-size: 1rem;
 }
@@ -984,17 +1004,14 @@
 .anim-pricing-btn {
   margin-top: auto;
   width: 100%;
-  composes: btn-3d;
 }
 
 .anim-pricing-btn.primary {
-  composes: btn-3d-green;
   padding: 0.8rem;
   font-size: 0.85rem;
 }
 
 .anim-pricing-btn.secondary {
-  composes: btn-3d-secondary;
   padding: 0.8rem;
   font-size: 0.85rem;
 }
@@ -1030,7 +1047,6 @@
 }
 
 .landing-footer-cta .landing-nav-cta {
-  composes: btn-3d btn-3d-green;
   font-size: 1.1rem;
   padding: 1.1rem 3rem;
 }
