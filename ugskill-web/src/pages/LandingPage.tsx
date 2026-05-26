@@ -1,15 +1,30 @@
 import React, { useRef, useLayoutEffect, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Menu, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { 
+  ArrowRight, 
+  Menu, 
+  ShieldCheck, 
+  Sparkles, 
+  X, 
+  BookOpen, 
+  Users, 
+  Mic, 
+  Briefcase, 
+  CheckCircle2, 
+  Award,
+  Zap
+} from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useAuthStore } from '../store/auth.store';
 import { SmoothScroll } from '../components/ui/SmoothScroll';
+
 // Lazy-load Three.js — excluded from initial bundle, loads only on desktop
 const HeroScene = lazy(() =>
   import('../components/3d/HeroScene').then((m) => ({ default: m.HeroScene }))
 );
+
 import {
   LogoTickerSVGs,
   LearningEngineSVG,
@@ -17,6 +32,7 @@ import {
   CareerLaunchpadSVG,
   GroupDiscussionSVG
 } from '../components/svgs/CustomSVGs';
+
 import { ModernPricingPage } from '../components/ui/AnimatedPricing';
 import type { PricingCardProps } from '../components/ui/AnimatedPricing';
 import { NavHeader } from '../components/ui/NavHeader';
@@ -49,10 +65,10 @@ const ugskillPricingPlans: PricingCardProps[] = [
 export const LandingPage: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // Detect mobile — specifically phones (< 768px) to switch aesthetics
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
+  const [activeStep, setActiveStep] = useState(0);
   const mainRef = useRef<HTMLDivElement>(null);
 
   const getDashboardRoute = () => {
@@ -69,9 +85,68 @@ export const LandingPage: React.FC = () => {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  useLayoutEffect(() => {
-    // GSAP placeholder — sticky stacking handled by CSS
-  }, []);
+  const steps = [
+    {
+      title: 'Adaptive Learning',
+      badge: 'UNIT 1',
+      mascotText: 'Hi! Let\'s build your base skills. I have laid out a personalized adaptive learning course path just for you!',
+      color: '#58cc02',
+      darkColor: '#46a302',
+      sectionId: 'unit-1-learning',
+      align: 'left',
+      icon: <BookOpen size={24} />
+    },
+    {
+      title: 'Proctored Assessments',
+      badge: 'UNIT 2',
+      mascotText: 'Next up: validation. Compete on our real-time AI Leaderboard under secure, anti-cheat proctoring!',
+      color: '#ff4b4b',
+      darkColor: '#ea2b2b',
+      sectionId: 'unit-2-assessments',
+      align: 'right',
+      icon: <ShieldCheck size={24} />
+    },
+    {
+      title: 'Live Group Discussions',
+      badge: 'UNIT 3',
+      mascotText: 'Now, let\'s collaborate! Participate in live, platform-native GDs with peers and boost your confidence.',
+      color: '#ce82ff',
+      darkColor: '#aa60eb',
+      sectionId: 'unit-3-community',
+      align: 'left',
+      icon: <Users size={24} />
+    },
+    {
+      title: 'AI Mock Interviews',
+      badge: 'UNIT 4',
+      mascotText: 'Get ready for the real deal! Practice mock interviews 1-on-1 with me and get granular, actionable feedback.',
+      color: '#ff9600',
+      darkColor: '#e07b00',
+      sectionId: 'unit-4-interviews',
+      align: 'right',
+      icon: <Mic size={24} />
+    },
+    {
+      title: 'Career Placement Hub',
+      badge: 'UNIT 5',
+      mascotText: 'Unlock placement drives! Once your AI Readiness Score peaks, apply directly to hiring partners.',
+      color: '#1cb0f6',
+      darkColor: '#1899d6',
+      sectionId: 'unit-5-placements',
+      align: 'left',
+      icon: <Briefcase size={24} />
+    }
+  ];
+
+  const handleNodeClick = (sectionId: string, index: number) => {
+    setActiveStep(index);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const yOffset = -100; // offset for nav bar
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
 
   return (
     <SmoothScroll>
@@ -136,18 +211,12 @@ export const LandingPage: React.FC = () => {
 
         {/* ── Hero Section ────────────────────────────────── */}
         <section className="hero-section">
-          {/* <HeroScene /> is now in hero-3d-side */}
-          <div className="landing-hero-glow-1"></div>
-          <div className="landing-hero-glow-2"></div>
           <div className="hero-bg-grid"></div>
-
-          <div className="landing-hero-glow"></div>
-
 
           <div className="hero-content-split">
             <div className="hero-text-side">
               <motion.div
-                initial={{ opacity: 0, y: -10 }} /* Reduced movement for faster paint */
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="hero-badge-tech"
@@ -155,20 +224,20 @@ export const LandingPage: React.FC = () => {
                 <div className="tech-tag">LIVE</div>
                 <span className="tech-version">Learning + Placement OS</span>
                 <div className="tech-divider"></div>
-                <span className="tech-text">Built for career-ready outcomes</span>
+                <span className="tech-text">Built for career outcomes</span>
                 <div className="tech-chevron">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
               </motion.div>
 
               <h1 className="hero-title-wrap">
-                {["UGSkill", "Career", "Ecosystem"].map((word, i) => (
+                {["UGSkill", "Career", "Journey"].map((word, i) => (
                   <motion.span
                     key={i}
                     className={`hero-word ${i === 0 ? 'accent' : ''}`}
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 + i * 0.15, ease: [0.215, 0.61, 0.355, 1] }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.1 + i * 0.1, ease: [0.215, 0.61, 0.355, 1] }}
                   >
                     {word}
                   </motion.span>
@@ -179,28 +248,26 @@ export const LandingPage: React.FC = () => {
                 className="hero-subtitle"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 1 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
               >
-                Move from skill-building to placement readiness with <span>AI-guided learning</span>, secure proctored assessments, live interview practice, and direct hiring workflows.
+                Learn, assess, debate, and interview. Traverse our interactive <span>Career Roadmaps</span> guided by AI to unlock placement drives and verify outcomes.
               </motion.h2>
 
               <motion.div
                 className="hero-actions"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 1.2 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
               >
                 {isAuthenticated ? (
                   <Link to={getDashboardRoute()} className="hero-cta-main">
                     <span>Go to Dashboard</span>
-                    <div className="cta-glow"></div>
                   </Link>
                 ) : (
                   <>
                     <Link to="/signup" className="hero-cta-main">
                       <span>Start Learning Free</span>
                       <ArrowRight size={18} />
-                      <div className="cta-glow"></div>
                     </Link>
                     <Link to="/login" className="hero-cta-secondary">
                       Sign In
@@ -212,10 +279,8 @@ export const LandingPage: React.FC = () => {
 
             <div className="hero-3d-side">
               {isMobile ? (
-                /* Premium Mobile SaaS Dashboard Mockup */
                 <SaaSDashboardMockup />
               ) : (
-                /* PC/Tablet 3D WebGL Scene */
                 <div className="hero-visual-shell">
                   <div className="hero-visual-chip hero-visual-chip-top">
                     <Sparkles size={14} />
@@ -229,18 +294,16 @@ export const LandingPage: React.FC = () => {
                     <HeroScene />
                   </Suspense>
 
-                  {/* Robo Guide Holographic Dialogue */}
+                  {/* Robo Guide Dialogue */}
                   <motion.div
                     className="robo-dialogue-v2"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 2.0, duration: 0.5 }}
+                    transition={{ delay: 1.2, duration: 0.5 }}
                   >
-                    <div className="hologram-effect"></div>
                     <div className="dialogue-bubble-v2">
                       <span className="dialogue-tag">UG BOT</span>
-                      <span className="dialogue-text">Ready to master your future? I'm here to guide you!</span>
-                      <div className="scanning-line"></div>
+                      <span className="dialogue-text">Welcome! Click down the path below to start your career story.</span>
                     </div>
                   </motion.div>
                 </div>
@@ -259,14 +322,66 @@ export const LandingPage: React.FC = () => {
           <motion.div
             className="ticker-track"
             animate={{ x: [0, -1000] }}
-            transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
           >
-            {[...LogoTickerSVGs, ...LogoTickerSVGs, ...LogoTickerSVGs].map((Logo, i) => (
+            {[...LogoTickerSVGs, ...LogoTickerSVGs, ...LogoTickerSVGs].map((LogoItem, i) => (
               <div key={i} className="ticker-item">
-                <Logo />
+                <LogoItem />
               </div>
             ))}
           </motion.div>
+        </section>
+
+        {/* ── Winding Career Path (Timeline) ───────────────── */}
+        <section className="roadmap-section" id="ecosystem">
+          <div className="section-header">
+            <div className="section-tag-small">YOUR ROUTE</div>
+            <h2 className="section-title">Walk the Skill Path</h2>
+            <p className="section-subtitle">
+              Duolingo-style progression tree. Complete units, test your skills, and unlock placement opportunities.
+            </p>
+          </div>
+
+          <div className="roadmap-path-wrapper">
+            {/* Connection winding path line */}
+            <div className="roadmap-line-connector"></div>
+
+            <div className="roadmap-steps">
+              {steps.map((step, idx) => {
+                const isActive = idx === activeStep;
+                return (
+                  <div key={idx} className={`roadmap-step-item ${step.align} ${isActive ? 'active' : ''}`}>
+                    {/* Node circle */}
+                    <button
+                      className="roadmap-node-btn"
+                      onClick={() => handleNodeClick(step.sectionId, idx)}
+                      style={{
+                        backgroundColor: step.color,
+                        borderBottom: `6px solid ${step.darkColor}`,
+                      }}
+                      aria-label={`Scroll to ${step.title}`}
+                    >
+                      <span className="node-icon-wrap">{step.icon}</span>
+                      <span className="node-badge-num">{idx + 1}</span>
+                    </button>
+
+                    {/* Mascot dialogue speech bubble */}
+                    <div className="roadmap-mascot-bubble-wrap">
+                      <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
+                        <div className="mascot-face">🤖</div>
+                      </div>
+                      <div className="roadmap-dialogue-bubble">
+                        <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
+                        <h4 className="bubble-title">{step.title}</h4>
+                        <p className="bubble-text">{step.mascotText}</p>
+                        <div className="bubble-arrow"></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </section>
 
         {/* ── PC Dashboard Showcase ──────────────────────── */}
@@ -280,8 +395,8 @@ export const LandingPage: React.FC = () => {
                 viewport={{ once: true }}
               >
                 <div className="showcase-tag">Platform Preview</div>
-                <h2 className="showcase-title">Your career, centralized.</h2>
-                <p className="showcase-desc">One interface to track learning, readiness, and placements.</p>
+                <h2 className="showcase-title">Your career progress, centralized.</h2>
+                <p className="showcase-desc">One interface to track your course completions, assessment results, debate history, and job applications.</p>
               </motion.div>
               <div className="showcase-visual">
                 <div className="showcase-mockup-wrap-pc">
@@ -292,174 +407,215 @@ export const LandingPage: React.FC = () => {
           </section>
         )}
 
-        {/* ── Bento Grid Ecosystem ────────────────────────── */}
-        <div className="ecosystem-contrast-wrap">
-        <section className="ecosystem-section" id="ecosystem">
-          <div className="section-header">
-            <motion.h2
-              className="section-title"
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              The complete ecosystem. Unmatched in India.
-            </motion.h2>
-          </div>
+        {/* ── Winding Story Chapters (Unit Sections) ───────── */}
+        <div className="story-chapters-container">
 
-          <div className="bento-grid">
-            {/* LMS / Learning Engine */}
-            <motion.div
-              className="bento-card large"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="bento-content">
-                <h3>AI-Driven Learning Engine</h3>
-                <p>Personalized roadmaps that adapt to your pace—an adaptive learning experience no competitor offers.</p>
+          {/* UNIT 1: Adaptive Learning Engine */}
+          <section className="unit-section unit-green" id="unit-1-learning">
+            <div className="unit-card-glow"></div>
+            <div className="unit-flex-split">
+              <div className="unit-text-side">
+                <div className="unit-badge">UNIT 1</div>
+                <h2 className="unit-title">AI-Driven Adaptive Learning</h2>
+                <p className="unit-desc">
+                  No two paths are the same. Our AI engine evaluates your strengths and weaknesses in real-time, delivering custom course sequences and roadmaps tailored to your pace.
+                </p>
+                <ul className="unit-feature-list">
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Adapts dynamically to quiz performance</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Visual path nodes showing exact lesson goals</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Gamified achievements for course progression</span>
+                  </li>
+                </ul>
+                <div className="unit-actions">
+                  <Link to="/signup" className="btn-3d btn-3d-green">
+                    Start Learning
+                  </Link>
+                </div>
               </div>
-              <div className="bento-svg-wrap" style={{ opacity: 0.8 }}>
-                <LearningEngineSVG />
+              <div className="unit-visual-side">
+                <div className="unit-graphic-shell">
+                  <LearningEngineSVG />
+                </div>
               </div>
-            </motion.div>
-
-            {/* Placements / Career Launchpad */}
-            <motion.div
-              className="bento-card"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="bento-content">
-                <h3>The Ultimate Launchpad</h3>
-                <p>Nail your dream job with AI Mock Interviews, direct placement drives, and platform-native Live GDs.</p>
-              </div>
-              <div className="bento-svg-wrap" style={{ right: '-20%', bottom: '-20%', opacity: 0.5 }}>
-                <CareerLaunchpadSVG />
-              </div>
-            </motion.div>
-
-            {/* Exams / Assessment Engine */}
-            <motion.div
-              className="bento-card"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="bento-content">
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#1cb0f6', display: 'inline-block' }}></span>
-                  Proctored Exams & AI Leaderboard
-                </h3>
-                <p>Compete on India's first real-time AI Leaderboard in highly secure, anti-cheat environments.</p>
-              </div>
-              <div className="bento-svg-wrap" style={{ right: '-15%', bottom: '-15%', opacity: 0.5 }}>
-                <AssessmentEngineSVG />
-              </div>
-            </motion.div>
-
-            {/* Community / Network */}
-            <motion.div
-              className="bento-card wide"
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="bento-content" style={{ maxWidth: '60%' }}>
-                <h3>Cognitive Enterprise Network</h3>
-                <p>Connect with peers via platform-native Live Group Discussions (GDs) and dominate the Hall of Fame.</p>
-              </div>
-              <div className="bento-svg-wrap" style={{ right: '0%', bottom: '-10%', width: '40%', height: '120%', opacity: 0.7 }}>
-                <GroupDiscussionSVG />
-              </div>
-            </motion.div>
-          </div>
-        </section>
-        </div>
-
-        {/* ── Deep Dives (Sticky Stacking) ───────────────── */}
-        <div className="deep-dive-container">
-
-          <section className="deep-dive-section deep-dive-1">
-            <motion.div
-              className="deep-dive-text"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-20%" }}
-            >
-              <div className="deep-dive-tag">01 / The Learning Engine</div>
-              <h2 className="deep-dive-title">The First AI-Driven Learning Engine.</h2>
-              <p className="deep-dive-desc">Experience personalized learning like never before. Our platform adapts to your strengths and weaknesses in real-time. No other platform in India offers this level of dynamic, roadmap-based skill mastery.</p>
-            </motion.div>
-            <motion.div
-              className="deep-dive-visual"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: false, margin: "-20%" }}
-            >
-              <LearningEngineSVG />
-            </motion.div>
+            </div>
           </section>
 
-          <section className="deep-dive-section deep-dive-2">
-            <motion.div
-              className="deep-dive-visual"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: false, margin: "-20%" }}
-            >
-              <AssessmentEngineSVG />
-            </motion.div>
-            <motion.div
-              className="deep-dive-text"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-20%" }}
-            >
-              <div className="deep-dive-tag" style={{ color: '#1cb0f6' }}>02 / The Assessment Engine</div>
-              <h2 className="deep-dive-title">Pioneering the AI Leaderboard.</h2>
-              <p className="deep-dive-desc">Prove your knowledge in live, highly secure environments. Compete on our real-time AI Leaderboard—the first of its kind—and get granular, unbiased analytics on your performance gaps.</p>
-            </motion.div>
+          {/* UNIT 2: Secure Assessments */}
+          <section className="unit-section unit-red" id="unit-2-assessments">
+            <div className="unit-card-glow"></div>
+            <div className="unit-flex-split">
+              <div className="unit-visual-side">
+                <div className="unit-graphic-shell">
+                  <AssessmentEngineSVG />
+                </div>
+              </div>
+              <div className="unit-text-side">
+                <div className="unit-badge">UNIT 2</div>
+                <h2 className="unit-title">Proctored Exams & Leaderboards</h2>
+                <p className="unit-desc">
+                  Compete on India's first real-time AI Leaderboard. Take secure exams powered by anti-cheat webcam monitoring, and earn trust badges validated for direct recruiter reviews.
+                </p>
+                <ul className="unit-feature-list">
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>AI-powered proctoring & tab-lock control</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>National rank list and skill benchmarks</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Granular performance reports showing gaps</span>
+                  </li>
+                </ul>
+                <div className="unit-actions">
+                  <Link to="/signup" className="btn-3d btn-3d-red">
+                    Test Your Skills
+                  </Link>
+                </div>
+              </div>
+            </div>
           </section>
 
-          <section className="deep-dive-section deep-dive-3">
-            <motion.div
-              className="deep-dive-text"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-20%" }}
-            >
-              <div className="deep-dive-tag" style={{ color: '#34d399' }}>03 / The Career Launchpad</div>
-              <h2 className="deep-dive-title">Direct Access. Real Live GDs.</h2>
-              <p className="deep-dive-desc">Don't just apply. Prepare with AI Mock Interviews and participate in Live Group Discussions directly on our platform. We connect you with hiring partners when your AI Readiness Score hits the mark.</p>
-            </motion.div>
-            <motion.div
-              className="deep-dive-visual"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: false, margin: "-20%" }}
-            >
-              <CareerLaunchpadSVG />
-            </motion.div>
+          {/* UNIT 3: Live Group Discussions */}
+          <section className="unit-section unit-purple" id="unit-3-community">
+            <div className="unit-card-glow"></div>
+            <div className="unit-flex-split">
+              <div className="unit-text-side">
+                <div className="unit-badge">UNIT 3</div>
+                <h2 className="unit-title">Live Group Discussions</h2>
+                <p className="unit-desc">
+                  Collaboration leads to success. Engage in real-time video group discussions (GDs) natively within the platform, complete with topic generators and peer evaluation systems.
+                </p>
+                <ul className="unit-feature-list">
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>One-click join to live video rooms</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Real-time debate prompts and timers</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Peer scorecards and helpful communication tips</span>
+                  </li>
+                </ul>
+                <div className="unit-actions">
+                  <Link to="/signup" className="btn-3d btn-3d-purple">
+                    Join Discussion
+                  </Link>
+                </div>
+              </div>
+              <div className="unit-visual-side">
+                <div className="unit-graphic-shell">
+                  <GroupDiscussionSVG />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* UNIT 4: AI Mock Interviews */}
+          <section className="unit-section unit-orange" id="unit-4-interviews">
+            <div className="unit-card-glow"></div>
+            <div className="unit-flex-split">
+              <div className="unit-visual-side">
+                <div className="unit-graphic-shell">
+                  <CareerLaunchpadSVG />
+                </div>
+              </div>
+              <div className="unit-text-side">
+                <div className="unit-badge">UNIT 4</div>
+                <h2 className="unit-title">AI Mock Interview Room</h2>
+                <p className="unit-desc">
+                  Ace the job. Practice technical and behavioral questions 1-on-1 with an AI bot that evaluates your answers, eye contact, speech patterns, and confidence in real-time.
+                </p>
+                <ul className="unit-feature-list">
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Customized roles (Software Eng, PM, Consultant)</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Instant score breakdown and sample ideal answers</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Webcam posture, pace, and vocal filler checks</span>
+                  </li>
+                </ul>
+                <div className="unit-actions">
+                  <Link to="/signup" className="btn-3d btn-3d-orange">
+                    Practice Free
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* UNIT 5: Placement Hub */}
+          <section className="unit-section unit-blue" id="unit-5-placements">
+            <div className="unit-card-glow"></div>
+            <div className="unit-flex-split">
+              <div className="unit-text-side">
+                <div className="unit-badge">UNIT 5</div>
+                <h2 className="unit-title">Direct Placement Drives</h2>
+                <p className="unit-desc">
+                  Your readiness score is your ticket. Once you achieve target skill validation scores, unlock direct applications to placement drives hosted by top hiring corporate partners.
+                </p>
+                <ul className="unit-feature-list">
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Direct recruiter notifications for high scorers</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>Integrated resume builder & score syncing</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 size={18} className="feat-check" />
+                    <span>End-to-end recruitment tracking status</span>
+                  </li>
+                </ul>
+                <div className="unit-actions">
+                  <Link to="/signup" className="btn-3d btn-3d-blue">
+                    Apply to Jobs
+                  </Link>
+                </div>
+              </div>
+              <div className="unit-visual-side">
+                <div className="unit-graphic-shell">
+                  <CareerLaunchpadSVG />
+                </div>
+              </div>
+            </div>
           </section>
 
         </div>
 
         {/* ── Pricing Section (Animated Glassy) ─────────────── */}
-        <ModernPricingPage
-          title={<>Simple, <span style={{ color: '#1cb0f6' }}>transparent</span> pricing.</>}
-          subtitle="Invest in your career today. Start for free, then upgrade to unlock powerful AI features."
-          plans={ugskillPricingPlans}
-        />
+        <div className="super-pricing-container">
+          <div className="super-glass-shimmer"></div>
+          <ModernPricingPage
+            title={<>Simple, <span className="blue-word">transparent</span> pricing.</>}
+            subtitle="Invest in your career today. Start for free, then upgrade to unlock powerful AI features."
+            plans={ugskillPricingPlans}
+          />
+        </div>
 
         {/* ── Footer CTA ──────────────────────────────────── */}
         <section className="landing-footer-cta">
           <div className="cta-bg-glow"></div>
-          <h2 className="cta-title">Ready to launch?</h2>
+          <h2 className="cta-title">Ready to launch your story?</h2>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -468,11 +624,11 @@ export const LandingPage: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             {isAuthenticated ? (
-              <Link to={getDashboardRoute()} className="landing-nav-cta" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
+              <Link to={getDashboardRoute()} className="btn-3d btn-3d-green" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
                 Enter the Dashboard
               </Link>
             ) : (
-              <Link to="/signup" className="landing-nav-cta" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
+              <Link to="/signup" className="btn-3d btn-3d-green" style={{ padding: '1.25rem 3rem', fontSize: '1.25rem' }}>
                 Create Your Account
               </Link>
             )}
@@ -484,7 +640,7 @@ export const LandingPage: React.FC = () => {
           <div className="footer-grid">
             <div className="footer-brand">
               <Logo />
-              <p>India's first cognitive ecosystem. Unlocking human potential with AI-driven learning, proctored assessments, and direct placements.</p>
+              <p>India's first cognitive learning & placement ecosystem. Unlocking human potential with AI proctored validation and direct placement pipelines.</p>
             </div>
 
             <div className="footer-col">
