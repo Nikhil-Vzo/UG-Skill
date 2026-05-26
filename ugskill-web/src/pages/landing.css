@@ -129,16 +129,17 @@
   top: 0;
   left: 0;
   right: 0;
+  width: 100%;
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 5vw;
-  background: rgba(255, 255, 255, 0.85);
+  padding: 0.55rem 5vw;
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 2px solid var(--duo-border, #e5e5e5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .landing-nav-center {
@@ -158,8 +159,8 @@
   display: flex;
   background: #ffffff;
   border: 2px solid var(--duo-border, #e5e5e5);
-  border-bottom: 4px solid var(--duo-border, #e5e5e5);
-  border-radius: 12px;
+  border-bottom: 4px solid var(--duo-green, #58cc02);
+  border-radius: 16px;
   padding: 0.15rem;
   list-style: none;
 }
@@ -377,7 +378,7 @@
 
 .hero-word {
   display: inline-block;
-  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.04em;
@@ -644,6 +645,13 @@
   margin: 0 auto;
 }
 
+/* Visual contrast wrapper for ecosystem section */
+.ecosystem-contrast-wrap {
+  background: linear-gradient(180deg, #f1fcf0 0%, #f0f9ff 100%);
+  border-top: 2px solid var(--duo-border, #e5e5e5);
+  border-bottom: 2px solid var(--duo-border, #e5e5e5);
+}
+
 .section-header {
   text-align: center;
   margin-bottom: 4rem;
@@ -666,7 +674,7 @@
 .bento-card {
   background-color: #ffffff;
   border: 2px solid var(--duo-border, #e5e5e5);
-  border-bottom: 6px solid var(--duo-border, #e5e5e5);
+  border-bottom: 6px solid var(--duo-green, #58cc02);
   border-radius: 20px;
   padding: 2rem;
   display: flex;
@@ -678,6 +686,7 @@
 
 .bento-card:hover {
   border-color: var(--duo-green, #58cc02);
+  border-bottom-color: var(--duo-green-hover, #46a302);
   transform: translateY(-2px);
 }
 

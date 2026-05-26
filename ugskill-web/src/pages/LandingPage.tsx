@@ -1,7 +1,7 @@
 import React, { useRef, useLayoutEffect, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, BriefcaseBusiness, GraduationCap, Menu, ShieldCheck, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Menu, ShieldCheck, Sparkles, X } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useAuthStore } from '../store/auth.store';
@@ -207,27 +207,6 @@ export const LandingPage: React.FC = () => {
                     </Link>
                   </>
                 )}
-              </motion.div>
-
-              <motion.div
-                className="hero-proof-grid"
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.35 }}
-              >
-                <div className="hero-proof-item">
-                  <GraduationCap size={18} />
-                  <span>Adaptive roadmaps</span>
-                </div>
-                <div className="hero-proof-item">
-                  <ShieldCheck size={18} />
-                  <span>AI proctoring</span>
-                </div>
-                <div className="hero-proof-item">
-                  <BriefcaseBusiness size={18} />
-                  <span>Placement pipeline</span>
-                </div>
-              </motion.div>
             </div>
 
             <div className="hero-3d-side">
@@ -313,6 +292,7 @@ export const LandingPage: React.FC = () => {
         )}
 
         {/* ── Bento Grid Ecosystem ────────────────────────── */}
+        <div className="ecosystem-contrast-wrap">
         <section className="ecosystem-section" id="ecosystem">
           <div className="section-header">
             <motion.h2
@@ -398,6 +378,7 @@ export const LandingPage: React.FC = () => {
             </motion.div>
           </div>
         </section>
+        </div>
 
         {/* ── Deep Dives (Sticky Stacking) ───────────────── */}
         <div className="deep-dive-container">
