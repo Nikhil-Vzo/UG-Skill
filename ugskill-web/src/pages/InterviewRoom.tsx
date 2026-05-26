@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -9,6 +9,8 @@ import {
 import api from '../lib/api';
 import { useAuthStore } from '../store/auth.store';
 import { connectSocket, disconnectSocket } from '../lib/socket';
+import { ProctoringEngine, type ProctoringEngineStatus, type ProctoringIncident } from '../lib/proctoring/ProctoringEngine';
+import './InterviewRoom.css';
 
 // Suggested questions based on Candidate Branch
 const SUGGESTED_QUESTIONS: Record<string, string[]> = {
@@ -56,6 +58,13 @@ const InterviewRoom: React.FC = () => {
 
   // Proctoring states for Candidate
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [proctoringStatus, setProctoringStatus] = useState<ProctoringEngineStatus>({
+    state: 'idle',
+    fps: 0,
+    faceReady: false,
+    objectReady: false,
+  });
+  const [proctoringIncidents, setProctoringIncidents] = useState<ProctoringIncident[]>([]);
 
   // Chat and WebRTC states
   const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -65,6 +74,12 @@ const InterviewRoom: React.FC = () => {
   const chatSocketRef = useRef<any>(null);
   const interviewSocketRef = useRef<any>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
+  const remoteSocketIdRef = useRef<string | null>(null);
+  const pendingIceCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const proctoringEngineRef = useRef<ProctoringEngine | null>(null);
+  const proctoringEventCooldownRef = useRef<Record<string, number>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -130,12 +145,47 @@ const InterviewRoom: React.FC = () => {
       }),
   });
 
+  const sendInterviewProctoringEvent = useCallback((incident: ProctoringIncident) => {
+    const now = Date.now();
+    const cooldownKey = `${incident.type}:${incident.severity}`;
+    if ((proctoringEventCooldownRef.current[cooldownKey] ?? 0) > now - 8000) return;
+    proctoringEventCooldownRef.current[cooldownKey] = now;
+
+    setProctoringIncidents(prev => [incident, ...prev].slice(0, 8));
+    api.post('/placements/proctoring-events', {
+      session_type: 'live_interview',
+      pg_session_id: sessionId,
+      event_type: incident.type,
+      severity: incident.severity.toLowerCase(),
+      timestamp: new Date(incident.timestamp).toISOString(),
+      metadata: {
+        ...incident.metadata,
+        confidence: incident.confidence,
+        source: 'edge-proctor',
+      },
+    }).catch(() => {
+      // Keep the interview running even when proctoring telemetry has a transient failure.
+    });
+  }, [sessionId]);
+
   // Load stream on mount for waiting room preview
   useEffect(() => {
     let stream: MediaStream | null = null;
     const getMedia = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user',
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+        localStreamRef.current = stream;
         setLocalStream(stream);
       } catch (err) {
         console.error('Failed to get user media', err);
@@ -146,6 +196,7 @@ const InterviewRoom: React.FC = () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
+      localStreamRef.current = null;
     };
   }, []);
 
@@ -161,6 +212,53 @@ const InterviewRoom: React.FC = () => {
       localStream.getVideoTracks().forEach(t => t.enabled = videoOn);
     }
   }, [micOn, videoOn, localStream]);
+
+  useEffect(() => {
+    if (isHR || !isLive || !localStream || !localVideoRef.current) return;
+
+    let cancelled = false;
+    const video = localVideoRef.current;
+
+    const startCandidateProctoring = async () => {
+      try {
+        if (!video.srcObject) {
+          video.srcObject = localStream;
+        }
+        await video.play().catch(() => {});
+
+        if (cancelled) return;
+
+        const engine = new ProctoringEngine({
+          video,
+          onIncident: sendInterviewProctoringEvent,
+          onStatusChange: setProctoringStatus,
+          normalFps: 1,
+          suspiciousFps: 4,
+          incidentCooldownMs: 8000,
+        });
+
+        proctoringEngineRef.current = engine;
+        await engine.initialize();
+        if (!cancelled) engine.start();
+      } catch {
+        setProctoringStatus({
+          state: 'error',
+          fps: 0,
+          faceReady: false,
+          objectReady: false,
+          lastError: 'Camera proctoring unavailable',
+        });
+      }
+    };
+
+    startCandidateProctoring();
+
+    return () => {
+      cancelled = true;
+      proctoringEngineRef.current?.stop();
+      proctoringEngineRef.current = null;
+    };
+  }, [isHR, isLive, localStream, sendInterviewProctoringEvent]);
 
   // Auto-redirect when session is completed or cancelled externally
   useEffect(() => {
@@ -186,10 +284,52 @@ const InterviewRoom: React.FC = () => {
 
   const cleanupPeerConnection = () => {
     if (peerConnectionRef.current) {
+      peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.onconnectionstatechange = null;
+      peerConnectionRef.current.oniceconnectionstatechange = null;
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
+    remoteStreamRef.current = null;
+    remoteSocketIdRef.current = null;
+    pendingIceCandidatesRef.current = [];
     setRemoteStream(null);
+  };
+
+  const addLocalTracksToPeer = (pc: RTCPeerConnection) => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+
+    const existingTrackIds = new Set(pc.getSenders().map(sender => sender.track?.id).filter(Boolean));
+    stream.getTracks().forEach(track => {
+      if (!existingTrackIds.has(track.id)) {
+        pc.addTrack(track, stream);
+      }
+    });
+  };
+
+  const emitRtcSignal = (socket: any, signal: any) => {
+    socket.emit('webrtc:signal', {
+      sessionId,
+      targetSocketId: remoteSocketIdRef.current || undefined,
+      signal,
+    });
+  };
+
+  const flushPendingIceCandidates = async (pc: RTCPeerConnection) => {
+    const queued = pendingIceCandidatesRef.current.splice(0);
+    for (const candidate of queued) {
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+  };
+
+  const createAndSendOffer = async (socket: any, iceRestart = false) => {
+    const pc = getOrCreatePeerConnection(socket);
+    addLocalTracksToPeer(pc);
+    const offer = await pc.createOffer({ iceRestart });
+    await pc.setLocalDescription(offer);
+    emitRtcSignal(socket, { type: 'offer', offer: pc.localDescription });
   };
 
   const getOrCreatePeerConnection = (socket: any) => {
@@ -208,30 +348,45 @@ const InterviewRoom: React.FC = () => {
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log('[WebRTC] Sending ICE candidate');
-        socket.emit('webrtc:signal', {
-          sessionId,
-          signal: { type: 'candidate', candidate: event.candidate }
-        });
+        emitRtcSignal(socket, { type: 'candidate', candidate: event.candidate.toJSON() });
       }
     };
 
     pc.ontrack = (event) => {
-      console.log('[WebRTC] Remote track received', event.streams[0]);
-      setRemoteStream(event.streams[0]);
+      console.log('[WebRTC] Remote track received');
+      const stream = event.streams[0] ?? remoteStreamRef.current ?? new MediaStream();
+      if (!event.streams[0]) {
+        stream.addTrack(event.track);
+      }
+      remoteStreamRef.current = stream;
+      setRemoteStream(stream);
     };
 
-    // Add local tracks
-    if (localStream) {
-      localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
-      });
-    } else {
-      console.warn('[WebRTC] No localStream available to add tracks');
-    }
+    pc.onconnectionstatechange = () => {
+      if (['failed', 'disconnected'].includes(pc.connectionState)) {
+        createAndSendOffer(socket, true).catch(err => console.error('[WebRTC] ICE restart failed', err));
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'failed') {
+        createAndSendOffer(socket, true).catch(err => console.error('[WebRTC] ICE restart failed', err));
+      }
+    };
+
+    addLocalTracksToPeer(pc);
 
     peerConnectionRef.current = pc;
     return pc;
   };
+
+  useEffect(() => {
+    if (!localStream || !peerConnectionRef.current || !interviewSocketRef.current) return;
+    addLocalTracksToPeer(peerConnectionRef.current);
+    if (remoteSocketIdRef.current) {
+      createAndSendOffer(interviewSocketRef.current).catch(err => console.error('[WebRTC] Renegotiation failed', err));
+    }
+  }, [localStream]);
 
   // Socket Connections & WebRTC Signaling Setup
   useEffect(() => {
@@ -256,44 +411,60 @@ const InterviewRoom: React.FC = () => {
       setChatMessages(prev => [...prev, msg]);
     });
 
-    intSocket.on('participant:joined', ({ userId, email }: { userId: string, email: string }) => {
+    intSocket.on('participant:list', ({ participants }: { participants: Array<{ socketId: string; userId: string; email?: string }> }) => {
+      const peer = participants[0];
+      if (!peer) return;
+      remoteSocketIdRef.current = peer.socketId;
+      console.log(`[Socket] Existing participant found: ${peer.email || peer.userId}`);
+    });
+
+    intSocket.on('participant:joined', ({ userId, email, socketId }: { userId: string, email: string, socketId: string }) => {
       console.log(`[Socket] Participant joined: ${email} (${userId})`);
-      const pc = getOrCreatePeerConnection(intSocket);
-      pc.createOffer()
-        .then(offer => pc.setLocalDescription(offer))
-        .then(() => {
-          console.log('[WebRTC] Sent offer to participant');
-          intSocket.emit('webrtc:signal', {
-            sessionId,
-            signal: { type: 'offer', offer: pc.localDescription }
-          });
-        })
+      remoteSocketIdRef.current = socketId;
+      createAndSendOffer(intSocket)
+        .then(() => console.log('[WebRTC] Sent offer to participant'))
         .catch(err => console.error('[WebRTC] Offer creation failed', err));
     });
 
-    intSocket.on('participant:left', ({ userId }: { userId: string }) => {
+    intSocket.on('participant:left', ({ userId, socketId }: { userId: string, socketId: string }) => {
       console.log(`[Socket] Participant left: ${userId}`);
-      cleanupPeerConnection();
+      if (!socketId || socketId === remoteSocketIdRef.current) {
+        cleanupPeerConnection();
+      }
     });
 
-    intSocket.on('webrtc:signal', async ({ signal }: { signal: any, senderId: string }) => {
+    intSocket.on('webrtc:signal', async ({ signal, senderSocketId }: { signal: any, senderId: string, senderSocketId?: string }) => {
       console.log('[WebRTC] Signal received of type:', signal.type);
       try {
+        if (senderSocketId) {
+          remoteSocketIdRef.current = senderSocketId;
+        }
         const pc = getOrCreatePeerConnection(intSocket);
         
         if (signal.type === 'offer') {
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.offer));
+          if (pc.signalingState !== 'stable') {
+            await Promise.all([
+              pc.setLocalDescription({ type: 'rollback' } as RTCSessionDescriptionInit),
+              pc.setRemoteDescription(new RTCSessionDescription(signal.offer)),
+            ]);
+          } else {
+            await pc.setRemoteDescription(new RTCSessionDescription(signal.offer));
+          }
+          addLocalTracksToPeer(pc);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
+          await flushPendingIceCandidates(pc);
           console.log('[WebRTC] Sent answer to participant');
-          intSocket.emit('webrtc:signal', {
-            sessionId,
-            signal: { type: 'answer', answer: pc.localDescription }
-          });
+          emitRtcSignal(intSocket, { type: 'answer', answer: pc.localDescription });
         } else if (signal.type === 'answer') {
           await pc.setRemoteDescription(new RTCSessionDescription(signal.answer));
+          await flushPendingIceCandidates(pc);
         } else if (signal.type === 'candidate' && signal.candidate) {
-          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          } else {
+            pendingIceCandidatesRef.current.push(signal.candidate);
+          }
         }
       } catch (err) {
         console.error('[WebRTC] Error handling signal', err);
@@ -306,6 +477,7 @@ const InterviewRoom: React.FC = () => {
     });
 
     return () => {
+      intSocket.off('participant:list');
       intSocket.off('participant:joined');
       intSocket.off('participant:left');
       intSocket.off('webrtc:signal');
@@ -317,7 +489,7 @@ const InterviewRoom: React.FC = () => {
       disconnectSocket('/chat');
       cleanupPeerConnection();
     };
-  }, [sessionId, isLive, localStream]);
+  }, [sessionId, isLive, isHR, navigate]);
 
   // Bind remote stream to HTML video tag
   useEffect(() => {
@@ -359,9 +531,9 @@ const InterviewRoom: React.FC = () => {
     // Waiting room UI - Beautiful split-screen camera preview and lobby card
     return (
       <div style={styles.page}>
-        <div style={styles.waitingRoomContainer}>
+      <div className="interview-waiting-room" style={styles.waitingRoomContainer}>
           {/* Left Panel: Camera Preview */}
-          <div style={styles.previewPanel}>
+          <div className="interview-preview-panel" style={styles.previewPanel}>
             <div style={styles.previewTitle}>Lobby Room Video Test</div>
             <div style={styles.previewVideoBox}>
               {videoOn && localStream ? (
@@ -390,7 +562,7 @@ const InterviewRoom: React.FC = () => {
           </div>
 
           {/* Right Panel: Lobby Info */}
-          <div style={styles.lobbyPanel}>
+          <div className="interview-lobby-panel" style={styles.lobbyPanel}>
             <div style={styles.lobbyHeader}>
               <span style={{ ...styles.statusBadge, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}>
                 ● Scheduled
@@ -466,11 +638,26 @@ const InterviewRoom: React.FC = () => {
   // Live Room UI - Differentiated by role
   const calculatedScore = Number(((techScore + commScore + probScore) / 3).toFixed(1));
   const suggestedQuestions = session.candidateBranch ? (SUGGESTED_QUESTIONS[session.candidateBranch] ?? DEFAULT_QUESTIONS) : DEFAULT_QUESTIONS;
+  const proctorStatusLabel = proctoringStatus.state === 'running'
+    ? 'ACTIVE'
+    : proctoringStatus.state === 'ready'
+      ? 'READY'
+      : proctoringStatus.state === 'error'
+        ? 'NEEDS ATTENTION'
+        : proctoringStatus.state.toUpperCase();
+  const faceStatus = proctoringStatus.facePresent === false
+    ? 'Not detected'
+    : proctoringStatus.facePresent === true
+      ? 'Detected'
+      : proctoringStatus.faceReady
+        ? 'Scanning'
+        : 'Loading';
+  const latestIncident = proctoringIncidents[0];
 
   return (
-    <div style={styles.liveRoomPage}>
+    <div className="interview-room" style={styles.liveRoomPage}>
       {/* Room Header */}
-      <header style={styles.roomHeader}>
+      <header className="interview-room-header" style={styles.roomHeader}>
         <div>
           <h1 style={styles.roomTitle}>
             {session.companyName ?? 'Interview'}
@@ -508,9 +695,9 @@ const InterviewRoom: React.FC = () => {
       </header>
 
       {/* Main Panel */}
-      <div style={styles.mainArea}>
+      <div className="interview-main-area" style={styles.mainArea}>
         {/* Video stream box */}
-        <div style={styles.videoGrid}>
+        <div className="interview-video-grid" style={styles.videoGrid}>
           <div style={styles.remoteVideoContainer}>
             {remoteStream ? (
               <video
@@ -530,7 +717,7 @@ const InterviewRoom: React.FC = () => {
           </div>
 
           {/* Pip camera preview */}
-          <div style={styles.localPipContainer}>
+          <div className="interview-local-pip" style={styles.localPipContainer}>
             {videoOn && localStream ? (
               <video
                 ref={localVideoRef}
@@ -549,7 +736,7 @@ const InterviewRoom: React.FC = () => {
         </div>
 
         {/* Sidebar */}
-        <div style={styles.sidebar}>
+        <div className="interview-sidebar" style={styles.sidebar}>
           {isHR ? (
             // INTERVIEWER SIDEBAR
             <>
@@ -831,24 +1018,35 @@ const InterviewRoom: React.FC = () => {
                     <div style={styles.proctorStatusHeader}>
                       <Shield size={24} color="#10b981" style={{ animation: 'pulse 2s infinite' }} />
                       <div>
-                        <div style={{ fontWeight: 700, color: '#10b981' }}>AI Proctoring Active</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Status: SECURE</div>
+                        <div style={{ fontWeight: 700, color: proctoringStatus.state === 'error' ? '#ef4444' : '#10b981' }}>
+                          AI Proctoring {proctorStatusLabel}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          Exam engine: face, gaze, object and focus checks
+                        </div>
                       </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
                       <div style={styles.proctorMetricLabel}>Webcam Detection</div>
-                      <div style={styles.proctorMetricValue}><Check size={14} color="#10b981" /> Active</div>
+                      <div style={proctoringStatus.facePresent === false ? styles.proctorMetricValueWarn : styles.proctorMetricValue}>
+                        {proctoringStatus.facePresent === false ? <AlertTriangle size={14} color="#ef4444" /> : <Check size={14} color="#10b981" />}
+                        {faceStatus}
+                      </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
-                      <div style={styles.proctorMetricLabel}>Audio Quality</div>
-                      <div style={styles.proctorMetricValue}><Check size={14} color="#10b981" /> Safe</div>
+                      <div style={styles.proctorMetricLabel}>Frame Analysis</div>
+                      <div style={styles.proctorMetricValue}>
+                        {proctoringStatus.faceReady || proctoringStatus.objectReady ? `${proctoringStatus.fps || 0} fps` : 'Loading'}
+                      </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
-                      <div style={styles.proctorMetricLabel}>Environment Sound</div>
-                      <div style={styles.proctorMetricValue}>Quiet</div>
+                      <div style={styles.proctorMetricLabel}>Object Scan</div>
+                      <div style={proctoringStatus.phonePresent ? styles.proctorMetricValueWarn : styles.proctorMetricValue}>
+                        {proctoringStatus.phonePresent ? 'Phone detected' : proctoringStatus.objectReady ? 'Clear' : 'Loading'}
+                      </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
@@ -862,6 +1060,20 @@ const InterviewRoom: React.FC = () => {
                       <div style={styles.proctorAlertBox}>
                         <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
                         <span>Warning: Tab/Window switches are logged and sent to recruiter.</span>
+                      </div>
+                    )}
+
+                    {latestIncident && (
+                      <div style={styles.proctorAlertBox}>
+                        <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
+                        <span>{latestIncident.message}</span>
+                      </div>
+                    )}
+
+                    {proctoringStatus.lastError && (
+                      <div style={styles.proctorAlertBox}>
+                        <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
+                        <span>{proctoringStatus.lastError}</span>
                       </div>
                     )}
                   </div>
@@ -926,7 +1138,7 @@ const InterviewRoom: React.FC = () => {
       </div>
 
       {/* Control panel buttons */}
-      <footer style={styles.controlsFooter}>
+      <footer className="interview-controls-footer" style={styles.controlsFooter}>
         <div style={styles.controlGroup}>
           <button style={micOn ? styles.controlBtn : styles.controlBtnOff} onClick={() => setMicOn(!micOn)}>
             {micOn ? <Mic size={20} /> : <MicOff size={20} />}
@@ -1061,4 +1273,3 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 export default InterviewRoom;
-
