@@ -29,7 +29,6 @@ import { InterviewPrep } from './pages/InterviewPrep';
 import { ReadinessAnalytics } from './pages/ReadinessAnalytics';
 import { ExamPreFlight } from './pages/ExamPreFlight';
 import { LiveGD } from './pages/LiveGD';
-import { LiveInterview } from './pages/LiveInterview';
 import InterviewRoom from './pages/InterviewRoom';
 import { ResumeBuilder } from './pages/ResumeBuilder';
 import { HRDashboard } from './pages/hr/HRDashboard';
@@ -100,7 +99,7 @@ function App() {
               <Route path="placements/analytics" element={<ReadinessAnalytics />} />
               <Route path="placements/resume-builder" element={<ResumeBuilder />} />
               <Route path="placements/gd/:sessionId" element={<LiveGD />} />
-              <Route path="placements/live/:sessionId" element={<LiveInterview />} />
+              <Route path="placements/live/:sessionId" element={<InterviewRoom />} />
               <Route path="placements/:driveId" element={<CompanyDetail />} />
               <Route path="feedback" element={<Feedback />} />
               <Route path="community" element={<Community />} />
@@ -140,7 +139,7 @@ function App() {
             <Route path="/app/exams/:examId/pre-flight" element={<ProtectedRoute><ExamPreFlight /></ProtectedRoute>} />
             <Route path="/app/exams/:examId" element={<ProtectedRoute><ExamInterface /></ProtectedRoute>} />
             <Route path="/app/exams/results/:attemptId" element={<ProtectedRoute><ExamResults /></ProtectedRoute>} />
-            <Route path="/app/live-interview/:sessionId" element={<ProtectedRoute><LiveInterview /></ProtectedRoute>} />
+            <Route path="/app/live-interview/:sessionId" element={<ProtectedRoute><InterviewRoom /></ProtectedRoute>} />
             <Route path="/app/placements/interview/:sessionId" element={<ProtectedRoute><InterviewRoom /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
