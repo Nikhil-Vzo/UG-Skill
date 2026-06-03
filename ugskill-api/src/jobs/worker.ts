@@ -10,6 +10,11 @@ import { handleAiFrameAnalysis } from './aiFrameAnalysis.job';
 export const startWorkers = () => {
   logger.info('Starting BullMQ Workers...');
 
+  if (!queueConnection || !cdcSyncQueue || !notificationQueue || !aiFrameQueue) {
+    logger.warn('⚠️ BullMQ Workers not started: Redis is disabled or queues are not initialized');
+    return;
+  }
+
   // CDC Worker
   const cdcWorker = new Worker(cdcSyncQueue.name, async (job: Job) => {
     logger.info(`Processing CDC Job ${job.id}`, { name: job.name });

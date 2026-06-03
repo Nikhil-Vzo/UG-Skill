@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth.store';
-import { Clock, FileText, Lock, ChevronRight, BarChart2, Calendar, Loader2, AlertCircle } from 'lucide-react';
+import { Clock, FileText, Lock, ChevronRight, BarChart2, Calendar, Loader2, AlertCircle, ClipboardList } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/loaders/Skeleton';
 import api from '../lib/api';
+import './Exams.css';
 
 /* ─────────── Types ─────────── */
 type ExamStatus = 'upcoming' | 'live' | 'completed' | 'missed';
@@ -23,6 +24,7 @@ interface Exam {
   score?: number;
   maxScore: number;
   isProctored: boolean;
+  attemptId?: string;
 }
 
 /* ─────────── Config ─────────── */
@@ -49,42 +51,41 @@ function formatScheduled(isoStr: string): string {
     return isoStr;
   }
 }
-
 /* ─────────── ExamCard ─────────── */
-const ExamCard: React.FC<{ exam: Exam; onEnter: () => void }> = ({ exam, onEnter }) => {
+const ExamCard: React.FC<{ exam: Exam; onEnter: () => void; onViewReport?: () => void }> = ({ exam, onEnter, onViewReport }) => {
   const cfg = STATUS_CFG[exam.status as ExamStatus] || { label: exam.status || 'Unknown', variant: 'secondary', color: 'var(--text-low)' };
   const canEnter = exam.status === 'live' || exam.status === 'upcoming';
 
   return (
-    <div className="surface-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+    <div className={`exam-card-premium ${exam.status === 'live' ? 'exam-card-premium--live' : ''}`}>
+      <div className="exam-card-header">
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
-            <h3 style={{ color: 'var(--text-high)', fontSize: '1rem', fontWeight: 700, margin: 0 }}>{exam.title}</h3>
+            <h3 className="exam-card-title">{exam.title}</h3>
             <Badge variant={cfg.variant} size="sm">{cfg.label}</Badge>
             {exam.isProctored && <Badge variant="warning" size="sm"><Lock size={10} /> Proctored</Badge>}
           </div>
-          <p style={{ color: 'var(--text-lowest)', fontSize: '0.8125rem', margin: 0 }}>{resolveCourseName(exam.course)}</p>
+          <p className="exam-card-course">{resolveCourseName(exam.course)}</p>
         </div>
         {exam.status === 'completed' && exam.score !== undefined && (
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: exam.score >= 60 ? 'var(--success)' : 'var(--error)', fontFamily: 'var(--font-display)' }}>
-              {exam.score}<span style={{ fontSize: '0.875rem', color: 'var(--text-low)' }}>/{exam.maxScore}</span>
+          <div className="exam-card-score">
+            <div className="exam-card-score-value" style={{ color: exam.score >= 60 ? 'var(--duo-green)' : 'var(--duo-red)' }}>
+              {exam.score}<span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>/{exam.maxScore}</span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-lowest)' }}>Score</div>
+            <div className="exam-card-score-label">Score</div>
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.8125rem', color: 'var(--text-low)' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Clock size={13} />{exam.durationMinutes} min</span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><FileText size={13} />{exam.totalQuestions} questions</span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Calendar size={13} />{formatScheduled(exam.scheduledAt)}</span>
+      <div className="exam-card-meta">
+        <span><Clock size={13} />{exam.durationMinutes} min</span>
+        <span><FileText size={13} />{exam.totalQuestions} questions</span>
+        <span><Calendar size={13} />{formatScheduled(exam.scheduledAt)}</span>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.25rem', borderTop: '1px solid var(--surface-highest)' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.25rem', borderTop: '1px solid var(--duo-border)' }}>
         {exam.status === 'completed' && (
-          <Button variant="ghost" size="sm" leftIcon={<BarChart2 size={14} />}>View Report</Button>
+          <Button variant="ghost" size="sm" leftIcon={<BarChart2 size={14} />} onClick={onViewReport}>View Report</Button>
         )}
         {canEnter && (
           <Button
@@ -103,7 +104,7 @@ const ExamCard: React.FC<{ exam: Exam; onEnter: () => void }> = ({ exam, onEnter
 
 /* ─────────── Exam Skeleton ─────────── */
 const ExamSkeleton: React.FC = () => (
-  <div className="surface-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+  <div className="exam-skeleton-card">
     <Skeleton variant="text" width="60%" height="20px" />
     <Skeleton variant="text" width="40%" />
     <Skeleton variant="text" width="80%" />
@@ -129,12 +130,11 @@ export const Exams: React.FC = () => {
   const filtered = activeTab === 'all' ? exams : exams.filter(e => e.status === activeTab);
 
   const statsConfig = [
-    { label: 'Live Now', val: exams.filter(e => e.status === 'live').length, color: 'var(--success)' },
-    { label: 'Upcoming', val: exams.filter(e => e.status === 'upcoming').length, color: 'var(--primary-glow)' },
-    { label: 'Completed', val: exams.filter(e => e.status === 'completed').length, color: 'var(--text-low)' },
-    { label: 'Missed', val: exams.filter(e => e.status === 'missed').length, color: 'var(--error)' },
+    { label: 'Live Now', val: exams.filter(e => e.status === 'live').length, color: 'var(--duo-green)' },
+    { label: 'Upcoming', val: exams.filter(e => e.status === 'upcoming').length, color: 'var(--duo-blue)' },
+    { label: 'Completed', val: exams.filter(e => e.status === 'completed').length, color: 'var(--text-secondary)' },
+    { label: 'Missed', val: exams.filter(e => e.status === 'missed').length, color: 'var(--duo-red)' },
   ];
-
   const handleEnter = (exam: Exam) => {
     const finalId = exam.id || exam._id;
     // Admins can always enter/preview
@@ -145,74 +145,71 @@ export const Exams: React.FC = () => {
     }
   };
 
-  return (
-    <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Header */}
-      <div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', color: 'var(--text-high)', margin: 0 }}>Exams &amp; Quizzes</h1>
-        <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', marginTop: '0.25rem' }}>Monitor your scheduled tests, enter live exams, and review results.</p>
-      </div>
+  const handleViewReport = (exam: Exam) => {
+    if (exam.attemptId) {
+      navigate(`/app/exams/results/${exam.attemptId}`);
+    }
+  };
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+  return (
+    <div className="exams-page">
+      <header className="exams-hero ugs-hero">
+        <div className="exams-hero-content">
+          <div className="exams-hero-badge"><ClipboardList size={14} /> Assessments</div>
+          <h1 className="ugs-hero-title">Exams &amp; Quizzes</h1>
+          <p className="ugs-hero-subtitle">Monitor scheduled tests, enter live exams, and review your results.</p>
+        </div>
+      </header>
+
+      <div className="exams-stats">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass-panel" style={{ padding: '1rem 1.25rem' }}>
+            <div key={i} className="exams-stat-card">
               <Skeleton variant="text" width="40%" height="32px" className="mb-2" />
               <Skeleton variant="text" width="70%" />
             </div>
           ))
         ) : (
           statsConfig.map(s => (
-            <div key={s.label} className="glass-panel" style={{ padding: '1rem 1.25rem', borderTop: `2px solid ${s.color}` }}>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: s.color, fontFamily: 'var(--font-display)' }}>{s.val}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-low)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</div>
+            <div key={s.label} className="exams-stat-card" style={{ borderBottomColor: s.color }}>
+              <div className="exams-stat-value" style={{ color: s.color }}>{s.val}</div>
+              <div className="exams-stat-label">{s.label}</div>
             </div>
           ))
         )}
       </div>
 
-      {/* Tab filter */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--surface-highest)', paddingBottom: 0 }}>
+      <div className="exams-tabs">
         {(['all', 'live', 'upcoming', 'completed', 'missed'] as const).map(tab => (
           <button
             key={tab}
+            type="button"
             onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '0.625rem 1rem', background: 'none', border: 'none',
-              color: activeTab === tab ? 'var(--primary-glow)' : 'var(--text-low)',
-              fontWeight: activeTab === tab ? 700 : 400,
-              fontSize: '0.875rem', cursor: 'pointer',
-              textTransform: 'capitalize',
-              borderBottom: activeTab === tab ? '2px solid var(--primary-glow)' : '2px solid transparent',
-              marginBottom: -1,
-            }}
+            className={`exams-tab ${activeTab === tab ? 'active' : ''}`}
           >
             {tab}
           </button>
         ))}
-        {isLoading && <Loader2 size={16} style={{ marginLeft: 'auto', alignSelf: 'center', animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />}
+        {isLoading && <Loader2 size={16} className="exams-tab-loader" />}
       </div>
 
-      {/* Error State */}
       {isError && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--error)', padding: '1rem', background: 'var(--error-container)' }}>
+        <div className="exams-error">
           <AlertCircle size={18} />
           <span>Failed to load exams. Ensure the API server is running.</span>
         </div>
       )}
 
-      {/* List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="exams-list">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => <ExamSkeleton key={i} />)
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-lowest)' }}>
+          <div className="exams-empty">
             No exams in this category.
           </div>
         ) : (
           filtered.map(e => (
-            <ExamCard key={e.id || e._id} exam={e} onEnter={() => handleEnter(e)} />
+            <ExamCard key={e.id || e._id} exam={e} onEnter={() => handleEnter(e)} onViewReport={() => handleViewReport(e)} />
           ))
         )}
       </div>

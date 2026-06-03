@@ -29,6 +29,13 @@
       "when": 1779237496933,
       "tag": "0003_fine_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779743493323,
+      "tag": "0004_add_session_fields",
+      "breakpoints": true
     }
   ]
 }

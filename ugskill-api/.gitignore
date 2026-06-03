@@ -37,3 +37,12 @@ Thumbs.db
 drizzle/
 !drizzle/migrations/
 !drizzle.config.ts
+
+# TypeScript build artifacts
+tsconfig.tsbuildinfo
+
+# Compiled JS/d.ts files in src/ (should only live in dist/)
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map

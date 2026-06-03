@@ -22,8 +22,9 @@ import { logger } from '../lib/logger';
 export function registerInterviewNamespace(io: SocketServer): Namespace {
   const interviewNS = io.of('/interview');
 
-  // Track participants per session room
-  const roomParticipants = new Map<string, Set<string>>();
+  // Track sockets per session room so late joiners can discover the peer that is
+  // already present and start WebRTC negotiation reliably.
+  const roomParticipants = new Map<string, Map<string, { userId: string; email?: string }>>();
 
   interviewNS.on('connection', (socket: AuthenticatedSocket) => {
     const { userId, email, roles } = socket.data;
@@ -40,13 +41,22 @@ export function registerInterviewNamespace(io: SocketServer): Namespace {
       await socket.join(room);
 
       if (!roomParticipants.has(room)) {
-        roomParticipants.set(room, new Set());
+        roomParticipants.set(room, new Map());
       }
-      roomParticipants.get(room)!.add(userId);
+
+      const participants = roomParticipants.get(room)!;
+      const existingParticipants = Array.from(participants.entries()).map(([socketId, participant]) => ({
+        socketId,
+        ...participant,
+      }));
+
+      participants.set(socket.id, { userId, email });
+
+      socket.emit('participant:list', { participants: existingParticipants });
 
       // Notify others that someone joined
-      socket.to(room).emit('participant:joined', { userId, email });
-      logger.info(`[/interview] userId=${userId} joined room ${room}. Total: ${roomParticipants.get(room)!.size}`);
+      socket.to(room).emit('participant:joined', { userId, email, socketId: socket.id });
+      logger.info(`[/interview] userId=${userId} joined room ${room}. Total: ${participants.size}`);
     });
 
     // ── Interviewer updates notes (synced to all in room) ─────────────────
@@ -98,15 +108,26 @@ export function registerInterviewNamespace(io: SocketServer): Namespace {
       logger.info(`[/interview] session:end emitted for sessionId=${sessionId}`);
     });
 
+    // ── WebRTC Signaling ──────────────────────────────────────────────────
+    socket.on('webrtc:signal', ({ sessionId, signal, targetSocketId }: { sessionId: string; signal: any; targetSocketId?: string }) => {
+      if (!sessionId || !signal) return;
+      const room = `interview:${sessionId}`;
+      if (targetSocketId) {
+        interviewNS.to(targetSocketId).emit('webrtc:signal', { signal, senderId: userId, senderSocketId: socket.id });
+        return;
+      }
+      socket.to(room).emit('webrtc:signal', { signal, senderId: userId, senderSocketId: socket.id });
+    });
+
     // ── Cleanup on disconnect ─────────────────────────────────────────────
     socket.on('disconnect', async () => {
       logger.debug(`[/interview] Disconnected socketId=${socket.id} userId=${userId}`);
 
       // Notify all rooms this socket was part of
       for (const [room, participants] of roomParticipants.entries()) {
-        if (participants.has(userId)) {
-          participants.delete(userId);
-          socket.to(room).emit('participant:left', { userId });
+        if (participants.has(socket.id)) {
+          participants.delete(socket.id);
+          socket.to(room).emit('participant:left', { userId, socketId: socket.id });
 
           // Clean up empty rooms
           if (participants.size === 0) {

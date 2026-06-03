@@ -1,9 +1,9 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { MAIN_NAV_ITEMS, ADMIN_NAV_ITEMS, FOOTER_NAV_ITEMS } from '../../config/navigation';
 import { useAuthStore } from '../../store/auth.store';
-import { LayoutGrid, Telescope, Building2 } from 'lucide-react';
+import { LayoutGrid, Telescope, Building2, LogOut, Settings, ShieldCheck, GraduationCap } from 'lucide-react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -13,11 +13,27 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const location = useLocation();
+  const navigate = useNavigate();
+  
   const isManager = user?.roles?.some(r => ['admin', 'creator', 'hr', 'super_admin'].includes(r));
   const isHR = user?.roles?.includes('hr');
   const isAdminPortal = location.pathname.startsWith('/app/admin');
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  // Generate monogram from name (e.g., "Nikhil Vzo" -> "NV")
+  const getMonogram = (name?: string) => {
+    if (!name) return 'U';
+    const parts = name.split(' ').filter(Boolean);
+    return parts.length > 1 
+      ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() 
+      : parts[0].substring(0, 2).toUpperCase();
+  };
 
   // Filter admin items based on role
   const visibleAdminItems = ADMIN_NAV_ITEMS.filter(item => {
@@ -63,9 +79,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
                     >
                       <span className="nav-icon">{item.icon}</span>
                       <span className="nav-label">{item.label}</span>
+                      {item.badge && <span className="nav-badge-soon">{item.badge}</span>}
                     </NavLink>
                   </li>
                 ))}
+                
+                {/* Switch to Admin/HR portal */}
+                {isManager && (
+                  <li>
+                    <NavLink
+                      to={isHR ? '/app/admin/placements' : '/app/admin/analytics'}
+                      className="nav-link admin-switch-link"
+                      onClick={() => {
+                        if (window.innerWidth < 768) onClose?.();
+                      }}
+                      style={{ background: 'rgba(99, 102, 241, 0.06)', color: '#6366f1', border: '1px dashed rgba(99, 102, 241, 0.3)', marginTop: '0.5rem' }}
+                    >
+                      <span className="nav-icon"><ShieldCheck size={18} strokeWidth={2.5} /></span>
+                      <span className="nav-label">{isHR ? 'Recruiter Portal' : 'Admin Console'}</span>
+                    </NavLink>
+                  </li>
+                )}
               </ul>
             </div>
           ) : (
@@ -100,9 +134,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
                     >
                       <span className="nav-icon">{item.icon}</span>
                       <span className="nav-label">{item.label}</span>
+                      {item.badge && <span className="nav-badge-soon">{item.badge}</span>}
                     </NavLink>
                   </li>
                 ))}
+
+                {/* Switch back to Student portal */}
+                <li>
+                  <NavLink
+                    to="/app"
+                    end
+                    className="nav-link student-switch-link"
+                    onClick={() => {
+                      if (window.innerWidth < 768) onClose?.();
+                    }}
+                    style={{ background: 'rgba(34, 197, 94, 0.06)', color: '#22c55e', border: '1px dashed rgba(34, 197, 94, 0.3)', marginTop: '0.5rem' }}
+                  >
+                    <span className="nav-icon"><GraduationCap size={18} strokeWidth={2.5} /></span>
+                    <span className="nav-label">Student Portal</span>
+                  </NavLink>
+                </li>
               </ul>
             </div>
           )}
@@ -116,11 +167,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, isOpen, onClose }) 
               key={item.to}
               to={item.to}
               className={({ isActive }) => cn('nav-link', isActive && 'active')}
+              onClick={() => {
+                if (window.innerWidth < 768) onClose?.();
+              }}
             >
               <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
             </NavLink>
           ))}
+
+          {/* Mobile responsive profile card + session controls */}
+          <div className="sidebar-account-section">
+            <div className="sidebar-account-profile">
+              <div className="user-monogram">
+                {getMonogram(user?.fullName)}
+              </div>
+              <div className="user-avatar-copy">
+                <span className="user-avatar-name">{user?.fullName?.split(' ')[0] || 'User'}</span>
+                <span className="user-avatar-role">{user?.roles?.[0] || 'Member'}</span>
+              </div>
+            </div>
+            
+            <div className="dropdown-divider" style={{ margin: '0.35rem 0', opacity: 0.5 }} />
+
+            <button
+              type="button"
+              className="nav-link w-full text-left"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center' }}
+              onClick={() => {
+                onClose?.();
+                navigate('/app/profile');
+              }}
+            >
+              <span className="nav-icon"><Settings size={18} strokeWidth={2.5} /></span>
+              <span className="nav-label">Account Settings</span>
+            </button>
+
+            <button
+              type="button"
+              className="nav-link w-full text-left danger"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', display: 'flex', alignItems: 'center' }}
+              onClick={handleLogout}
+            >
+              <span className="nav-icon"><LogOut size={18} strokeWidth={2.5} /></span>
+              <span className="nav-label">Terminate Session</span>
+            </button>
+          </div>
         </div>
       </aside>
     </>

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Search, Star, Clock, ChevronRight, Loader2, AlertCircle, 
-  Filter, TrendingUp, Sparkles, BookOpen, ArrowRight, Zap,
+  ArrowUpDown, TrendingUp, Sparkles, BookOpen, ArrowRight, Zap,
   LayoutGrid, List, X, ChevronDown
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -155,6 +155,12 @@ export const Discover: React.FC = () => {
     }
   };
 
+  const toolbarTitle = debouncedSearch
+    ? `Results for "${debouncedSearch}"`
+    : activeCategory === 'All'
+      ? 'Trending Courses'
+      : `Trending in ${activeCategory}`;
+
   return (
     <div className="discover-container">
       {/* Hero Section */}
@@ -240,9 +246,7 @@ export const Discover: React.FC = () => {
         {/* Toolbar */}
         <div className="discover-toolbar">
           <div className="discover-toolbar-left">
-            <h2 className="discover-toolbar-title">
-              {debouncedSearch ? `Results for "${debouncedSearch}"` : `Trending in ${activeCategory}`}
-            </h2>
+            <h2 className="discover-toolbar-title">{toolbarTitle}</h2>
             <span className="discover-toolbar-count">
               {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''}
             </span>
@@ -254,16 +258,16 @@ export const Discover: React.FC = () => {
                 className="discover-sort-trigger"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                <Filter size={16} />
+                <ArrowUpDown size={16} />
                 <span>Sort</span>
                 <ChevronDown size={14} className={showFilters ? 'rotate' : ''} />
               </button>
               {showFilters && (
                 <div className="discover-sort-menu">
-                  {SORT_OPTIONS.map(option => (
+                  {SORT_OPTIONS.map((option, i) => (
                     <button
                       key={option.value}
-                      className={`discover-sort-option ${sortBy === option.value ? 'active' : ''}`}
+                      className={`discover-sort-option ${sortBy === option.value ? 'active' : ''} ${i < SORT_OPTIONS.length - 1 ? 'has-separator' : ''}`}
                       onClick={() => {
                         setSortBy(option.value);
                         setShowFilters(false);
@@ -315,10 +319,11 @@ export const Discover: React.FC = () => {
           ) : filteredCourses.length === 0 ? (
             <EmptyState search={debouncedSearch} />
           ) : (
-            filteredCourses.map(course => (
+            filteredCourses.map((course, index) => (
               <CourseCard
                 key={course._id}
                 course={course}
+                accentIndex={index % 4}
                 viewMode={viewMode}
                 onClick={() => navigate(`/app/courses/${course._id}`)}
                 onEnroll={(e) => handleEnroll(e, course._id)}
@@ -392,8 +397,11 @@ function FeaturedCourseCard({
   );
 }
 
+const CARD_ACCENTS = ['blue', 'green', 'orange', 'purple'] as const;
+
 function CourseCard({ 
   course, 
+  accentIndex,
   viewMode, 
   onClick, 
   onEnroll, 
@@ -402,6 +410,7 @@ function CourseCard({
   getLevelColor
 }: { 
   course: CatalogCourse; 
+  accentIndex: number;
   viewMode: ViewMode;
   onClick: () => void;
   onEnroll: (e: React.MouseEvent) => void;
@@ -411,9 +420,10 @@ function CourseCard({
 }) {
   return (
     <div 
-      className={`discover-course-card ${viewMode}`}
+      className={`discover-course-card ${viewMode} accent-${CARD_ACCENTS[accentIndex]}`}
       onClick={onClick}
     >
+      <div className="discover-course-accent" aria-hidden="true" />
       {/* Thumbnail */}
       <div className="discover-course-thumbnail">
         {course.thumbnailUrl ? (
@@ -453,7 +463,7 @@ function CourseCard({
           )}
           {course.durationWeeks != null && (
             <div className="discover-course-stat">
-              <Clock size={16} />
+              <Clock size={16} className="discover-course-clock" />
               <span>{course.durationWeeks} Weeks</span>
             </div>
           )}

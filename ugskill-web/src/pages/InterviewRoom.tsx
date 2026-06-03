@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuthStore } from '../store/auth.store';
+import { connectSocket, disconnectSocket } from '../lib/socket';
+import { ProctoringEngine, type ProctoringEngineStatus, type ProctoringIncident } from '../lib/proctoring/ProctoringEngine';
+import './InterviewRoom.css';
 
 // Suggested questions based on Candidate Branch
 const SUGGESTED_QUESTIONS: Record<string, string[]> = {
@@ -55,6 +58,30 @@ const InterviewRoom: React.FC = () => {
 
   // Proctoring states for Candidate
   const [tabSwitches, setTabSwitches] = useState(0);
+  const [proctoringStatus, setProctoringStatus] = useState<ProctoringEngineStatus>({
+    state: 'idle',
+    fps: 0,
+    faceReady: false,
+    objectReady: false,
+  });
+  const [proctoringIncidents, setProctoringIncidents] = useState<ProctoringIncident[]>([]);
+
+  // Chat and WebRTC states
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInputValue, setChatInputValue] = useState('');
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+  const chatSocketRef = useRef<any>(null);
+  const interviewSocketRef = useRef<any>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
+  const remoteSocketIdRef = useRef<string | null>(null);
+  const pendingIceCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const proctoringEngineRef = useRef<ProctoringEngine | null>(null);
+  const proctoringEventCooldownRef = useRef<Record<string, number>>({});
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -67,6 +94,7 @@ const InterviewRoom: React.FC = () => {
 
   const isHR = user?.roles?.some(r => ['hr', 'admin', 'super_admin', 'placement_coordinator'].includes(r));
   const isStudent = user?.roles?.includes('student');
+  const isLive = session?.status === 'in_progress' || joined;
 
   useEffect(() => {
     if (isHR) {
@@ -83,6 +111,9 @@ const InterviewRoom: React.FC = () => {
       setJoined(true);
       queryClient.invalidateQueries({ queryKey: ['interview-session', sessionId] });
     },
+    onError: (err: any) => {
+      console.error('Failed to join interview room:', err?.response?.data || err);
+    }
   });
 
   const endMutation = useMutation({
@@ -94,7 +125,7 @@ const InterviewRoom: React.FC = () => {
   });
 
   const submitEvaluationMutation = useMutation({
-    mutationFn: (payload: { score: number; maxScore: number; status: 'completed' }) =>
+    mutationFn: (payload: { score: number; maxScore: number; status: 'completed'; feedbackNotes?: string }) =>
       api.patch(`/placements/sessions/${sessionId}/status`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interview-session', sessionId] });
@@ -102,12 +133,59 @@ const InterviewRoom: React.FC = () => {
     },
   });
 
+  const sendProctoringEventMutation = useMutation({
+    mutationFn: (eventType: string) =>
+      api.post('/placements/proctoring-events', {
+        session_type: 'live_interview',
+        pg_session_id: sessionId,
+        event_type: eventType,
+        severity: 'medium',
+        timestamp: new Date().toISOString(),
+        metadata: { sessionId }
+      }),
+  });
+
+  const sendInterviewProctoringEvent = useCallback((incident: ProctoringIncident) => {
+    const now = Date.now();
+    const cooldownKey = `${incident.type}:${incident.severity}`;
+    if ((proctoringEventCooldownRef.current[cooldownKey] ?? 0) > now - 8000) return;
+    proctoringEventCooldownRef.current[cooldownKey] = now;
+
+    setProctoringIncidents(prev => [incident, ...prev].slice(0, 8));
+    api.post('/placements/proctoring-events', {
+      session_type: 'live_interview',
+      pg_session_id: sessionId,
+      event_type: incident.type,
+      severity: incident.severity.toLowerCase(),
+      timestamp: new Date(incident.timestamp).toISOString(),
+      metadata: {
+        ...incident.metadata,
+        confidence: incident.confidence,
+        source: 'edge-proctor',
+      },
+    }).catch(() => {
+      // Keep the interview running even when proctoring telemetry has a transient failure.
+    });
+  }, [sessionId]);
+
   // Load stream on mount for waiting room preview
   useEffect(() => {
     let stream: MediaStream | null = null;
     const getMedia = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user',
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+        localStreamRef.current = stream;
         setLocalStream(stream);
       } catch (err) {
         console.error('Failed to get user media', err);
@@ -118,6 +196,7 @@ const InterviewRoom: React.FC = () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
+      localStreamRef.current = null;
     };
   }, []);
 
@@ -134,6 +213,53 @@ const InterviewRoom: React.FC = () => {
     }
   }, [micOn, videoOn, localStream]);
 
+  useEffect(() => {
+    if (isHR || !isLive || !localStream || !localVideoRef.current) return;
+
+    let cancelled = false;
+    const video = localVideoRef.current;
+
+    const startCandidateProctoring = async () => {
+      try {
+        if (!video.srcObject) {
+          video.srcObject = localStream;
+        }
+        await video.play().catch(() => {});
+
+        if (cancelled) return;
+
+        const engine = new ProctoringEngine({
+          video,
+          onIncident: sendInterviewProctoringEvent,
+          onStatusChange: setProctoringStatus,
+          normalFps: 1,
+          suspiciousFps: 4,
+          incidentCooldownMs: 8000,
+        });
+
+        proctoringEngineRef.current = engine;
+        await engine.initialize();
+        if (!cancelled) engine.start();
+      } catch {
+        setProctoringStatus({
+          state: 'error',
+          fps: 0,
+          faceReady: false,
+          objectReady: false,
+          lastError: 'Camera proctoring unavailable',
+        });
+      }
+    };
+
+    startCandidateProctoring();
+
+    return () => {
+      cancelled = true;
+      proctoringEngineRef.current?.stop();
+      proctoringEngineRef.current = null;
+    };
+  }, [isHR, isLive, localStream, sendInterviewProctoringEvent]);
+
   // Auto-redirect when session is completed or cancelled externally
   useEffect(() => {
     if (session?.status === 'completed' || session?.status === 'cancelled') {
@@ -141,17 +267,241 @@ const InterviewRoom: React.FC = () => {
     }
   }, [session?.status, isHR, navigate]);
 
-  // Tab switch proctoring logic for Candidate
+  // Tab switch proctoring logic for Candidate — sends event to backend
   useEffect(() => {
     if (isHR) return;
     const handleBlur = () => {
       setTabSwitches(prev => prev + 1);
+      if (joined) {
+        sendProctoringEventMutation.mutate('tab_switch');
+      }
     };
     window.addEventListener('blur', handleBlur);
     return () => {
       window.removeEventListener('blur', handleBlur);
     };
-  }, [isHR]);
+  }, [isHR, joined]);
+
+  const cleanupPeerConnection = () => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.onicecandidate = null;
+      peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.onconnectionstatechange = null;
+      peerConnectionRef.current.oniceconnectionstatechange = null;
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    remoteStreamRef.current = null;
+    remoteSocketIdRef.current = null;
+    pendingIceCandidatesRef.current = [];
+    setRemoteStream(null);
+  };
+
+  const addLocalTracksToPeer = (pc: RTCPeerConnection) => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+
+    const existingTrackIds = new Set(pc.getSenders().map(sender => sender.track?.id).filter(Boolean));
+    stream.getTracks().forEach(track => {
+      if (!existingTrackIds.has(track.id)) {
+        pc.addTrack(track, stream);
+      }
+    });
+  };
+
+  const emitRtcSignal = (socket: any, signal: any) => {
+    socket.emit('webrtc:signal', {
+      sessionId,
+      targetSocketId: remoteSocketIdRef.current || undefined,
+      signal,
+    });
+  };
+
+  const flushPendingIceCandidates = async (pc: RTCPeerConnection) => {
+    const queued = pendingIceCandidatesRef.current.splice(0);
+    for (const candidate of queued) {
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+  };
+
+  const createAndSendOffer = async (socket: any, iceRestart = false) => {
+    const pc = getOrCreatePeerConnection(socket);
+    addLocalTracksToPeer(pc);
+    const offer = await pc.createOffer({ iceRestart });
+    await pc.setLocalDescription(offer);
+    emitRtcSignal(socket, { type: 'offer', offer: pc.localDescription });
+  };
+
+  const getOrCreatePeerConnection = (socket: any) => {
+    if (peerConnectionRef.current) {
+      return peerConnectionRef.current;
+    }
+
+    console.log('[WebRTC] Creating RTCPeerConnection…');
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+      ]
+    });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('[WebRTC] Sending ICE candidate');
+        emitRtcSignal(socket, { type: 'candidate', candidate: event.candidate.toJSON() });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      console.log('[WebRTC] Remote track received');
+      const stream = event.streams[0] ?? remoteStreamRef.current ?? new MediaStream();
+      if (!event.streams[0]) {
+        stream.addTrack(event.track);
+      }
+      remoteStreamRef.current = stream;
+      setRemoteStream(stream);
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (['failed', 'disconnected'].includes(pc.connectionState)) {
+        createAndSendOffer(socket, true).catch(err => console.error('[WebRTC] ICE restart failed', err));
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === 'failed') {
+        createAndSendOffer(socket, true).catch(err => console.error('[WebRTC] ICE restart failed', err));
+      }
+    };
+
+    addLocalTracksToPeer(pc);
+
+    peerConnectionRef.current = pc;
+    return pc;
+  };
+
+  useEffect(() => {
+    if (!localStream || !peerConnectionRef.current || !interviewSocketRef.current) return;
+    addLocalTracksToPeer(peerConnectionRef.current);
+    if (remoteSocketIdRef.current) {
+      createAndSendOffer(interviewSocketRef.current).catch(err => console.error('[WebRTC] Renegotiation failed', err));
+    }
+  }, [localStream]);
+
+  // Socket Connections & WebRTC Signaling Setup
+  useEffect(() => {
+    if (!sessionId || !isLive) return;
+
+    console.log('[Sockets] Connecting to /chat and /interview namespaces…');
+    
+    const intSocket = connectSocket('/interview');
+    interviewSocketRef.current = intSocket;
+
+    const chatSocket = connectSocket('/chat');
+    chatSocketRef.current = chatSocket;
+
+    intSocket.emit('join:session', { sessionId });
+    chatSocket.emit('join:room', { room: `interview:${sessionId}` });
+
+    chatSocket.on('message:history', (history: any[]) => {
+      setChatMessages(history);
+    });
+
+    chatSocket.on('message:received', (msg: any) => {
+      setChatMessages(prev => [...prev, msg]);
+    });
+
+    intSocket.on('participant:list', ({ participants }: { participants: Array<{ socketId: string; userId: string; email?: string }> }) => {
+      const peer = participants[0];
+      if (!peer) return;
+      remoteSocketIdRef.current = peer.socketId;
+      console.log(`[Socket] Existing participant found: ${peer.email || peer.userId}`);
+    });
+
+    intSocket.on('participant:joined', ({ userId, email, socketId }: { userId: string, email: string, socketId: string }) => {
+      console.log(`[Socket] Participant joined: ${email} (${userId})`);
+      remoteSocketIdRef.current = socketId;
+      createAndSendOffer(intSocket)
+        .then(() => console.log('[WebRTC] Sent offer to participant'))
+        .catch(err => console.error('[WebRTC] Offer creation failed', err));
+    });
+
+    intSocket.on('participant:left', ({ userId, socketId }: { userId: string, socketId: string }) => {
+      console.log(`[Socket] Participant left: ${userId}`);
+      if (!socketId || socketId === remoteSocketIdRef.current) {
+        cleanupPeerConnection();
+      }
+    });
+
+    intSocket.on('webrtc:signal', async ({ signal, senderSocketId }: { signal: any, senderId: string, senderSocketId?: string }) => {
+      console.log('[WebRTC] Signal received of type:', signal.type);
+      try {
+        if (senderSocketId) {
+          remoteSocketIdRef.current = senderSocketId;
+        }
+        const pc = getOrCreatePeerConnection(intSocket);
+        
+        if (signal.type === 'offer') {
+          if (pc.signalingState !== 'stable') {
+            await Promise.all([
+              pc.setLocalDescription({ type: 'rollback' } as RTCSessionDescriptionInit),
+              pc.setRemoteDescription(new RTCSessionDescription(signal.offer)),
+            ]);
+          } else {
+            await pc.setRemoteDescription(new RTCSessionDescription(signal.offer));
+          }
+          addLocalTracksToPeer(pc);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await flushPendingIceCandidates(pc);
+          console.log('[WebRTC] Sent answer to participant');
+          emitRtcSignal(intSocket, { type: 'answer', answer: pc.localDescription });
+        } else if (signal.type === 'answer') {
+          await pc.setRemoteDescription(new RTCSessionDescription(signal.answer));
+          await flushPendingIceCandidates(pc);
+        } else if (signal.type === 'candidate' && signal.candidate) {
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          } else {
+            pendingIceCandidatesRef.current.push(signal.candidate);
+          }
+        }
+      } catch (err) {
+        console.error('[WebRTC] Error handling signal', err);
+      }
+    });
+
+    intSocket.on('session:ended', () => {
+      console.log('[Socket] Session ended by interviewer');
+      navigate(isHR ? '/hr/dashboard' : '/app/placements');
+    });
+
+    return () => {
+      intSocket.off('participant:list');
+      intSocket.off('participant:joined');
+      intSocket.off('participant:left');
+      intSocket.off('webrtc:signal');
+      intSocket.off('session:ended');
+      chatSocket.off('message:history');
+      chatSocket.off('message:received');
+      
+      disconnectSocket('/interview');
+      disconnectSocket('/chat');
+      cleanupPeerConnection();
+    };
+  }, [sessionId, isLive, isHR, navigate]);
+
+  // Bind remote stream to HTML video tag
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
+  // Scroll to bottom of chat when messages change
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, activeTab]);
 
   if (isLoading) {
     return (
@@ -175,15 +525,15 @@ const InterviewRoom: React.FC = () => {
     );
   }
 
-  const isLive = session.status === 'in_progress' || joined;
+
 
   if (!isLive) {
     // Waiting room UI - Beautiful split-screen camera preview and lobby card
     return (
       <div style={styles.page}>
-        <div style={styles.waitingRoomContainer}>
+      <div className="interview-waiting-room" style={styles.waitingRoomContainer}>
           {/* Left Panel: Camera Preview */}
-          <div style={styles.previewPanel}>
+          <div className="interview-preview-panel" style={styles.previewPanel}>
             <div style={styles.previewTitle}>Lobby Room Video Test</div>
             <div style={styles.previewVideoBox}>
               {videoOn && localStream ? (
@@ -212,7 +562,7 @@ const InterviewRoom: React.FC = () => {
           </div>
 
           {/* Right Panel: Lobby Info */}
-          <div style={styles.lobbyPanel}>
+          <div className="interview-lobby-panel" style={styles.lobbyPanel}>
             <div style={styles.lobbyHeader}>
               <span style={{ ...styles.statusBadge, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}>
                 ● Scheduled
@@ -223,10 +573,16 @@ const InterviewRoom: React.FC = () => {
               <h1 style={styles.lobbyTitle}>
                 {session.companyName ?? 'Placement Drive'}
               </h1>
-              <div style={{ color: '#2dd4bf', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ color: '#2dd4bf', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <Tv size={15} />
-                <span>Round {session.roundNumber || 1} · {session.driveName ?? 'Interview Session'}</span>
+                <span>Round {session.roundNumber || 1}{session.roundLabel ? ` · ${session.roundLabel}` : ` · ${session.driveName ?? 'Interview Session'}`}</span>
               </div>
+              {session.scheduledAt && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
+                  <Clock size={13} />
+                  <span>Scheduled: {new Date(session.scheduledAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                </div>
+              )}
 
               {isHR && (
                 <div style={styles.candidateDetailsCard}>
@@ -255,7 +611,7 @@ const InterviewRoom: React.FC = () => {
               )}
             </div>
 
-            <div style={{ marginTop: 'auto' }}>
+             <div style={{ marginTop: 'auto' }}>
               <button
                 onClick={() => joinMutation.mutate()}
                 disabled={joinMutation.isPending}
@@ -264,6 +620,11 @@ const InterviewRoom: React.FC = () => {
                 {joinMutation.isPending ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Video size={18} />}
                 {joinMutation.isPending ? 'Joining…' : isHR ? 'Join & Admit Candidate' : 'Join Interview Room'}
               </button>
+              {joinMutation.isError && (
+                <div style={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '0.5rem', textAlign: 'center', fontWeight: 500 }}>
+                  {(joinMutation.error as any)?.response?.data?.error?.message || (joinMutation.error as any)?.message || 'Failed to join the room.'}
+                </div>
+              )}
               <button onClick={() => navigate(isHR ? '/hr/dashboard' : '/app/placements')} style={styles.lobbyBackLink}>
                 <ArrowLeft size={14} /> Back to Dashboard
               </button>
@@ -277,11 +638,26 @@ const InterviewRoom: React.FC = () => {
   // Live Room UI - Differentiated by role
   const calculatedScore = Number(((techScore + commScore + probScore) / 3).toFixed(1));
   const suggestedQuestions = session.candidateBranch ? (SUGGESTED_QUESTIONS[session.candidateBranch] ?? DEFAULT_QUESTIONS) : DEFAULT_QUESTIONS;
+  const proctorStatusLabel = proctoringStatus.state === 'running'
+    ? 'ACTIVE'
+    : proctoringStatus.state === 'ready'
+      ? 'READY'
+      : proctoringStatus.state === 'error'
+        ? 'NEEDS ATTENTION'
+        : proctoringStatus.state.toUpperCase();
+  const faceStatus = proctoringStatus.facePresent === false
+    ? 'Not detected'
+    : proctoringStatus.facePresent === true
+      ? 'Detected'
+      : proctoringStatus.faceReady
+        ? 'Scanning'
+        : 'Loading';
+  const latestIncident = proctoringIncidents[0];
 
   return (
-    <div style={styles.liveRoomPage}>
+    <div className="interview-room" style={styles.liveRoomPage}>
       {/* Room Header */}
-      <header style={styles.roomHeader}>
+      <header className="interview-room-header" style={styles.roomHeader}>
         <div>
           <h1 style={styles.roomTitle}>
             {session.companyName ?? 'Interview'}
@@ -301,7 +677,8 @@ const InterviewRoom: React.FC = () => {
                   submitEvaluationMutation.mutate({
                     status: 'completed',
                     score: calculatedScore,
-                    maxScore: 10
+                    maxScore: 10,
+                    feedbackNotes: feedbackNotes || undefined
                   });
                 }
               }}
@@ -318,20 +695,29 @@ const InterviewRoom: React.FC = () => {
       </header>
 
       {/* Main Panel */}
-      <div style={styles.mainArea}>
+      <div className="interview-main-area" style={styles.mainArea}>
         {/* Video stream box */}
-        <div style={styles.videoGrid}>
+        <div className="interview-video-grid" style={styles.videoGrid}>
           <div style={styles.remoteVideoContainer}>
-            <div style={styles.remotePlaceholder}>
-              <User size={64} color="rgba(255,255,255,0.2)" />
-              <div style={styles.remoteNameBadge}>
-                {isHR ? (session.candidateName || 'Candidate') : 'Interviewer'}
+            {remoteStream ? (
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <div style={styles.remotePlaceholder}>
+                <User size={64} color="rgba(255,255,255,0.2)" />
               </div>
+            )}
+            <div style={styles.remoteNameBadge}>
+              {isHR ? (session.candidateName || 'Candidate') : 'Interviewer'}
             </div>
           </div>
 
           {/* Pip camera preview */}
-          <div style={styles.localPipContainer}>
+          <div className="interview-local-pip" style={styles.localPipContainer}>
             {videoOn && localStream ? (
               <video
                 ref={localVideoRef}
@@ -350,7 +736,7 @@ const InterviewRoom: React.FC = () => {
         </div>
 
         {/* Sidebar */}
-        <div style={styles.sidebar}>
+        <div className="interview-sidebar" style={styles.sidebar}>
           {isHR ? (
             // INTERVIEWER SIDEBAR
             <>
@@ -372,6 +758,12 @@ const InterviewRoom: React.FC = () => {
                   style={activeTab === 'guide' ? styles.sidebarTabActive : styles.sidebarTab}
                 >
                   AI Guide
+                </button>
+                <button 
+                  onClick={() => setActiveTab('chat')} 
+                  style={activeTab === 'chat' ? styles.sidebarTabActive : styles.sidebarTab}
+                >
+                  Chat
                 </button>
               </div>
 
@@ -488,7 +880,8 @@ const InterviewRoom: React.FC = () => {
                         submitEvaluationMutation.mutate({
                           status: 'completed',
                           score: calculatedScore,
-                          maxScore: 10
+                          maxScore: 10,
+                          feedbackNotes: feedbackNotes || undefined
                         });
                       }}
                       disabled={submitEvaluationMutation.isPending}
@@ -517,6 +910,59 @@ const InterviewRoom: React.FC = () => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {activeTab === 'chat' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', minHeight: 250 }}>
+                      <div style={styles.systemMessage}>AI proctor connected to room</div>
+                      {chatMessages.map((msg, i) => {
+                        const isSelf = msg.senderId === user?.id;
+                        return (
+                          <div
+                            key={msg._id || i}
+                            style={{
+                              alignSelf: isSelf ? 'flex-end' : 'flex-start',
+                              maxWidth: '85%',
+                              background: isSelf ? 'linear-gradient(135deg,#06b6d4,#3b82f6)' : 'rgba(255,255,255,0.06)',
+                              borderRadius: 12,
+                              padding: '0.625rem 0.875rem',
+                              border: isSelf ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                            }}
+                          >
+                            <div style={{ fontSize: '0.6875rem', color: isSelf ? 'rgba(255,255,255,0.7)' : '#94a3b8', fontWeight: 600, marginBottom: '0.25rem' }}>
+                              {isSelf ? 'You' : msg.senderEmail.split('@')[0]}
+                            </div>
+                            <div style={{ fontSize: '0.8125rem', color: '#f8fafc', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!chatInputValue.trim()) return;
+                        chatSocketRef.current?.emit('message:send', {
+                          room: `interview:${sessionId}`,
+                          content: chatInputValue.trim()
+                        });
+                        setChatInputValue('');
+                      }}
+                      style={styles.chatInputWrapper}
+                    >
+                      <input 
+                        type="text" 
+                        value={chatInputValue}
+                        onChange={(e) => setChatInputValue(e.target.value)}
+                        placeholder="Type message to candidate..." 
+                        style={{ ...styles.chatInput, background: 'rgba(255,255,255,0.04)' }} 
+                      />
+                    </form>
                   </div>
                 )}
               </div>
@@ -572,24 +1018,35 @@ const InterviewRoom: React.FC = () => {
                     <div style={styles.proctorStatusHeader}>
                       <Shield size={24} color="#10b981" style={{ animation: 'pulse 2s infinite' }} />
                       <div>
-                        <div style={{ fontWeight: 700, color: '#10b981' }}>AI Proctoring Active</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Status: SECURE</div>
+                        <div style={{ fontWeight: 700, color: proctoringStatus.state === 'error' ? '#ef4444' : '#10b981' }}>
+                          AI Proctoring {proctorStatusLabel}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          Exam engine: face, gaze, object and focus checks
+                        </div>
                       </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
                       <div style={styles.proctorMetricLabel}>Webcam Detection</div>
-                      <div style={styles.proctorMetricValue}><Check size={14} color="#10b981" /> Active</div>
+                      <div style={proctoringStatus.facePresent === false ? styles.proctorMetricValueWarn : styles.proctorMetricValue}>
+                        {proctoringStatus.facePresent === false ? <AlertTriangle size={14} color="#ef4444" /> : <Check size={14} color="#10b981" />}
+                        {faceStatus}
+                      </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
-                      <div style={styles.proctorMetricLabel}>Audio Quality</div>
-                      <div style={styles.proctorMetricValue}><Check size={14} color="#10b981" /> Safe</div>
+                      <div style={styles.proctorMetricLabel}>Frame Analysis</div>
+                      <div style={styles.proctorMetricValue}>
+                        {proctoringStatus.faceReady || proctoringStatus.objectReady ? `${proctoringStatus.fps || 0} fps` : 'Loading'}
+                      </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
-                      <div style={styles.proctorMetricLabel}>Environment Sound</div>
-                      <div style={styles.proctorMetricValue}>Quiet</div>
+                      <div style={styles.proctorMetricLabel}>Object Scan</div>
+                      <div style={proctoringStatus.phonePresent ? styles.proctorMetricValueWarn : styles.proctorMetricValue}>
+                        {proctoringStatus.phonePresent ? 'Phone detected' : proctoringStatus.objectReady ? 'Clear' : 'Loading'}
+                      </div>
                     </div>
 
                     <div style={styles.proctorMetricRow}>
@@ -605,22 +1062,73 @@ const InterviewRoom: React.FC = () => {
                         <span>Warning: Tab/Window switches are logged and sent to recruiter.</span>
                       </div>
                     )}
+
+                    {latestIncident && (
+                      <div style={styles.proctorAlertBox}>
+                        <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
+                        <span>{latestIncident.message}</span>
+                      </div>
+                    )}
+
+                    {proctoringStatus.lastError && (
+                      <div style={styles.proctorAlertBox}>
+                        <AlertTriangle size={15} color="#ef4444" style={{ flexShrink: 0 }} />
+                        <span>{proctoringStatus.lastError}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {activeTab === 'chat' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <div style={styles.chatMessageList}>
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', minHeight: 250 }}>
                       <div style={styles.systemMessage}>AI proctor connected to room</div>
+                      {chatMessages.map((msg, i) => {
+                        const isSelf = msg.senderId === user?.id;
+                        return (
+                          <div
+                            key={msg._id || i}
+                            style={{
+                              alignSelf: isSelf ? 'flex-end' : 'flex-start',
+                              maxWidth: '85%',
+                              background: isSelf ? 'linear-gradient(135deg,#06b6d4,#3b82f6)' : 'rgba(255,255,255,0.06)',
+                              borderRadius: 12,
+                              padding: '0.625rem 0.875rem',
+                              border: isSelf ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                            }}
+                          >
+                            <div style={{ fontSize: '0.6875rem', color: isSelf ? 'rgba(255,255,255,0.7)' : '#94a3b8', fontWeight: 600, marginBottom: '0.25rem' }}>
+                              {isSelf ? 'You' : msg.senderEmail.split('@')[0]}
+                            </div>
+                            <div style={{ fontSize: '0.8125rem', color: '#f8fafc', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
                     </div>
-                    <div style={styles.chatInputWrapper}>
+
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!chatInputValue.trim()) return;
+                        chatSocketRef.current?.emit('message:send', {
+                          room: `interview:${sessionId}`,
+                          content: chatInputValue.trim()
+                        });
+                        setChatInputValue('');
+                      }}
+                      style={styles.chatInputWrapper}
+                    >
                       <input 
                         type="text" 
+                        value={chatInputValue}
+                        onChange={(e) => setChatInputValue(e.target.value)}
                         placeholder="Type message to interviewer..." 
-                        style={styles.chatInput} 
-                        disabled
+                        style={{ ...styles.chatInput, background: 'rgba(255,255,255,0.04)' }} 
                       />
-                    </div>
+                    </form>
                   </div>
                 )}
               </div>
@@ -630,7 +1138,7 @@ const InterviewRoom: React.FC = () => {
       </div>
 
       {/* Control panel buttons */}
-      <footer style={styles.controlsFooter}>
+      <footer className="interview-controls-footer" style={styles.controlsFooter}>
         <div style={styles.controlGroup}>
           <button style={micOn ? styles.controlBtn : styles.controlBtnOff} onClick={() => setMicOn(!micOn)}>
             {micOn ? <Mic size={20} /> : <MicOff size={20} />}
@@ -639,7 +1147,7 @@ const InterviewRoom: React.FC = () => {
             {videoOn ? <Video size={20} /> : <VideoOff size={20} />}
           </button>
           <button style={styles.controlBtn} title="Chat" onClick={() => {
-            setActiveTab(isHR ? 'grading' : 'chat');
+            setActiveTab('chat');
           }}>
             <MessageSquare size={20} />
           </button>
@@ -765,4 +1273,3 @@ const styles: Record<string, React.CSSProperties> = {
 };
 
 export default InterviewRoom;
-

@@ -11,12 +11,12 @@
 
 .ug-sidebar {
   position: fixed;
-  top: 56px; /* below new navbar */
+  top: 56px;
   left: 0;
   bottom: 0;
-  width: 250px;
+  width: 248px;
   background-color: var(--surface-0);
-  border-right: 1px solid var(--border-subtle);
+  border-right: 2px solid var(--duo-border, var(--border-subtle));
   z-index: 45;
   display: flex;
   flex-direction: column;
@@ -57,11 +57,11 @@
 
 .sidebar-nav {
   flex: 1;
-  padding: 1.5rem 0.75rem;
+  padding: 1.25rem 0.625rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .nav-section {
@@ -93,28 +93,16 @@
 .nav-link {
   display: flex;
   align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-md);
+  padding: 0.5625rem 0.75rem;
+  border-radius: 12px;
   color: var(--text-secondary);
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   font-family: var(--font-body);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   position: relative;
-}
-
-.nav-link::before {
-  content: '';
-  position: absolute;
-  left: -0.75rem;
-  top: 50%;
-  transform: translateY(-50%) scaleY(0);
-  width: 3px;
-  height: 16px;
-  background-color: var(--primary);
-  border-radius: 0 4px 4px 0;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 2px solid transparent;
 }
 
 .nav-link:hover {
@@ -122,20 +110,16 @@
   color: var(--text-primary);
 }
 
-/* Active State */
+/* Active State — Duolingo pill */
 .nav-link.active {
-  background-color: var(--surface-1);
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.nav-link.active::before {
-  transform: translateY(-50%) scaleY(1);
+  background-color: var(--duo-blue-subtle, var(--primary-subtle));
+  color: var(--duo-text-dark, var(--text-primary));
+  border-color: var(--duo-border, var(--border-subtle));
+  box-shadow: 0 2px 0 var(--duo-border, var(--border-default));
 }
 
 .nav-link.active .nav-icon {
-  color: var(--primary);
-  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4));
+  color: var(--duo-blue, var(--primary));
 }
 
 .nav-icon {
@@ -154,9 +138,9 @@
 }
 
 .sidebar-footer {
-  padding: 1rem 0.75rem;
-  border-top: 1px solid var(--border-subtle);
-  background: var(--surface-1);
+  padding: 0.875rem 0.625rem;
+  border-top: 2px solid var(--duo-border, var(--border-subtle));
+  background: var(--surface-0);
 }
 
 /* Mobile Handlers */
@@ -172,5 +156,81 @@
   .sidebar-overlay.open {
     display: block;
     opacity: 1;
+  }
+}
+
+.nav-badge-soon {
+  margin-left: auto;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  background: var(--duo-orange-subtle, #fff8ee);
+  border: 1px solid var(--duo-orange, #ff9600);
+  color: var(--duo-orange-hover, #e07b00);
+  border-radius: 6px;
+}
+
+/* Responsive Account Section in Sidebar */
+.sidebar-account-section {
+  display: none;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--surface-2, rgba(0, 0, 0, 0.03));
+  border: 2px solid var(--duo-border);
+  border-radius: 12px;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sidebar-account-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0.35rem;
+}
+
+.sidebar-account-profile .user-monogram {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--duo-green), var(--duo-green-hover));
+  border-bottom: 3px solid rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.sidebar-account-profile .user-avatar-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.sidebar-account-profile .user-avatar-name {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-account-profile .user-avatar-role {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .sidebar-account-section {
+    display: flex;
   }
 }

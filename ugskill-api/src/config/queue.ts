@@ -9,34 +9,32 @@ export const queueConnection = env.REDIS_URL
   : new (require('ioredis-mock').default)();
 
 if (!env.REDIS_URL) {
-  logger.warn('⚠️ REDIS_URL not provided — using ioredis-mock for BullMQ queues');
+  logger.warn('⚠️ REDIS_URL not provided — BullMQ queues are disabled');
 }
 
-const defaultOptions: QueueOptions = {
-  connection: queueConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 2000,
-    },
-    removeOnComplete: true,
-  },
-};
+const defaultOptions: QueueOptions | null = queueConnection
+  ? {
+      connection: queueConnection,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000,
+        },
+        removeOnComplete: true,
+      },
+    }
+  : null;
 
-// Queue Definitions
-export const cdcSyncQueue = new Queue('cdc-sync', defaultOptions);
-export const notificationQueue = new Queue('notifications', defaultOptions);
-export const scoringQueue = new Queue('scoring', defaultOptions);
-export const aiFrameQueue = new Queue('ai-frame-analysis', defaultOptions);
+// Queue Definitions — null when Redis is unavailable
+export const cdcSyncQueue = defaultOptions ? new Queue('cdc-sync', defaultOptions) : null;
+export const notificationQueue = defaultOptions ? new Queue('notifications', defaultOptions) : null;
+export const scoringQueue = defaultOptions ? new Queue('scoring', defaultOptions) : null;
+export const aiFrameQueue = defaultOptions ? new Queue('ai-frame-analysis', defaultOptions) : null;
 
 // Helper to gracefully shutdown queues
 export const closeQueues = async () => {
   logger.info('Closing BullMQ queues...');
-  await Promise.all([
-    cdcSyncQueue.close(),
-    notificationQueue.close(),
-    scoringQueue.close(),
-    aiFrameQueue.close(),
-  ]);
+  const queues = [cdcSyncQueue, notificationQueue, scoringQueue, aiFrameQueue].filter(Boolean);
+  await Promise.all(queues.map((q) => q!.close()));
 };

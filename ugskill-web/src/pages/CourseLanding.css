@@ -1,0 +1,207 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   CourseLanding Page Stylesheet (Vengeance Theme)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.course-landing-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  background-color: transparent;
+}
+
+.course-landing-hero-banner {
+  padding: 2rem 2.25rem;
+  border-radius: var(--radius-xl);
+}
+
+.course-landing-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.course-landing-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.course-landing-hero-subtitle {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: var(--font-size-md);
+  margin: 0;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .course-landing-page {
+    padding: var(--space-8) var(--space-6);
+  }
+}
+
+.course-landing-back-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.2s ease;
+  width: fit-content;
+}
+
+.course-landing-back-btn:hover {
+  color: var(--primary);
+}
+
+.course-landing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .course-landing-grid {
+    grid-template-columns: 1fr 360px;
+    gap: var(--space-8);
+  }
+}
+
+.course-landing-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0; /* Prevent horizontal overflow from content */
+}
+
+.course-landing-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-3);
+}
+
+.course-landing-hero-meta strong {
+  color: #ffffff;
+}
+
+.course-landing-outcomes-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .course-landing-outcomes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.course-landing-outcome-item {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  font-size: var(--font-size-sm);
+  color: var(--text-medium);
+}
+
+.course-landing-curriculum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.course-landing-reviews-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.course-landing-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.course-landing-review-card {
+  padding: var(--space-4);
+}
+
+.course-landing-aside {
+  position: relative;
+}
+
+@media (min-width: 992px) {
+  .course-landing-aside {
+    position: sticky;
+    top: 5rem;
+  }
+}
+
+.course-landing-preview-thumb {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.course-landing-preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(28, 176, 246, 0.25) 0%, transparent 70%);
+}
+
+.course-landing-play-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--duo-blue);
+  border-bottom: 4px solid var(--duo-blue-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(28, 176, 246, 0.35);
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: #ffffff;
+}
+
+.course-landing-play-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 28px rgba(28, 176, 246, 0.45);
+}
+
+.course-landing-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-default);
+}

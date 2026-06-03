@@ -189,7 +189,9 @@ export const createPlacementSessionSchema = z.object({
     driveId: z.string().uuid().optional(),
     companyId: z.string().uuid().optional(),
     mongoFlowId: z.string().optional(),
-    roundNumber: z.number().int().optional()
+    roundNumber: z.number().int().optional(),
+    scheduledAt: z.string().datetime().optional(),
+    roundLabel: z.string().max(80).optional(),
   })
 });
 
@@ -202,6 +204,7 @@ export const updatePlacementSessionStatusSchema = z.object({
     mongoAttemptId: z.string().optional(),
     recordingUrl: z.string().url().optional(),
     proctoringVerdict: z.string().optional(),
+    feedbackNotes: z.string().optional(),
     startedAt: z.string().datetime().optional(),
     endedAt: z.string().datetime().optional()
   })
@@ -216,7 +219,8 @@ export const placementSessionQuerySchema = z.object({
     companyId: z.string().uuid().optional(),
     type: z.string().optional(),
     status: z.string().optional(),
-    active: z.union([z.literal('true'), z.literal('false')]).optional()
+    active: z.union([z.literal('true'), z.literal('false')]).optional(),
+    sessionType: z.enum(['live_interview', 'mock_interview', 'group_discussion']).optional()
   })
 });
 

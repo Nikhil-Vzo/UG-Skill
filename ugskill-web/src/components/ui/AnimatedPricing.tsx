@@ -20,7 +20,7 @@ const CheckIcon = () => (
     width="16" height="16" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="3"
     strokeLinecap="round" strokeLinejoin="round"
-    style={{ color: '#818cf8', flexShrink: 0 }}
+    style={{ color: '#58cc02', flexShrink: 0 }}
   >
     <path d="M20 6 9 17l-5-5" />
   </svg>
@@ -52,7 +52,7 @@ export const AnimatedPricingCard = ({
         <p className="anim-pricing-desc">{description}</p>
       </div>
       <div className="anim-pricing-price-wrap">
-        <span className="anim-pricing-price">${price}</span>
+        <span className="anim-pricing-price">₹{price}</span>
         <span className="anim-pricing-period">/mo</span>
       </div>
       <div className="anim-pricing-divider"></div>

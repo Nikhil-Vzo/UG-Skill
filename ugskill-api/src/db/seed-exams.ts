@@ -90,12 +90,13 @@ async function seedExams() {
       status: 'published',
       stem: 'What is the capital of AI?',
       options: [
-        { id: '1', text: 'Silicon Valley' },
-        { id: '2', text: 'Neural Network' },
-        { id: '3', text: 'Data Center' },
-        { id: '4', text: 'Localhost' }
+        { id: '1', text: 'Silicon Valley', isCorrect: false },
+        { id: '2', text: 'Neural Network', isCorrect: false },
+        { id: '3', text: 'Data Center', isCorrect: false },
+        { id: '4', text: 'Localhost', isCorrect: true }
       ],
-      explanation: 'It is a joke.',
+      correct_answer: 'Localhost',
+      explanation: 'It is a joke — the real capital of AI is localhost (your own machine)!',
       pg_created_by: admin.id,
       source_exam: 'E2E Proctoring Test Exam',
       marks: 10,
@@ -107,11 +108,12 @@ async function seedExams() {
       status: 'published',
       stem: 'Which protocol is used by the proctoring engine for real-time alerts?',
       options: [
-        { id: '1', text: 'HTTP/1.1' },
-        { id: '2', text: 'WebSockets (Socket.io)' },
-        { id: '3', text: 'FTP' },
-        { id: '4', text: 'SMTP' }
+        { id: '1', text: 'HTTP/1.1', isCorrect: false },
+        { id: '2', text: 'WebSockets (Socket.io)', isCorrect: true },
+        { id: '3', text: 'FTP', isCorrect: false },
+        { id: '4', text: 'SMTP', isCorrect: false }
       ],
+      correct_answer: 'WebSockets (Socket.io)',
       explanation: 'Socket.io enables real-time duplex communication.',
       pg_created_by: admin.id,
       source_exam: 'E2E Proctoring Test Exam',

@@ -8,6 +8,10 @@ export const registerEventListeners = () => {
   // Catch-all CDC events wrapper
   const handleCdcEvent = async (eventType: string, payload: any) => {
     try {
+      if (!cdcSyncQueue) {
+        logger.debug(`CDC sync queue is disabled; skipping sync for ${eventType}`);
+        return;
+      }
       await cdcSyncQueue.add(eventType, {
         eventType,
         payload,

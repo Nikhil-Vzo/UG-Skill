@@ -1,17 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ─── Design Tokens ──────────────────────────────────────────── */
 :root {
-  /* ── Palette: Professional Slate ── */
-  --bg-app:               #0f1115;
-  --bg-overlay:           rgba(15, 17, 21, 0.92);
+  --bg-app:               #ffffff;   /* Pure white main base */
+  --bg-overlay:           rgba(255, 255, 255, 0.95);
 
-  /* Surface elevation stack - refined grays */
-  --surface-0:            #0f1115;  /* app background */
-  --surface-1:            #181a20;  /* card base */
-  --surface-2:            #1f2229;  /* elevated card */
-  --surface-3:            #262a32;  /* tooltips, popovers */
-  --surface-4:            #2e333c;  /* highest emphasis */
+  /* Duolingo Brand Palette */
+  --duo-green:            #58cc02;
+  --duo-green-hover:      #46a302;
+  --duo-green-subtle:     #f1fcf0;
+  
+  --duo-blue:             #1cb0f6;
+  --duo-blue-hover:       #1899d6;
+  --duo-blue-subtle:      #f0f9ff;
+  
+  --duo-orange:           #ff9600;
+  --duo-orange-hover:     #e07b00;
+  --duo-orange-subtle:    #fff8ee;
+  
+  --duo-purple:           #ce82ff;
+  --duo-purple-hover:     #aa60eb;
+  --duo-purple-subtle:    #f9f0ff;
+  
+  --duo-red:              #ff4b4b;
+  --duo-red-hover:        #ea2b2b;
+  --duo-red-subtle:       #fff0f0;
+  
+  --duo-yellow:           #ffc800;
+  --duo-yellow-hover:     #e6b400;
+  
+  --duo-border:           #e5e5e5;
+  --duo-text-dark:        #3c3c3c;
+  --duo-text-muted:       #777777;
+
+  /* Surface elevations using Duolingo-styled soft grey fills */
+  --surface-0:            #ffffff;  /* app background */
+  --surface-1:            #ffffff;  /* card base */
+  --surface-2:            #f7f7f7;  /* elevated card / inset wells */
+  --surface-3:            #efeef1;  /* dropdowns, hovers */
+  --surface-4:            #e5e5e5;  /* headers, default borders */
 
   /* Legacy aliases — keep for compatibility */
   --bg-color:             var(--bg-app);
@@ -21,49 +48,53 @@
   --surface-container-high:   var(--surface-3);
   --surface-bright:           var(--surface-4);
 
-  /* ── Primary: Refined Blue (Professional) ── */
-  --primary:              #60a5fa;   /* blue-400 */
-  --primary-dim:          #3b82f6;   /* blue-500 */
-  --primary-deep:         #1d4ed8;   /* blue-700 */
-  --primary-hover:        #4b9efa;   /* blue-450 */
-  --primary-fg:           #0a0c10;   /* text on primary */
-  --primary-subtle:       rgba(59, 130, 246, 0.12);
-  --primary-glow:         rgba(59, 130, 246, 0.35);
+  /* ── Primary: Duolingo Blue ── */
+  --primary:              var(--duo-blue);
+  --primary-dim:          var(--duo-blue-hover);
+  --primary-deep:         #0f7fb8;
+  --primary-hover:        var(--duo-blue-hover);
+  --primary-fg:           #ffffff;
+  --primary-subtle:       var(--duo-blue-subtle);
+  --primary-glow:         rgba(28, 176, 246, 0.15);
+
+  /* Pink-radient (Aura-Blue to Pink Gradient) */
+  --gradient-primary:     linear-gradient(135deg, #1cb0f6 0%, #ff4b4b 100%);
+  --gradient-primary-dark: linear-gradient(135deg, #1899d6 0%, #ea2b2b 100%);
 
   /* ── Semantic Text ── */
-  --text-primary:         #f1f5f9;   /* slate-100 - near white */
-  --text-secondary:       #94a3b8;   /* slate-400 - muted */
-  --text-tertiary:        #64748b;   /* slate-500 - disabled */
-  --text-inverse:         #0f1115;
+  --text-primary:         var(--duo-text-dark);   /* high contrast dark text */
+  --text-secondary:       var(--duo-text-muted);  /* muted grey */
+  --text-tertiary:        #afafaf;                /* disabled/light text */
+  --text-inverse:         #ffffff;
 
   /* Legacy text aliases */
   --on-surface:           var(--text-primary);
   --on-surface-variant:   var(--text-secondary);
   --text-high:            var(--text-primary);
-  --text-medium:          #cbd5e1;      /* slate-300 */
+  --text-medium:          #4b4b4b;
   --text-low:             var(--text-secondary);
   --text-lowest:          var(--text-tertiary);
 
   /* ── Borders ── */
-  --border-subtle:        rgba(148, 163, 184, 0.06);
-  --border-default:       rgba(148, 163, 184, 0.12);
-  --border-emphasis:      rgba(96, 165, 250, 0.3);
-  --border-focus:         #3b82f6;
+  --border-subtle:        var(--duo-border);
+  --border-default:       var(--duo-border);
+  --border-emphasis:      rgba(28, 176, 246, 0.2);
+  --border-focus:         var(--duo-blue);
 
   /* Legacy border aliases */
-  --outline:              rgba(148, 163, 184, 0.15);
+  --outline:              var(--duo-border);
   --outline-variant:      var(--border-default);
   --border-neon:          var(--border-emphasis);
 
-  /* ── Status Palette - Professional tones ── */
-  --color-success:        #22c55e;   /* green-500 */
-  --color-success-subtle: rgba(34, 197, 94, 0.12);
-  --color-warning:        #f59e0b;   /* amber-500 */
-  --color-warning-subtle: rgba(245, 158, 11, 0.12);
-  --color-error:          #ef4444;   /* red-500 */
-  --color-error-subtle:   rgba(239, 68, 68, 0.12);
-  --color-info:           #38bdf8;   /* sky-400 */
-  --color-info-subtle:    rgba(56, 189, 248, 0.12);
+  /* ── Status Palette ── */
+  --color-success:        var(--duo-green);
+  --color-success-subtle: var(--duo-green-subtle);
+  --color-warning:        var(--duo-orange);
+  --color-warning-subtle: var(--duo-orange-subtle);
+  --color-error:          var(--duo-red);
+  --color-error-subtle:   var(--duo-red-subtle);
+  --color-info:           var(--duo-blue);
+  --color-info-subtle:    var(--duo-blue-subtle);
 
   /* Legacy status aliases */
   --success:              var(--color-success);
@@ -71,13 +102,13 @@
   --warning:              var(--color-warning);
 
   /* ── Accent colors per section ── */
-  --accent-placement:     #f59e0b;  /* amber-500 */
-  --accent-exam:          #ef4444;  /* red-500 */
-  --accent-community:     #22c55e;  /* green-500 */
-  --accent-gd:            #38bdf8;  /* sky-400 */
+  --accent-placement:     var(--duo-orange);
+  --accent-exam:          var(--duo-red);
+  --accent-community:     var(--duo-green);
+  --accent-gd:            var(--duo-blue);
 
   /* ── Typography ── */
-  --font-display:         'Space Grotesk', sans-serif;
+  --font-display:         'Outfit', 'Space Grotesk', sans-serif;
   --font-body:            'Inter', sans-serif;
   --font-mono:            'JetBrains Mono', 'Fira Code', monospace;
 
@@ -92,17 +123,18 @@
   --space-10: 2.5rem;    /* 40px */
   --space-12: 3rem;      /* 48px */
 
-  /* ── Radius ── */
+  /* ── Radius - Duolingo 12px/16px system ── */
   --radius-sm:   4px;
-  --radius-md:   8px;
-  --radius-lg:   12px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
   --radius-full: 9999px;
 
-  /* ── Shadow - Professional depth ── */
-  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md:  0 4px 6px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.2);
-  --shadow-lg:  0 10px 25px rgba(0, 0, 0, 0.3), 0 20px 40px rgba(0, 0, 0, 0.25);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.25), 0 0 40px rgba(59, 130, 246, 0.1);
+  /* ── Shadows ── */
+  --shadow-sm:  0 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md:  0 4px 0 rgba(0, 0, 0, 0.05);
+  --shadow-lg:  0 8px 0 rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 20px rgba(28, 176, 246, 0.10), 0 0 40px rgba(28, 176, 246, 0.05);
 
   /* ── Z-index ── */
   --z-base:    1;
@@ -157,7 +189,7 @@ a:hover { color: var(--primary-hover); }
 
 /* Glassmorphism — used for the navbar and floating panels */
 .glass-panel {
-  background: rgba(13, 15, 26, 0.75);
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--border-default);
@@ -166,25 +198,25 @@ a:hover { color: var(--primary-hover); }
 /* Standard surface card */
 .surface-card {
   background-color: var(--surface-1);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   position: relative;
-  /* Subtle top-edge highlight */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    var(--shadow-sm);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .surface-card:hover {
-  border-color: var(--border-default);
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 /* Inset well for nested sections */
 .surface-well {
-  background-color: var(--surface-0);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 /* Elevated panel */
@@ -364,3 +396,229 @@ a:hover { color: var(--primary-hover); }
   background: var(--border-subtle);
   width: 100%;
 }
+
+/* ─── Tactile 3D Buttons ─────────────────────────────────────────────── */
+.btn-3d {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.1rem 2.5rem;
+  border-radius: 16px;
+  font-family: var(--font-display, 'Outfit', sans-serif);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+  transform: translateY(0);
+}
+
+.btn-3d:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5);
+}
+
+.btn-3d-large {
+  padding: 1.25rem 3rem;
+  font-size: 1.25rem;
+}
+
+.btn-3d-tactile {
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-bottom-width 0.1s ease, background-color 0.15s ease !important;
+  transform: translateY(0);
+  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
+}
+
+.btn-3d-tactile:active:not(:disabled) {
+  transform: translateY(5px) !important;
+  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5) !important;
+  border-bottom-width: 0px !important;
+}
+
+/* 3D Button Color Variants with increased selector specificity to remove !important */
+a.btn-3d, button.btn-3d, .btn-3d {
+  color: #ffffff;
+}
+
+a.btn-3d-green, button.btn-3d-green, .btn-3d-green,
+a.hero-cta-main, button.hero-cta-main, .hero-cta-main {
+  --btn-shadow-color: var(--duo-green-hover, #46a302);
+  background-color: var(--duo-green, #58cc02);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-green:hover:not(:disabled),
+a.hero-cta-main:hover:not(:disabled),
+button.btn-3d-green:hover:not(:disabled),
+button.hero-cta-main:hover:not(:disabled),
+.btn-3d-green:hover:not(:disabled),
+.hero-cta-main:hover:not(:disabled) {
+  background-color: #61e002;
+}
+
+a.btn-3d-blue, button.btn-3d-blue, .btn-3d-blue {
+  --btn-shadow-color: var(--duo-blue-hover, #1899d6);
+  background-color: var(--duo-blue, #1cb0f6);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-blue:hover:not(:disabled),
+button.btn-3d-blue:hover:not(:disabled),
+.btn-3d-blue:hover:not(:disabled) {
+  background-color: #24beff;
+}
+
+a.btn-3d-red, button.btn-3d-red, .btn-3d-red {
+  --btn-shadow-color: var(--duo-red-hover, #ea2b2b);
+  background-color: var(--duo-red, #ff4b4b);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-red:hover:not(:disabled),
+button.btn-3d-red:hover:not(:disabled),
+.btn-3d-red:hover:not(:disabled) {
+  background-color: #ff6666;
+}
+
+a.btn-3d-purple, button.btn-3d-purple, .btn-3d-purple {
+  --btn-shadow-color: var(--duo-purple-hover, #aa60eb);
+  background-color: var(--duo-purple, #ce82ff);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-purple:hover:not(:disabled),
+button.btn-3d-purple:hover:not(:disabled),
+.btn-3d-purple:hover:not(:disabled) {
+  background-color: #db9cff;
+}
+
+a.btn-3d-orange, button.btn-3d-orange, .btn-3d-orange {
+  --btn-shadow-color: var(--duo-orange-hover, #e07b00);
+  background-color: var(--duo-orange, #ff9600);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-orange:hover:not(:disabled),
+button.btn-3d-orange:hover:not(:disabled),
+.btn-3d-orange:hover:not(:disabled) {
+  background-color: #ffa41a;
+}
+
+a.btn-3d-secondary, button.btn-3d-secondary, .btn-3d-secondary,
+a.hero-cta-secondary, button.hero-cta-secondary, .hero-cta-secondary {
+  --btn-shadow-color: var(--duo-border, #e5e5e5);
+  background-color: #ffffff;
+  border: 2px solid var(--duo-border, #e5e5e5);
+  color: var(--duo-text-dark, #3c3c3c);
+  box-shadow: 0 3px 0 var(--btn-shadow-color);
+}
+a.btn-3d-secondary:hover:not(:disabled),
+a.hero-cta-secondary:hover:not(:disabled),
+button.btn-3d-secondary:hover:not(:disabled),
+button.hero-cta-secondary:hover:not(:disabled),
+.btn-3d-secondary:hover:not(:disabled),
+.hero-cta-secondary:hover:not(:disabled) {
+  background-color: #f7f7f7;
+}
+a.btn-3d-secondary:active:not(:disabled),
+a.hero-cta-secondary:active:not(:disabled),
+button.btn-3d-secondary:active:not(:disabled),
+button.hero-cta-secondary:active:not(:disabled),
+.btn-3d-secondary:active:not(:disabled),
+.hero-cta-secondary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0px 0 var(--btn-shadow-color);
+}
+
+/* Gradient Duolingo Variant */
+a.btn-3d-gradient, button.btn-3d-gradient, .btn-3d-gradient {
+  --btn-shadow-color: #ea2b2b;
+  background: var(--gradient-primary);
+  box-shadow: 0 5px 0 var(--btn-shadow-color);
+  border: none;
+}
+a.btn-3d-gradient:hover:not(:disabled),
+button.btn-3d-gradient:hover:not(:disabled),
+.btn-3d-gradient:hover:not(:disabled) {
+  background: var(--gradient-primary-dark);
+}
+
+/* Adjust general status and outline-soon classes */
+.nav-header-container .nav-badge-soon {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  background: var(--duo-blue-subtle) !important;
+  border: 1px solid rgba(28, 176, 246, 0.2) !important;
+  color: var(--duo-blue);
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Shared page hero (Dashboard / Discover treatment) ───────────────────── */
+.ugs-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl, 16px);
+  background-color: #1cb0f6;
+  background-image:
+    radial-gradient(circle at 15% 15%, rgba(88, 204, 2, 0.95) 0%, transparent 60%),
+    radial-gradient(circle at 85% 85%, rgba(0, 242, 254, 0.9) 0%, transparent 65%),
+    radial-gradient(circle at 50% 50%, rgba(206, 130, 255, 0.35) 0%, transparent 70%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.18'/%3E%3C/svg%3E"),
+    linear-gradient(135deg, #1cb0f6 0%, #58cc02 100%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 5px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px -5px rgba(28, 176, 246, 0.28);
+}
+
+.ugs-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: fit-content;
+  backdrop-filter: blur(4px);
+}
+
+.ugs-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.ugs-hero-subtitle {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.9375rem;
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+

@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Skeleton } from '../components/loaders/Skeleton';
 import api from '../lib/api';
+import './CourseLanding.css';
 
 /* ─────────────────────── Types ─────────────────────── */
 interface Lecture {
@@ -215,31 +216,32 @@ export const CourseLanding: React.FC = () => {
   })) ?? course.curriculum ?? [];
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+    <div className="course-landing-page">
       {/* Back */}
       <button
         onClick={() => navigate(-1)}
-        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', marginBottom: '1.5rem', fontSize: '0.875rem' }}
+        className="course-landing-back-btn"
       >
         <ArrowLeft size={16} /> Back to Catalog
       </button>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '2.5rem', alignItems: 'start' }}>
+      <div className="course-landing-grid">
         {/* ─── Left Column ─── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="course-landing-left">
           {/* Hero */}
-          <div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <div className="course-landing-hero-banner ugs-hero">
+            <div className="course-landing-hero-inner">
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
               {course.category && <Badge variant="primary">{course.category}</Badge>}
               {course.level && <Badge variant="default">{course.level}</Badge>}
               {(course.tags ?? []).map(t => <Badge key={t} variant="outline" size="sm">{t}</Badge>)}
             </div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.25rem', color: 'var(--text-high)', lineHeight: 1.2, marginBottom: '0.75rem' }}>
+            <h1 className="course-landing-hero-title">
               {course.title}
             </h1>
-            {course.subtitle && <p style={{ color: 'var(--text-low)', fontSize: '1.125rem', marginBottom: '1.5rem' }}>{course.subtitle}</p>}
+            {course.subtitle && <p className="course-landing-hero-subtitle">{course.subtitle}</p>}
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', fontSize: '0.875rem', color: 'var(--text-low)' }}>
+            <div className="course-landing-hero-meta" style={{ color: 'rgba(255,255,255,0.92)' }}>
               {course.rating != null && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <Star size={15} fill="var(--primary-glow)" color="var(--primary-glow)" />
@@ -263,17 +265,18 @@ export const CourseLanding: React.FC = () => {
                 </div>
               )}
             </div>
+            </div>
           </div>
 
           {/* What You'll Learn */}
           {(course.whatYouLearn ?? []).length > 0 && (
-            <div className="glass-panel" style={{ padding: '1.5rem' }}>
-              <h2 style={{ color: 'var(--text-high)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.125rem', fontFamily: 'var(--font-display)' }}>
-                <Award size={20} color="var(--primary-glow)" /> Cognitive Outcomes
+            <div className="glass-panel" style={{ padding: 'var(--space-5)' }}>
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Award size={20} color="var(--primary)" /> Cognitive Outcomes
               </h2>
-              <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.75rem' }}>
+              <ul className="course-landing-outcomes-grid">
                 {course.whatYouLearn!.map((item, i) => (
-                  <li key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', fontSize: '0.875rem', color: 'var(--text-medium)' }}>
+                  <li key={i} className="course-landing-outcome-item">
                     <CheckCircle size={15} color="var(--success)" style={{ flexShrink: 0, marginTop: '2px' }} />
                     <span>{item}</span>
                   </li>
@@ -285,10 +288,10 @@ export const CourseLanding: React.FC = () => {
           {/* Curriculum */}
           {curriculum.length > 0 && (
             <div>
-              <h2 style={{ color: 'var(--text-high)', marginBottom: '1rem', fontSize: '1.125rem', fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-lg font-bold mb-4">
                 Curriculum Architecture
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div className="course-landing-curriculum">
                 {curriculum.map(s => (
                   <CurriculumSection key={s._id} section={s} enrolled={isEnrolled} courseId={courseId!} />
                 ))}
@@ -296,8 +299,8 @@ export const CourseLanding: React.FC = () => {
             </div>
           )}
 
-          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <h2 style={{ color: 'var(--text-high)', margin: 0, fontSize: '1.125rem', fontFamily: 'var(--font-display)' }}>
+          <div className="glass-panel course-landing-reviews-panel" style={{ padding: 'var(--space-5)' }}>
+            <h2 className="text-lg font-bold">
               Course Reviews
             </h2>
 
@@ -335,20 +338,20 @@ export const CourseLanding: React.FC = () => {
               {reviewMut.isError && <span style={{ color: 'var(--error)', fontSize: '0.8125rem' }}>Could not save review.</span>}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="course-landing-reviews-list">
               {loadingReviews ? (
                 <Skeleton variant="rectangular" height={72} />
               ) : reviews.length === 0 ? (
-                <p style={{ color: 'var(--text-low)', margin: 0, fontSize: '0.875rem' }}>No reviews yet.</p>
+                <p className="text-sm text-secondary">No reviews yet.</p>
               ) : (
                 reviews.map(review => (
-                  <div key={review.id} className="surface-well" style={{ padding: '0.875rem' }}>
-                    <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.35rem' }}>
+                  <div key={review.id} className="surface-well course-landing-review-card">
+                    <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem' }}>
                       {[1, 2, 3, 4, 5].map(value => (
                         <Star key={value} size={14} fill={value <= review.rating ? 'var(--primary-glow)' : 'none'} color={value <= review.rating ? 'var(--primary-glow)' : 'var(--text-lowest)'} />
                       ))}
                     </div>
-                    <p style={{ color: 'var(--text-medium)', margin: 0, fontSize: '0.875rem', lineHeight: 1.5 }}>
+                    <p className="text-sm text-primary" style={{ margin: 0, lineHeight: 1.5 }}>
                       {review.reviewText || 'No written feedback.'}
                     </p>
                   </div>
@@ -359,19 +362,18 @@ export const CourseLanding: React.FC = () => {
         </div>
 
         {/* ─── Right Column — Sticky Enroll Card ─── */}
-        <aside style={{ position: 'sticky', top: '5rem' }}>
-          <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <aside className="course-landing-aside">
+          <div className="glass-panel" style={{ padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
             {/* Preview Thumbnail */}
-            <div style={{
-              height: '180px',
-              background: thumbnailUrl ? `url(${thumbnailUrl}) center/cover` : 'var(--surface-highest)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative', overflow: 'hidden',
-              border: '1px solid var(--surface-highest)'
-            }}>
-              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 50%, rgba(99,102,241,0.2) 0%, transparent 70%)' }} />
+            <div 
+              className="course-landing-preview-thumb"
+              style={{
+                background: thumbnailUrl ? `url(${thumbnailUrl}) center/cover` : 'var(--surface-highest)'
+              }}
+            >
+              <div className="course-landing-preview-overlay" />
               <div
-                style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 0 30px rgba(99,102,241,0.4)', position: 'relative' }}
+                className="course-landing-play-btn"
                 onClick={() => navigate(`/app/courses/${courseId}/player`)}
               >
                 <Play size={24} color="white" fill="white" />
@@ -411,22 +413,22 @@ export const CourseLanding: React.FC = () => {
               <p style={{ color: 'var(--error)', fontSize: '0.8125rem', textAlign: 'center' }}>Enrollment failed. Please try again.</p>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--surface-highest)' }}>
+            <div className="course-landing-features">
               {['Full lifetime access', 'Certificate of completion', 'AI-powered study assistance', 'Downloadable resources'].map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--text-low)' }}>
+                <div key={f} className="flex items-center gap-2 text-sm text-secondary">
                   <CheckCircle size={13} color="var(--success)" /> {f}
                 </div>
               ))}
             </div>
 
             {/* Instructor */}
-            <div className="surface-well" style={{ padding: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary-low)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 700, color: 'var(--primary-glow)', flexShrink: 0 }}>
+            <div className="surface-well" style={{ padding: 'var(--space-3)', display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 700, color: 'var(--primary)', flexShrink: 0 }}>
                 {instructorName[0]}
               </div>
               <div>
-                <div style={{ color: 'var(--text-high)', fontWeight: 600, fontSize: '0.9375rem' }}>{instructorName}</div>
-                {instructorTitle && <div style={{ color: 'var(--text-low)', fontSize: '0.75rem' }}>{instructorTitle}</div>}
+                <div className="text-sm font-semibold text-primary">{instructorName}</div>
+                {instructorTitle && <div className="text-xs text-secondary">{instructorTitle}</div>}
               </div>
             </div>
           </div>

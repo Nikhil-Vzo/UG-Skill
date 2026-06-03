@@ -398,9 +398,11 @@ export const listRegistrationsPg = async (query: RegistrationQuery) => {
       driveId: driveRegistrations.driveId,
       status: driveRegistrations.status,
       registeredAt: driveRegistrations.registeredAt,
+      resumeUrl: users.resumeUrl,
       student: {
         fullName: users.fullName,
         email: users.email,
+        resumeUrl: users.resumeUrl,
       },
       drive: {
         name: companyDrives.name,
@@ -475,6 +477,8 @@ export const getPlacementSessionPg = async (id: string) => {
       companyId: placementSessions.companyId,
       mongoFlowId: placementSessions.mongoFlowId,
       roundNumber: placementSessions.roundNumber,
+      roundLabel: placementSessions.roundLabel,
+      scheduledAt: placementSessions.scheduledAt,
       status: placementSessions.status,
       score: placementSessions.score,
       maxScore: placementSessions.maxScore,
@@ -482,6 +486,7 @@ export const getPlacementSessionPg = async (id: string) => {
       mongoAttemptId: placementSessions.mongoAttemptId,
       recordingUrl: placementSessions.recordingUrl,
       proctoringVerdict: placementSessions.proctoringVerdict,
+      feedbackNotes: placementSessions.feedbackNotes,
       startedAt: placementSessions.startedAt,
       endedAt: placementSessions.endedAt,
       createdAt: placementSessions.createdAt,
@@ -518,12 +523,13 @@ export const updatePlacementSessionPg = async (
 };
 
 export const listPlacementSessionsPg = async (query: any) => {
-  const { studentId, driveId, status, active, page = 1, limit = 50 } = query || {};
+  const { studentId, driveId, status, active, sessionType, page = 1, limit = 50 } = query || {};
   const offset = (Number(page) - 1) * Number(limit);
   let conditions: any[] = [];
 
   if (studentId) conditions.push(eq(placementSessions.studentId, studentId));
   if (driveId) conditions.push(eq(placementSessions.driveId, driveId));
+  if (sessionType) conditions.push(eq(placementSessions.sessionType, sessionType));
   if (active === 'true') {
     conditions.push(inArray(placementSessions.status, ['scheduled', 'in_progress']));
   } else if (status?.includes(',')) {

@@ -392,23 +392,43 @@ export const VideoPlayer: React.FC = () => {
 
   const courseTitle = course?.title ?? 'Loading...';
   const activeTitle = lecture?.title ?? activeLecture?.title ?? '';
+  const contentType = lecture?.type ?? 'video';
+  const progressPercent = allLectures.length ? Math.round((completedCount / allLectures.length) * 100) : 0;
+  const contentTypeLabel: Record<string, string> = {
+    video: 'Video lesson',
+    youtube: 'Embedded lesson',
+    document: 'Document',
+    pdf: 'PDF document',
+    article: 'Article',
+    text: 'Reading lesson',
+    external_link: 'External resource',
+  };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-root)' }}>
+    <div className="vp-page">
       {/* ── Top Bar ── */}
       <header className="vp-header">
         <div className="vp-header-left">
-          <button onClick={() => navigate(`/app/courses/${courseId}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-low)', display: 'flex', flexShrink: 0 }}>
+          <button className="vp-back-btn" onClick={() => navigate(`/app/courses/${courseId}`)}>
             <ChevronLeft size={20} />
           </button>
           {courseLoading ? (
             <Skeleton variant="text" width="200px" />
           ) : (
-            <>
-              <span style={{ color: 'var(--text-high)', fontWeight: 600, fontSize: '0.9375rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '240px' }}>{courseTitle}</span>
-              {activeTitle && <span style={{ color: 'var(--text-lowest)', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>/ {activeTitle}</span>}
-            </>
+            <div className="vp-title-stack">
+              <span className="vp-course-title">{courseTitle}</span>
+              {activeTitle && <span className="vp-lecture-title">{activeTitle}</span>}
+            </div>
           )}
+        </div>
+        <div className="vp-header-progress" aria-label={`Course progress ${progressPercent}%`}>
+          <div className="vp-header-progress-meta">
+            <span>{progressPercent}% complete</span>
+            <span>{completedCount}/{allLectures.length || 0}</span>
+          </div>
+          <div className="vp-header-progress-track">
+            <div className="vp-header-progress-fill" style={{ width: `${progressPercent}%` }} />
+          </div>
         </div>
         <div className="vp-header-right">
           {courseError && (
@@ -427,9 +447,9 @@ export const VideoPlayer: React.FC = () => {
       </header>
 
       {/* ── Main Layout ── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="vp-layout">
         {/* ─── Left: Video + Tabs ─── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+        <div className="vp-main">
           {/* Course fetch error */}
           {courseError && (
             <div style={{ background: 'var(--error-container)', padding: '2rem', textAlign: 'center', borderBottom: '1px solid var(--surface-highest)' }}>
@@ -449,7 +469,20 @@ export const VideoPlayer: React.FC = () => {
           )}
 
           {/* Content Frame — branches by lecture type */}
-          <div style={{ background: '#000', aspectRatio: '16/9', width: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', maxHeight: '60vh' }}>
+          {activeLecture && (
+            <div className="vp-lesson-strip">
+              <div>
+                <Badge variant="primary" size="sm">{contentTypeLabel[contentType] ?? 'Lesson'}</Badge>
+                <h1>{activeTitle}</h1>
+              </div>
+              <div className="vp-lesson-strip-actions">
+                <Button variant="ghost" size="sm" leftIcon={<ChevronLeft size={14} />} disabled={currentIndex <= 0} onClick={goPrev}>Prev</Button>
+                <Button variant="outline" size="sm" rightIcon={<ChevronRight size={14} />} disabled={currentIndex >= allLectures.length - 1 || currentIndex < 0} onClick={goNext}>Next</Button>
+              </div>
+            </div>
+          )}
+
+          <div className={`vp-content-frame vp-content-${contentType}`}>
             {(() => {
               const type = lecture?.type ?? 'video';
               const videoSrc = lecture?.video_url ?? lecture?.videoUrl;
@@ -634,7 +667,7 @@ export const VideoPlayer: React.FC = () => {
 
           {/* Mark Complete bar */}
           {activeLecture && !activeLecture.completed && (
-            <div style={{ padding: '0.75rem 1.25rem', background: 'var(--surface-container)', borderBottom: '1px solid var(--surface-highest)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div className="vp-complete-bar">
               <span style={{ color: 'var(--text-low)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1 1 auto', minWidth: '200px' }}>
                 <BookOpen size={15} /> Mark this lecture as complete when done
               </span>
@@ -652,20 +685,13 @@ export const VideoPlayer: React.FC = () => {
           )}
 
           {/* Tabs */}
-          <div style={{ margin: '0 1.5rem 1.5rem', flexShrink: 0 }}>
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-highest)', marginBottom: '1.25rem', gap: '0.25rem' }}>
+          <div className="vp-tabs-panel">
+            <div className="vp-tabs">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.4rem',
-                    padding: '0.75rem 1rem', background: 'none', border: 'none', cursor: 'pointer',
-                    borderBottom: activeTab === tab.id ? '2px solid var(--primary-glow)' : '2px solid transparent',
-                    color: activeTab === tab.id ? 'var(--primary-glow)' : 'var(--text-low)',
-                    fontWeight: activeTab === tab.id ? 600 : 400, fontSize: '0.875rem',
-                    marginBottom: '-1px', transition: 'all 0.15s',
-                  }}
+                  className={activeTab === tab.id ? 'active' : ''}
                 >
                   {tab.icon} {tab.label}
                 </button>
@@ -917,7 +943,7 @@ export const VideoPlayer: React.FC = () => {
               )}
               {!courseLoading && (course?.curriculum ?? []).map(section => (
                 <React.Fragment key={section._id}>
-                  <li style={{ padding: '0.5rem 1.25rem', background: 'var(--surface-container-high)', borderBottom: '1px solid var(--surface-highest)' }}>
+                  <li className="vp-section-heading" style={{ padding: '0.5rem 1.25rem', background: 'var(--surface-container-high)', borderBottom: '1px solid var(--surface-highest)' }}>
                     <span style={{ color: 'var(--text-lowest)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>{section.title}</span>
                   </li>
                   {section.lectures.map((lec, i) => (
