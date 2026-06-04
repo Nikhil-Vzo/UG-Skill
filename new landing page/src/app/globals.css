@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  
+  --primary-action: #58cc02;
+  --primary-action-hover: #46a302;
+  --deep-slate: #0f172a;
+  --slate-500: #64748b;
+  --ocean-blue: #2b99cc;
+  --slate-50: #f8fafc;
+  --slate-200: #e2e8f0;
+}
+
+@theme {
+  --color-primary-action: var(--primary-action);
+  --color-primary-action-hover: var(--primary-action-hover);
+  --color-deep-slate: var(--deep-slate);
+  --color-slate-500: var(--slate-500);
+  --color-ocean-blue: var(--ocean-blue);
+  --color-slate-50: var(--slate-50);
+  --color-slate-200: var(--slate-200);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* Custom UI Utility Classes */
+.btn-tactile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  background-color: var(--primary-action);
+  color: #ffffff;
+  border-bottom: 4px solid var(--primary-action-hover);
+  transition: transform 0.1s ease, border-bottom-width 0.1s ease;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+}
+
+.btn-tactile:active {
+  transform: translateY(4px);
+  border-bottom-width: 0px;
+}
+
+.shadow-diffused {
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.05);
+}
+
+/* Layout helpers */
+.hero-heading {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+}
+
