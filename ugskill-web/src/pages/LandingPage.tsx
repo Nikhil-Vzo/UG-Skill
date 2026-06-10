@@ -1,16 +1,16 @@
 import React, { useRef, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowRight, 
-  Menu, 
-  ShieldCheck, 
-  Sparkles, 
-  X, 
-  BookOpen, 
-  Users, 
-  Mic, 
-  Briefcase, 
+import {
+  ArrowRight,
+  Menu,
+  ShieldCheck,
+  Sparkles,
+  X,
+  BookOpen,
+  Users,
+  Mic,
+  Briefcase,
   CheckCircle2
 } from 'lucide-react';
 import { useAuthStore } from '../store/auth.store';
@@ -119,8 +119,8 @@ const InteractiveLessonCard: React.FC = () => {
               <div className="result-text-block">
                 <h4 className="result-status">{isCorrect ? 'Correct! Excellent job.' : 'Incorrect! Try again.'}</h4>
                 <p className="result-explanation">
-                  {isCorrect 
-                    ? 'AI Placement Matcher checks your readiness score against recruiter targets.' 
+                  {isCorrect
+                    ? 'AI Placement Matcher checks your readiness score against recruiter targets.'
                     : 'The correct answer is C. Try resetting to see why!'}
                 </p>
               </div>
@@ -363,18 +363,15 @@ export const LandingPage: React.FC = () => {
             <div className="hero-3d-side">
               {isMobile ? (
                 <div className="hero-mobile-visual-wrap">
-                  <img 
-                    src="/images/hero-mobile.webp" 
-                    alt="UG Bot Mascot" 
-                    className="hero-mobile-image" 
+                  <img
+                    src="/images/hero-mobile.webp"
+                    alt="UG Bot Mascot"
+                    className="hero-mobile-image"
                   />
                 </div>
               ) : (
                 <div className="hero-visual-shell">
-                  <div className="hero-visual-chip hero-visual-chip-top">
-                    <Sparkles size={14} />
-                    Readiness score live
-                  </div>
+
                   <div className="hero-visual-chip hero-visual-chip-bottom">
                     <ShieldCheck size={14} />
                     Secure assessment mode
@@ -436,118 +433,118 @@ export const LandingPage: React.FC = () => {
             </p>
           </div>
 
-            {!isMobile ? (
-              <div className="roadmap-centered-content">
-                {/* Connection winding path line - Curved SVG */}
-                <svg className="roadmap-svg-line" viewBox="0 0 600 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path 
-                    d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730" 
-                    stroke="#e2e8f0" 
-                    strokeWidth="12" 
-                    strokeLinecap="round" 
-                  />
-                  <path 
-                    d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730" 
-                    stroke="#10b981" 
-                    strokeWidth="12" 
-                    strokeLinecap="round" 
-                    strokeDasharray="1000"
-                    strokeDashoffset={1000 - (activeStep + 1) * 200}
-                  />
-                </svg>
+          {!isMobile ? (
+            <div className="roadmap-centered-content">
+              {/* Connection winding path line - Curved SVG */}
+              <svg className="roadmap-svg-line" viewBox="0 0 600 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730"
+                  stroke="#e2e8f0"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730"
+                  stroke="#10b981"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray="1000"
+                  strokeDashoffset={1000 - (activeStep + 1) * 200}
+                />
+              </svg>
 
-                <div className="roadmap-steps">
-                  {steps.map((step, idx) => {
-                    const isActive = idx === activeStep;
-                    return (
-                      <div 
-                        key={idx} 
-                        className={`roadmap-step-item ${step.align} ${isActive ? 'active' : ''}`}
+              <div className="roadmap-steps">
+                {steps.map((step, idx) => {
+                  const isActive = idx === activeStep;
+                  return (
+                    <div
+                      key={idx}
+                      className={`roadmap-step-item ${step.align} ${isActive ? 'active' : ''}`}
+                      style={{
+                        top: step.cy,
+                        left: step.cx,
+                      } as React.CSSProperties}
+                    >
+                      {/* Node circle */}
+                      <button
+                        className="roadmap-node-btn"
+                        onClick={() => handleNodeClick(step.sectionId, idx)}
                         style={{
-                          top: step.cy,
-                          left: step.cx,
+                          backgroundColor: step.color,
+                          '--btn-shadow-color': step.darkColor,
                         } as React.CSSProperties}
+                        aria-label={`Scroll to ${step.title}`}
                       >
-                        {/* Node circle */}
-                        <button
-                          className="roadmap-node-btn"
-                          onClick={() => handleNodeClick(step.sectionId, idx)}
-                          style={{
-                            backgroundColor: step.color,
-                            '--btn-shadow-color': step.darkColor,
-                          } as React.CSSProperties}
-                          aria-label={`Scroll to ${step.title}`}
-                        >
-                          <span className="node-icon-wrap">{step.icon}</span>
-                          <span className="node-badge-num">{idx + 1}</span>
-                        </button>
+                        <span className="node-icon-wrap">{step.icon}</span>
+                        <span className="node-badge-num">{idx + 1}</span>
+                      </button>
 
-                        {/* Mascot dialogue speech bubble */}
-                        <div className="roadmap-mascot-bubble-wrap">
-                          <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
-                            <div className="mascot-face">🤖</div>
-                          </div>
-                          <div className="roadmap-dialogue-bubble">
-                            <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
-                            <h4 className="bubble-title">{step.title}</h4>
-                            <p className="bubble-text">{step.mascotText}</p>
-                            <div className="bubble-arrow"></div>
-                          </div>
+                      {/* Mascot dialogue speech bubble */}
+                      <div className="roadmap-mascot-bubble-wrap">
+                        <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
+                          <div className="mascot-face">🤖</div>
+                        </div>
+                        <div className="roadmap-dialogue-bubble">
+                          <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
+                          <h4 className="bubble-title">{step.title}</h4>
+                          <p className="bubble-text">{step.mascotText}</p>
+                          <div className="bubble-arrow"></div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="roadmap-path-wrapper">
-                <div className="roadmap-line-connector"></div>
-                <div className="roadmap-steps-mobile">
-                  {steps.map((step, idx) => {
-                    const isActive = idx === activeStep;
-                    return (
-                      <div 
-                        key={idx} 
-                        className={`roadmap-step-item-mobile ${isActive ? 'active' : ''}`}
+            </div>
+          ) : (
+            <div className="roadmap-path-wrapper">
+              <div className="roadmap-line-connector"></div>
+              <div className="roadmap-steps-mobile">
+                {steps.map((step, idx) => {
+                  const isActive = idx === activeStep;
+                  return (
+                    <div
+                      key={idx}
+                      className={`roadmap-step-item-mobile ${isActive ? 'active' : ''}`}
+                    >
+                      {/* Node circle */}
+                      <button
+                        className="roadmap-node-btn-mobile"
+                        onClick={() => handleNodeClick(step.sectionId, idx)}
+                        style={{
+                          backgroundColor: step.color,
+                          '--btn-shadow-color': step.darkColor,
+                        } as React.CSSProperties}
+                        aria-label={`Scroll to ${step.title}`}
                       >
-                        {/* Node circle */}
-                        <button
-                          className="roadmap-node-btn-mobile"
-                          onClick={() => handleNodeClick(step.sectionId, idx)}
-                          style={{
-                            backgroundColor: step.color,
-                            '--btn-shadow-color': step.darkColor,
-                          } as React.CSSProperties}
-                          aria-label={`Scroll to ${step.title}`}
-                        >
-                          <span className="node-icon-wrap">{step.icon}</span>
-                          <span className="node-badge-num">{idx + 1}</span>
-                        </button>
+                        <span className="node-icon-wrap">{step.icon}</span>
+                        <span className="node-badge-num">{idx + 1}</span>
+                      </button>
 
-                        {/* Mascot dialogue speech bubble */}
-                        <div className="roadmap-mascot-bubble-wrap-mobile">
-                          <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
-                            <div className="mascot-face">🤖</div>
-                          </div>
-                          <div className="roadmap-dialogue-bubble">
-                            <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
-                            <h4 className="bubble-title">{step.title}</h4>
-                            <p className="bubble-text">{step.mascotText}</p>
-                            <div className="bubble-arrow"></div>
-                          </div>
+                      {/* Mascot dialogue speech bubble */}
+                      <div className="roadmap-mascot-bubble-wrap-mobile">
+                        <div className="roadmap-mascot-avatar" style={{ border: `3px solid ${step.color}` }}>
+                          <div className="mascot-face">🤖</div>
+                        </div>
+                        <div className="roadmap-dialogue-bubble">
+                          <div className="bubble-tag" style={{ color: step.color }}>{step.badge}</div>
+                          <h4 className="bubble-title">{step.title}</h4>
+                          <p className="bubble-text">{step.mascotText}</p>
+                          <div className="bubble-arrow"></div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
+          )}
         </section>
 
         {/* ── Interactive Lesson Card Showcase (Replacing SaaS Mockup) ── */}
         <section className="pc-showcase-section">
           <div className="showcase-container">
-            <motion.div 
+            <motion.div
               className="showcase-text"
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
