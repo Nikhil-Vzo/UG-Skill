@@ -271,14 +271,14 @@
 }
 
 .login-forgot-link {
-  color: #0052ff;
+  color: var(--primary);
   text-decoration: none;
   font-weight: 500;
 }
 
 .login-forgot-link:hover {
   text-decoration: underline;
-  color: #0041cc;
+  color: var(--primary-dim);
 }
 
 /* Error banner */
@@ -298,8 +298,15 @@
   font-size: 0.9375rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.01em !important;
-  box-shadow: 0 10px 25px -5px rgba(28, 176, 246, 0.3) !important;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dim) 100%) !important;
+  box-shadow: 0 4px 12px var(--primary-glow) !important;
   margin-top: 0.5rem;
+  transition: all 0.2s ease !important;
+}
+
+.login-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px var(--primary-glow) !important;
 }
 
 /* Footer */
@@ -310,7 +317,7 @@
 }
 
 .login-footer-link {
-  color: #10b981;
+  color: var(--duo-green);
   font-weight: 700;
   text-decoration: none;
   margin-left: 0.25rem;
@@ -318,7 +325,7 @@
 
 .login-footer-link:hover {
   text-decoration: underline;
-  color: #059669;
+  color: var(--duo-green-hover);
 }
 
 /* Portal switcher */
