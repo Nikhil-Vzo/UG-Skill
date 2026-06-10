@@ -1,20 +1,13 @@
 /* ═══════════════════════════════════════════════════════
    HRDashboard — Recruiter Portal Revamp CSS
-   Premium dark-teal design system, micro-interactions
+   Premium Light Theme, modern slate card layout, pro-grade spacing
    ═══════════════════════════════════════════════════════ */
-
-:root {
-  --teal-glow: #14b8a6;
-  --teal-dim: #0d9488;
-  --teal-bg: rgba(20, 184, 166, 0.08);
-  --teal-border: rgba(20, 184, 166, 0.2);
-}
 
 .hr-portal {
   min-height: 100vh;
-  background: #060b14;
-  color: #eff6ff;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-body);
 }
 
 /* --- Header --- */
@@ -23,25 +16,24 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2.5rem;
-  background: rgba(8, 12, 20, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(20, 184, 166, 0.12);
+  border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-sm);
 }
 
 .hr-header-logo-wrap {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--teal-glow), var(--teal-dim));
+  background: var(--gradient-primary);
   border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 0 15px rgba(20, 184, 166, 0.25);
 }
 
 .hr-header-actions {
@@ -55,20 +47,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
-  background: linear-gradient(135deg, var(--teal-glow), var(--teal-dim));
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dim) 100%);
   border: none;
   border-radius: 8px;
   color: #fff;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.25);
+  box-shadow: 0 4px 12px var(--primary-glow);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hr-btn-create:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(20, 184, 166, 0.4);
+  box-shadow: 0 6px 18px var(--primary-glow);
   filter: brightness(1.08);
 }
 
@@ -80,7 +72,7 @@
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 8px;
-  color: #fca5a5;
+  color: var(--color-error);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -90,7 +82,7 @@
 .hr-btn-logout:hover {
   background: rgba(239, 68, 68, 0.16);
   border-color: rgba(239, 68, 68, 0.35);
-  color: #fecdd3;
+  color: var(--color-error);
 }
 
 /* --- Main Layout --- */
@@ -111,11 +103,11 @@
   font-weight: 800;
   letter-spacing: -0.025em;
   margin-bottom: 0.375rem;
-  text-shadow: 0 0 30px rgba(20, 184, 166, 0.1);
+  color: var(--text-primary);
 }
 
 .hr-welcome-subtitle {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.9375rem;
   margin-top: 0;
 }
@@ -124,39 +116,39 @@
 .hr-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
   margin-bottom: 2.5rem;
 }
 
 .hr-stat-card {
   padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.005) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
   transition: all 0.25s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .hr-stat-card:hover {
-  border-color: var(--teal-border);
-  background: rgba(20, 184, 166, 0.02);
+  border-color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .hr-stat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .hr-stat-label {
   font-size: 0.775rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -171,7 +163,7 @@
 /* --- Columns Layout --- */
 .hr-grid-layout {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
+  grid-template-columns: 1.35fr 1fr;
   gap: 1.5rem;
 }
 
@@ -182,11 +174,11 @@
 }
 
 .hr-panel {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.25) 0%, rgba(15, 23, 42, 0.15) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-sm);
 }
 
 .hr-panel-header {
@@ -194,7 +186,7 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.75rem;
 }
 
@@ -202,12 +194,12 @@
   font-size: 1.05rem;
   font-weight: 700;
   margin: 0;
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 
 .hr-panel-link {
   font-size: 0.775rem;
-  color: var(--teal-glow);
+  color: var(--primary);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -215,8 +207,7 @@
 }
 
 .hr-panel-link:hover {
-  color: #2dd4bf;
-  text-shadow: 0 0 8px rgba(20, 184, 166, 0.3);
+  color: var(--primary-hover);
 }
 
 /* --- Applicant List & Card --- */
@@ -231,33 +222,32 @@
   align-items: center;
   gap: 0.875rem;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hr-applicant-item:hover {
-  background: rgba(20, 184, 166, 0.04);
-  border-color: var(--teal-border);
+  background: var(--surface-2);
+  border-color: var(--primary);
   transform: translateX(3px);
 }
 
 .hr-avatar {
   width: 36px;
   height: 36px;
-  background: rgba(20, 184, 166, 0.12);
-  border: 1px solid rgba(20, 184, 166, 0.2);
+  background: var(--primary-subtle);
+  border: 1px solid var(--border-emphasis);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.875rem;
-  color: #2dd4bf;
+  color: var(--primary);
   flex-shrink: 0;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .hr-applicant-info {
@@ -268,7 +258,7 @@
 .hr-applicant-name {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #f8fafc;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -276,7 +266,7 @@
 
 .hr-applicant-drive {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
@@ -294,13 +284,13 @@
 }
 
 .hr-chevron {
-  color: #334155;
+  color: var(--text-tertiary);
   transition: transform 0.2s;
   flex-shrink: 0;
 }
 
 .hr-applicant-item:hover .hr-chevron {
-  color: var(--teal-glow);
+  color: var(--primary);
   transform: translateX(1px);
 }
 
@@ -313,8 +303,8 @@
 
 .hr-drive-item {
   padding: 1.125rem;
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(20, 184, 166, 0.01) 100%);
-  border: 1px solid rgba(20, 184, 166, 0.12);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   display: flex;
   justify-content: space-between;
@@ -323,15 +313,15 @@
 }
 
 .hr-drive-item:hover {
-  border-color: rgba(20, 184, 166, 0.35);
-  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.08);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .hr-drive-name {
   font-weight: 700;
   font-size: 0.9375rem;
   margin-bottom: 0.375rem;
-  color: #f1f5f9;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -342,7 +332,7 @@
   align-items: center;
   gap: 1rem;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .hr-drive-meta-item {
@@ -354,7 +344,7 @@
 .hr-btn-delete {
   background: none;
   border: none;
-  color: #ef4444;
+  color: var(--color-error);
   cursor: pointer;
   padding: 0.5rem;
   display: flex;
@@ -368,8 +358,8 @@
 }
 
 .hr-btn-delete:hover {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  background: var(--color-error-subtle);
+  color: var(--color-error);
   opacity: 1;
 }
 
@@ -380,8 +370,8 @@
   z-index: 100;
   display: flex;
   justify-content: flex-end;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
   animation: backdropFade 0.25s ease-out;
 }
 
@@ -393,13 +383,13 @@
 .hr-side-panel {
   width: 420px;
   max-width: 90vw;
-  background: #0b0f19;
-  border-left: 1px solid rgba(20, 184, 166, 0.15);
+  background: var(--surface-1);
+  border-left: 1px solid var(--border-subtle);
   padding: 2.5rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.6);
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.05);
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -412,18 +402,18 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
-  color: #f8fafc;
+  color: var(--text-primary);
 }
 
 .hr-side-subtitle {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 .hr-side-close {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.25rem;
   transition: color 0.2s;
@@ -432,7 +422,7 @@
 }
 
 .hr-side-close:hover {
-  color: #94a3b8;
+  color: var(--text-primary);
 }
 
 .hr-side-status-section {
@@ -440,7 +430,7 @@
   align-items: center;
   gap: 0.5rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .hr-resume-btn {
@@ -450,10 +440,10 @@
   gap: 0.5rem;
   width: 100%;
   padding: 0.875rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  color: #f8fafc;
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -461,8 +451,7 @@
 }
 
 .hr-resume-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--surface-3);
 }
 
 .hr-action-group {
@@ -474,7 +463,7 @@
 
 .hr-action-title {
   font-size: 0.8125rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -491,36 +480,36 @@
 }
 
 .hr-btn-pipeline.shortlist {
-  background: rgba(34, 197, 94, 0.08);
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  color: #4ade80;
+  background: var(--color-success-subtle);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: var(--color-success);
 }
 
 .hr-btn-pipeline.shortlist:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.15);
-  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 .hr-btn-pipeline.interview {
-  background: rgba(129, 140, 248, 0.08);
-  border: 1px solid rgba(129, 140, 248, 0.25);
-  color: #818cf8;
+  background: var(--primary-subtle);
+  border: 1px solid var(--border-emphasis);
+  color: var(--primary);
 }
 
 .hr-btn-pipeline.interview:hover:not(:disabled) {
-  background: rgba(129, 140, 248, 0.15);
-  border-color: rgba(129, 140, 248, 0.4);
+  background: rgba(0, 82, 255, 0.12);
+  border-color: rgba(0, 82, 255, 0.35);
 }
 
 .hr-btn-pipeline.reject {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: var(--color-error-subtle);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  color: var(--color-error);
 }
 
 .hr-btn-pipeline.reject:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
 }
 
 .hr-btn-pipeline:disabled {
@@ -532,30 +521,30 @@
 .hr-interview-action-panel {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .hr-btn-video-room {
   width: 100%;
   padding: 0.875rem;
-  background: linear-gradient(135deg, #eab308, #ca8a04);
+  background: linear-gradient(135deg, var(--duo-orange), var(--duo-orange-hover));
   border: none;
   border-radius: 8px;
-  color: #000;
-  font-weight: 750;
+  color: #fff;
+  font-weight: 700;
   font-size: 0.875rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 15px rgba(234, 179, 8, 0.25);
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25);
   transition: all 0.2s ease;
 }
 
 .hr-btn-video-room:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
   filter: brightness(1.05);
 }
 
@@ -574,23 +563,23 @@
   padding: 0.55rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  background: rgba(20, 184, 166, 0.06);
-  border: 1px solid rgba(20, 184, 166, 0.2);
+  background: var(--primary-subtle);
+  border: 1px solid var(--border-emphasis);
   border-radius: 8px;
-  color: #2dd4bf;
+  color: var(--primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .hr-btn-copy-link.copied {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.3);
-  color: #4ade80;
+  background: var(--color-success-subtle);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--color-success);
 }
 
 .hr-interview-status-msg {
   margin: 0.625rem 0 0;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   text-align: center;
 }
@@ -603,19 +592,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
   animation: backdropFade 0.2s ease-out;
 }
 
 .hr-modal {
-  background: #0f172a;
-  border: 1px solid rgba(20, 184, 166, 0.2);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 2.5rem;
   max-width: 480px;
   width: 90%;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  color: var(--text-primary);
   animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -644,7 +634,7 @@
 .hr-modal-icon-wrap {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--teal-glow), var(--teal-dim));
+  background: var(--gradient-primary);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -652,33 +642,33 @@
 }
 
 .hr-modal-icon-wrap.danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: var(--color-error-subtle);
+  color: var(--color-error);
 }
 
 .hr-modal-title {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #eff6ff;
+  color: var(--text-primary);
 }
 
 .hr-modal-close {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.25rem;
   transition: color 0.2s;
 }
 
 .hr-modal-close:hover {
-  color: #94a3b8;
+  color: var(--text-primary);
 }
 
 .hr-modal-link-box {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 1rem;
   margin-bottom: 1.25rem;
@@ -686,7 +676,7 @@
 
 .hr-modal-link-label {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -696,7 +686,7 @@
 .hr-modal-link-url {
   font-family: ui-monospace, monospace;
   font-size: 0.8125rem;
-  color: var(--teal-glow);
+  color: var(--primary);
   word-break: break-all;
 }
 
@@ -720,46 +710,46 @@
 }
 
 .hr-modal-btn.secondary {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
 }
 
 .hr-modal-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--surface-3);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .hr-modal-btn.primary {
-  background: linear-gradient(135deg, var(--teal-glow), var(--teal-dim));
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dim) 100%);
   border: none;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);
+  box-shadow: 0 4px 12px var(--primary-glow);
 }
 
 .hr-modal-btn.primary:hover {
-  box-shadow: 0 6px 16px rgba(20, 184, 166, 0.35);
+  box-shadow: 0 6px 16px var(--primary-glow);
   filter: brightness(1.05);
 }
 
 .hr-modal-btn.danger {
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  background: linear-gradient(135deg, var(--duo-red), var(--duo-red-hover));
   border: none;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
 }
 
 .hr-modal-btn.danger:hover {
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+  box-shadow: 0 6px 16px rgba(244, 63, 94, 0.35);
   filter: brightness(1.05);
 }
 
 .hr-modal-warning-box {
-  background: rgba(239, 68, 68, 0.04);
-  border: 1px solid rgba(239, 68, 68, 0.15);
+  background: var(--color-error-subtle);
+  border: 1px solid rgba(244, 63, 94, 0.15);
   border-radius: 8px;
   padding: 0.875rem;
   font-size: 0.8125rem;
-  color: #fca5a5;
+  color: var(--color-error);
   line-height: 1.45;
 }
