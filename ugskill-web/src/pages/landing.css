@@ -366,7 +366,7 @@
 .hero-visual-shell {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 480px; /* Fixed height to prevent 3D Canvas height collapse */
 }
 
 .hero-3d-placeholder {

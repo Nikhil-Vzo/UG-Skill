@@ -26,8 +26,8 @@ function RoboModel() {
   return (
     <primitive
       object={scene}
-      scale={1.5}
-      position={[1.2, -1.2, 0]} /* Move robot right within the 3D canvas */
+      scale={2.0} /* Scaled up from 1.5 to make it look large and impressive */
+      position={[0.8, -1.3, 0]} /* Optimized position inside the 3D canvas */
       rotation={[0, -Math.PI / 8, 0]}
     />
   );
