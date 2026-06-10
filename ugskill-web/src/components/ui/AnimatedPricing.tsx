@@ -20,7 +20,7 @@ const CheckIcon = () => (
     width="16" height="16" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="3"
     strokeLinecap="round" strokeLinejoin="round"
-    style={{ color: '#58cc02', flexShrink: 0 }}
+    style={{ color: '#10b981', flexShrink: 0 }}
   >
     <path d="M20 6 9 17l-5-5" />
   </svg>

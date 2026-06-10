@@ -16,7 +16,7 @@ function RoboModel() {
         // Add subtle holographic scan effect to materials
         if (mesh.material) {
           const mat = mesh.material as THREE.MeshStandardMaterial;
-          mat.emissive = new THREE.Color('#1cb0f6');
+          mat.emissive = new THREE.Color('#0052ff');
           mat.emissiveIntensity = 0.1;
         }
       }
@@ -106,8 +106,8 @@ export const HeroScene: React.FC = () => {
           castShadow
           shadow-mapSize={[512, 512]} // Reduced from 1024 — invisible difference, half the VRAM
         />
-        <pointLight position={[-5, -5, -5]} intensity={1.5} color="#1cb0f6" />
-        <pointLight position={[5, 5, -5]} intensity={0.5} color="#58cc02" />
+        <pointLight position={[-5, -5, -5]} intensity={1.5} color="#0052ff" />
+        <pointLight position={[5, 5, -5]} intensity={0.5} color="#10b981" />
 
         <Suspense fallback={null}>
           <PresentationControls

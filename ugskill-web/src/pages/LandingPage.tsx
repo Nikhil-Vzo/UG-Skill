@@ -166,8 +166,8 @@ export const LandingPage: React.FC = () => {
       title: 'Adaptive Learning',
       badge: 'UNIT 1',
       mascotText: 'Hi! Let\'s build your base skills. I have laid out a personalized adaptive learning course path just for you!',
-      color: '#58cc02',
-      darkColor: '#46a302',
+      color: '#10b981',
+      darkColor: '#059669',
       sectionId: 'unit-1-learning',
       align: 'left',
       // Coordinates inside the fixed 600px width / 800px height container
@@ -179,8 +179,8 @@ export const LandingPage: React.FC = () => {
       title: 'Proctored Assessments',
       badge: 'UNIT 2',
       mascotText: 'Next up: validation. Compete on our real-time AI Leaderboard under secure, anti-cheat proctoring!',
-      color: '#ff4b4b',
-      darkColor: '#ea2b2b',
+      color: '#f43f5e',
+      darkColor: '#e11d48',
       sectionId: 'unit-2-assessments',
       align: 'left',
       cx: '425px',
@@ -191,8 +191,8 @@ export const LandingPage: React.FC = () => {
       title: 'Live Group Discussions',
       badge: 'UNIT 3',
       mascotText: 'Now, let\'s collaborate! Participate in live, platform-native GDs with peers and boost your confidence.',
-      color: '#ce82ff',
-      darkColor: '#aa60eb',
+      color: '#8b5cf6',
+      darkColor: '#7c3aed',
       sectionId: 'unit-3-community',
       align: 'right',
       cx: '300px',
@@ -203,8 +203,8 @@ export const LandingPage: React.FC = () => {
       title: 'AI Mock Interviews',
       badge: 'UNIT 4',
       mascotText: 'Get ready for the real deal! Practice mock interviews 1-on-1 with me and get granular, actionable feedback.',
-      color: '#ff9600',
-      darkColor: '#e07b00',
+      color: '#f97316',
+      darkColor: '#ea580c',
       sectionId: 'unit-4-interviews',
       align: 'right',
       cx: '175px',
@@ -215,8 +215,8 @@ export const LandingPage: React.FC = () => {
       title: 'Career Placement Hub',
       badge: 'UNIT 5',
       mascotText: 'Unlock placement drives! Once your AI Readiness Score peaks, apply directly to hiring partners.',
-      color: '#1cb0f6',
-      darkColor: '#1899d6',
+      color: '#0052ff',
+      darkColor: '#0041cc',
       sectionId: 'unit-5-placements',
       align: 'left',
       cx: '300px',
@@ -442,13 +442,13 @@ export const LandingPage: React.FC = () => {
                 <svg className="roadmap-svg-line" viewBox="0 0 600 800" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path 
                     d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730" 
-                    stroke="#e5e5e5" 
+                    stroke="#e2e8f0" 
                     strokeWidth="12" 
                     strokeLinecap="round" 
                   />
                   <path 
                     d="M 300,90 C 420,150 450,190 425,250 C 400,310 200,350 300,410 C 400,470 150,510 175,570 C 200,630 200,670 300,730" 
-                    stroke="#58cc02" 
+                    stroke="#10b981" 
                     strokeWidth="12" 
                     strokeLinecap="round" 
                     strokeDasharray="1000"

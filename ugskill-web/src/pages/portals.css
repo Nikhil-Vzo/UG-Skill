@@ -433,7 +433,7 @@
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.03em;
-  color: #f0f9ff;
+  color: #eff6ff;
   margin-bottom: 1.25rem;
 }
 
@@ -519,7 +519,7 @@
 .hr-portal-heading {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #f0f9ff;
+  color: #eff6ff;
   letter-spacing: -0.02em;
 }
 
@@ -537,7 +537,7 @@
   border: 1px solid rgba(240, 249, 255, 0.08);
   border-radius: 8px;
   font-size: 0.9375rem;
-  color: #f0f9ff;
+  color: #eff6ff;
   outline: none;
   transition: border-color 0.2s ease, background 0.2s ease;
   box-sizing: border-box;
@@ -634,7 +634,7 @@
 .hr-invite-email {
   font-size: 1rem;
   font-weight: 600;
-  color: #f0f9ff;
+  color: #eff6ff;
   margin-top: 0.25rem;
 }
 

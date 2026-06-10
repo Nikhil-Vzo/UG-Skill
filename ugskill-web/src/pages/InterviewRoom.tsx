@@ -516,7 +516,7 @@ const InterviewRoom: React.FC = () => {
     return (
       <div style={styles.center}>
         <AlertTriangle size={40} color="#ef4444" />
-        <h2 style={{ color: '#f0f9ff', marginTop: '1rem' }}>Session not found</h2>
+        <h2 style={{ color: '#eff6ff', marginTop: '1rem' }}>Session not found</h2>
         <p style={{ color: '#64748b' }}>This interview session may have expired or the link is invalid.</p>
         <button onClick={() => navigate(isHR ? '/hr/dashboard' : '/app/placements')} style={{...styles.btn, background: 'rgba(255,255,255,0.1)'} as any}>
           <ArrowLeft size={16} /> Back to Dashboard
@@ -1171,7 +1171,7 @@ const UserOffIcon: React.FC<{ size?: number }> = ({ size = 24 }) => (
 
 const styles: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', background: '#030712', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' },
-  center: { minHeight: '100vh', background: '#030712', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#f0f9ff', textAlign: 'center', padding: '2rem' },
+  center: { minHeight: '100vh', background: '#030712', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#eff6ff', textAlign: 'center', padding: '2rem' },
   btn: { padding: '0.75rem 1.5rem', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' },
   statusBadge: { fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.75rem', borderRadius: 20, textTransform: 'capitalize' },
   joinBtn: { width: '100%', padding: '1rem', background: 'linear-gradient(135deg,#06b6d4,#3b82f6)', border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem', boxShadow: '0 8px 24px rgba(59,130,246,0.3)', transition: 'all 0.2s' },

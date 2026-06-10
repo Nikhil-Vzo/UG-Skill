@@ -1,44 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ─── Design Tokens ──────────────────────────────────────────── */
 :root {
-  --bg-app:               #ffffff;   /* Pure white main base */
-  --bg-overlay:           rgba(255, 255, 255, 0.95);
+  --bg-app:               #f8fafc;   /* Slate 50 pro-grade background */
+  --bg-overlay:           rgba(248, 250, 252, 0.95);
 
-  /* Duolingo Brand Palette */
-  --duo-green:            #58cc02;
-  --duo-green-hover:      #46a302;
-  --duo-green-subtle:     #f1fcf0;
+  /* Refined Brand Palette */
+  --duo-green:            #10b981;   /* Emerald Success */
+  --duo-green-hover:      #059669;
+  --duo-green-subtle:     #ecfdf5;
   
-  --duo-blue:             #1cb0f6;
-  --duo-blue-hover:       #1899d6;
-  --duo-blue-subtle:      #f0f9ff;
+  --duo-blue:             #0052ff;   /* Tech Cobalt Blue */
+  --duo-blue-hover:       #0041cc;   /* Shadow blue */
+  --duo-blue-subtle:      #eff6ff;
   
-  --duo-orange:           #ff9600;
-  --duo-orange-hover:     #e07b00;
-  --duo-orange-subtle:    #fff8ee;
+  --duo-orange:           #f97316;
+  --duo-orange-hover:     #ea580c;
+  --duo-orange-subtle:    #fff7ed;
   
-  --duo-purple:           #ce82ff;
-  --duo-purple-hover:     #aa60eb;
-  --duo-purple-subtle:    #f9f0ff;
+  --duo-purple:           #8b5cf6;
+  --duo-purple-hover:     #7c3aed;
+  --duo-purple-subtle:    #f5f3ff;
   
-  --duo-red:              #ff4b4b;
-  --duo-red-hover:        #ea2b2b;
-  --duo-red-subtle:       #fff0f0;
+  --duo-red:              #f43f5e;
+  --duo-red-hover:        #e11d48;
+  --duo-red-subtle:       #fff1f2;
   
   --duo-yellow:           #ffc800;
   --duo-yellow-hover:     #e6b400;
   
-  --duo-border:           #e5e5e5;
-  --duo-text-dark:        #3c3c3c;
-  --duo-text-muted:       #777777;
+  --duo-border:           #e2e8f0;   /* Slate 200 borders */
+  --duo-text-dark:        #0f172a;   /* Slate 900 headings */
+  --duo-text-muted:       #64748b;   /* Slate 500 secondary */
 
-  /* Surface elevations using Duolingo-styled soft grey fills */
-  --surface-0:            #ffffff;  /* app background */
-  --surface-1:            #ffffff;  /* card base */
-  --surface-2:            #f7f7f7;  /* elevated card / inset wells */
-  --surface-3:            #efeef1;  /* dropdowns, hovers */
-  --surface-4:            #e5e5e5;  /* headers, default borders */
+  /* Surface elevations - Pro-grade slate contrast card design */
+  --surface-0:            #f8fafc;  /* App canvas background */
+  --surface-1:            #ffffff;  /* Card panel base */
+  --surface-2:            #f1f5f9;  /* Slate 100 inset/wells */
+  --surface-3:            #e2e8f0;  /* Slate 200 hovers/dropdowns */
+  --surface-4:            #cbd5e1;  /* Slate 300 divider/focus borders */
 
   /* Legacy aliases — keep for compatibility */
   --bg-color:             var(--bg-app);
@@ -48,37 +48,37 @@
   --surface-container-high:   var(--surface-3);
   --surface-bright:           var(--surface-4);
 
-  /* ── Primary: Duolingo Blue ── */
+  /* ── Primary: Brand Blue ── */
   --primary:              var(--duo-blue);
   --primary-dim:          var(--duo-blue-hover);
-  --primary-deep:         #0f7fb8;
-  --primary-hover:        var(--duo-blue-hover);
+  --primary-deep:         #0037b3;
+  --primary-hover:        #1a66ff;  /* Hover state */
   --primary-fg:           #ffffff;
   --primary-subtle:       var(--duo-blue-subtle);
-  --primary-glow:         rgba(28, 176, 246, 0.15);
+  --primary-glow:         rgba(0, 82, 255, 0.15);
 
-  /* Pink-radient (Aura-Blue to Pink Gradient) */
-  --gradient-primary:     linear-gradient(135deg, #1cb0f6 0%, #ff4b4b 100%);
-  --gradient-primary-dark: linear-gradient(135deg, #1899d6 0%, #ea2b2b 100%);
+  /* Premium Cobalt to Violet Gradient */
+  --gradient-primary:     linear-gradient(135deg, #0052ff 0%, #8b5cf6 100%);
+  --gradient-primary-dark: linear-gradient(135deg, #0041cc 0%, #7c3aed 100%);
 
   /* ── Semantic Text ── */
-  --text-primary:         var(--duo-text-dark);   /* high contrast dark text */
-  --text-secondary:       var(--duo-text-muted);  /* muted grey */
-  --text-tertiary:        #afafaf;                /* disabled/light text */
+  --text-primary:         var(--duo-text-dark);   /* Slate 900 */
+  --text-secondary:       var(--duo-text-muted);  /* Slate 500 */
+  --text-tertiary:        #94a3b8;                /* Slate 400 */
   --text-inverse:         #ffffff;
 
   /* Legacy text aliases */
   --on-surface:           var(--text-primary);
   --on-surface-variant:   var(--text-secondary);
   --text-high:            var(--text-primary);
-  --text-medium:          #4b4b4b;
+  --text-medium:          #334155;                /* Slate 700 */
   --text-low:             var(--text-secondary);
   --text-lowest:          var(--text-tertiary);
 
   /* ── Borders ── */
   --border-subtle:        var(--duo-border);
   --border-default:       var(--duo-border);
-  --border-emphasis:      rgba(28, 176, 246, 0.2);
+  --border-emphasis:      rgba(0, 82, 255, 0.2);
   --border-focus:         var(--duo-blue);
 
   /* Legacy border aliases */
@@ -108,8 +108,8 @@
   --accent-gd:            var(--duo-blue);
 
   /* ── Typography ── */
-  --font-display:         'Outfit', 'Space Grotesk', sans-serif;
-  --font-body:            'Inter', sans-serif;
+  --font-display:         'Plus Jakarta Sans', 'Outfit', 'Space Grotesk', sans-serif;
+  --font-body:            'Plus Jakarta Sans', 'Inter', sans-serif;
   --font-mono:            'JetBrains Mono', 'Fira Code', monospace;
 
   /* ── Spacing scale (4px base) ── */
@@ -131,10 +131,10 @@
   --radius-full: 9999px;
 
   /* ── Shadows ── */
-  --shadow-sm:  0 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow-md:  0 4px 0 rgba(0, 0, 0, 0.05);
-  --shadow-lg:  0 8px 0 rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 20px rgba(28, 176, 246, 0.10), 0 0 40px rgba(28, 176, 246, 0.05);
+  --shadow-sm:  0 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md:  0 4px 0 rgba(0, 0, 0, 0.04);
+  --shadow-lg:  0 8px 0 rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(0, 82, 255, 0.08), 0 0 40px rgba(0, 82, 255, 0.03);
 
   /* ── Z-index ── */
   --z-base:    1;
@@ -413,14 +413,14 @@ a:hover { color: var(--primary-hover); }
   cursor: pointer;
   border: none;
   outline: none;
-  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
+  box-shadow: 0 5px 0 var(--btn-shadow-color, #e2e8f0);
   transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
   transform: translateY(0);
 }
 
 .btn-3d:active:not(:disabled) {
   transform: translateY(5px);
-  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5);
+  box-shadow: 0 0px 0 var(--btn-shadow-color, #e2e8f0);
 }
 
 .btn-3d-large {
@@ -437,12 +437,12 @@ a:hover { color: var(--primary-hover); }
   letter-spacing: 0.05em;
   transition: transform 0.1s ease, box-shadow 0.1s ease, border-bottom-width 0.1s ease, background-color 0.15s ease !important;
   transform: translateY(0);
-  box-shadow: 0 5px 0 var(--btn-shadow-color, #e5e5e5);
+  box-shadow: 0 5px 0 var(--btn-shadow-color, #e2e8f0);
 }
 
 .btn-3d-tactile:active:not(:disabled) {
   transform: translateY(5px) !important;
-  box-shadow: 0 0px 0 var(--btn-shadow-color, #e5e5e5) !important;
+  box-shadow: 0 0px 0 var(--btn-shadow-color, #e2e8f0) !important;
   border-bottom-width: 0px !important;
 }
 
@@ -453,8 +453,8 @@ a.btn-3d, button.btn-3d, .btn-3d {
 
 a.btn-3d-green, button.btn-3d-green, .btn-3d-green,
 a.hero-cta-main, button.hero-cta-main, .hero-cta-main {
-  --btn-shadow-color: var(--duo-green-hover, #46a302);
-  background-color: var(--duo-green, #58cc02);
+  --btn-shadow-color: var(--duo-green-hover, #059669);
+  background-color: var(--duo-green, #10b981);
   box-shadow: 0 5px 0 var(--btn-shadow-color);
   border: none;
 }
@@ -464,63 +464,63 @@ button.btn-3d-green:hover:not(:disabled),
 button.hero-cta-main:hover:not(:disabled),
 .btn-3d-green:hover:not(:disabled),
 .hero-cta-main:hover:not(:disabled) {
-  background-color: #61e002;
+  background-color: #34d399;
 }
 
 a.btn-3d-blue, button.btn-3d-blue, .btn-3d-blue {
-  --btn-shadow-color: var(--duo-blue-hover, #1899d6);
-  background-color: var(--duo-blue, #1cb0f6);
+  --btn-shadow-color: var(--duo-blue-hover, #0041cc);
+  background-color: var(--duo-blue, #0052ff);
   box-shadow: 0 5px 0 var(--btn-shadow-color);
   border: none;
 }
 a.btn-3d-blue:hover:not(:disabled),
 button.btn-3d-blue:hover:not(:disabled),
 .btn-3d-blue:hover:not(:disabled) {
-  background-color: #24beff;
+  background-color: #1a66ff;
 }
 
 a.btn-3d-red, button.btn-3d-red, .btn-3d-red {
-  --btn-shadow-color: var(--duo-red-hover, #ea2b2b);
-  background-color: var(--duo-red, #ff4b4b);
+  --btn-shadow-color: var(--duo-red-hover, #e11d48);
+  background-color: var(--duo-red, #f43f5e);
   box-shadow: 0 5px 0 var(--btn-shadow-color);
   border: none;
 }
 a.btn-3d-red:hover:not(:disabled),
 button.btn-3d-red:hover:not(:disabled),
 .btn-3d-red:hover:not(:disabled) {
-  background-color: #ff6666;
+  background-color: #fb7185;
 }
 
 a.btn-3d-purple, button.btn-3d-purple, .btn-3d-purple {
-  --btn-shadow-color: var(--duo-purple-hover, #aa60eb);
-  background-color: var(--duo-purple, #ce82ff);
+  --btn-shadow-color: var(--duo-purple-hover, #7c3aed);
+  background-color: var(--duo-purple, #8b5cf6);
   box-shadow: 0 5px 0 var(--btn-shadow-color);
   border: none;
 }
 a.btn-3d-purple:hover:not(:disabled),
 button.btn-3d-purple:hover:not(:disabled),
 .btn-3d-purple:hover:not(:disabled) {
-  background-color: #db9cff;
+  background-color: #a78bfa;
 }
 
 a.btn-3d-orange, button.btn-3d-orange, .btn-3d-orange {
-  --btn-shadow-color: var(--duo-orange-hover, #e07b00);
-  background-color: var(--duo-orange, #ff9600);
+  --btn-shadow-color: var(--duo-orange-hover, #ea580c);
+  background-color: var(--duo-orange, #f97316);
   box-shadow: 0 5px 0 var(--btn-shadow-color);
   border: none;
 }
 a.btn-3d-orange:hover:not(:disabled),
 button.btn-3d-orange:hover:not(:disabled),
 .btn-3d-orange:hover:not(:disabled) {
-  background-color: #ffa41a;
+  background-color: #fb923c;
 }
 
 a.btn-3d-secondary, button.btn-3d-secondary, .btn-3d-secondary,
 a.hero-cta-secondary, button.hero-cta-secondary, .hero-cta-secondary {
-  --btn-shadow-color: var(--duo-border, #e5e5e5);
+  --btn-shadow-color: var(--duo-border, #e2e8f0);
   background-color: #ffffff;
-  border: 2px solid var(--duo-border, #e5e5e5);
-  color: var(--duo-text-dark, #3c3c3c);
+  border: 2px solid var(--duo-border, #e2e8f0);
+  color: var(--duo-text-dark, #0f172a);
   box-shadow: 0 3px 0 var(--btn-shadow-color);
 }
 a.btn-3d-secondary:hover:not(:disabled),
@@ -543,7 +543,7 @@ button.hero-cta-secondary:active:not(:disabled),
 
 /* Gradient Duolingo Variant */
 a.btn-3d-gradient, button.btn-3d-gradient, .btn-3d-gradient {
-  --btn-shadow-color: #ea2b2b;
+  --btn-shadow-color: #e11d48;
   background: var(--gradient-primary);
   box-shadow: 0 5px 0 var(--btn-shadow-color);
   border: none;
@@ -573,13 +573,13 @@ button.btn-3d-gradient:hover:not(:disabled),
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-xl, 16px);
-  background-color: #1cb0f6;
+  background-color: #0052ff;
   background-image:
     radial-gradient(circle at 15% 15%, rgba(88, 204, 2, 0.95) 0%, transparent 60%),
     radial-gradient(circle at 85% 85%, rgba(0, 242, 254, 0.9) 0%, transparent 65%),
     radial-gradient(circle at 50% 50%, rgba(206, 130, 255, 0.35) 0%, transparent 70%),
     url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.18'/%3E%3C/svg%3E"),
-    linear-gradient(135deg, #1cb0f6 0%, #58cc02 100%);
+    linear-gradient(135deg, #0052ff 0%, #10b981 100%);
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-bottom: 5px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 10px 25px -5px rgba(28, 176, 246, 0.28);

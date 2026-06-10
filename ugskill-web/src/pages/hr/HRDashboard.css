@@ -13,7 +13,7 @@
 .hr-portal {
   min-height: 100vh;
   background: #060b14;
-  color: #f0f9ff;
+  color: #eff6ff;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -660,7 +660,7 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #f0f9ff;
+  color: #eff6ff;
 }
 
 .hr-modal-close {

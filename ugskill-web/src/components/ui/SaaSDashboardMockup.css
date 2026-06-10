@@ -381,7 +381,7 @@
 
 .user-profile-mock,
 .sidebar-item.active {
-  background: linear-gradient(135deg, #25d06f, #1cb0f6);
+  background: linear-gradient(135deg, #25d06f, #0052ff);
   box-shadow: 0 0 12px rgba(28, 176, 246, 0.32);
 }
 
@@ -400,7 +400,7 @@
 }
 
 .cursor-dot {
-  border-color: #1cb0f6;
+  border-color: #0052ff;
   box-shadow: 0 0 10px rgba(28, 176, 246, 0.48);
 }
 

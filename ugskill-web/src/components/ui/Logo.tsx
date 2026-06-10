@@ -20,11 +20,11 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', showText = true, tone =
         ringA: 'rgba(88, 204, 2, 0.22)',
         ringB: 'rgba(28, 176, 246, 0.2)',
         shell: 'radial-gradient(circle at top left, rgba(88, 204, 2, 0.16), transparent)',
-        icon: 'linear-gradient(135deg, #58cc02 0%, #46a302 100%)',
+        icon: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
         shadow: '0 8px 16px rgba(88, 204, 2, 0.28), inset 0 2px 4px rgba(255, 255, 255, 0.3)',
         accent: '#d7ffb8',
-        wordmark: 'linear-gradient(to right, #3c3c3c 30%, #58cc02 100%)',
-        subtitle: '#58cc02',
+        wordmark: 'linear-gradient(to right, #0f172a 30%, #10b981 100%)',
+        subtitle: '#10b981',
       }
     : {
         ringA: 'rgba(129, 140, 248, 0.2)',
