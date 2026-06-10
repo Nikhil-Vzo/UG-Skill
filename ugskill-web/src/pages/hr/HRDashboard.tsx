@@ -11,10 +11,10 @@ import api from '../../lib/api';
 import './HRDashboard.css';
 
 const statusColor: Record<string, string> = {
-  shortlisted: '#22c55e',
-  rejected:    '#ef4444',
-  pending:     '#f59e0b',
-  interview:   '#818cf8',
+  shortlisted: '#10b981',
+  rejected:    '#f43f5e',
+  pending:     '#f97316',
+  interview:   '#0052ff',
   selected:    '#10b981',
 };
 
@@ -68,8 +68,8 @@ const ScheduleInterviewModal: React.FC<ScheduleModalProps> = ({ applicant, onClo
               </div>
               <h2 className="hr-modal-title">Schedule Interview</h2>
             </div>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b', marginTop: '0.25rem' }}>
-              Candidate: <strong style={{ color: '#f8fafc' }}>{applicant.student?.fullName}</strong>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Candidate: <strong style={{ color: 'var(--text-primary)' }}>{applicant.student?.fullName}</strong>
               {applicant.drive?.name && (
                 <span> · {applicant.drive.name}</span>
               )}
@@ -94,7 +94,7 @@ const ScheduleInterviewModal: React.FC<ScheduleModalProps> = ({ applicant, onClo
               style={inputStyle}
               required
             />
-            <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.35rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
               Candidate's local timezone is assumed. Communicate the exact time separately.
             </div>
           </div>
@@ -129,32 +129,32 @@ const ScheduleInterviewModal: React.FC<ScheduleModalProps> = ({ applicant, onClo
 
           {/* Role differentiation callout */}
           <div style={{
-            background: 'rgba(99,102,241,0.08)',
-            border: '1px solid rgba(99,102,241,0.25)',
+            background: 'var(--primary-subtle)',
+            border: '1px solid var(--border-emphasis)',
             borderRadius: 10,
             padding: '1rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.625rem',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', fontWeight: 700, color: '#a5b4fc' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--primary)' }}>
               <Shield size={14} /> Role Differentiation — same link, different experience
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div style={roleCardStyle('#22c55e')}>
-                <UserCog size={16} color="#22c55e" />
+              <div style={roleCardStyle('#10b981')}>
+                <UserCog size={16} color="#10b981" />
                 <div>
-                  <div style={{ fontWeight: 700, color: '#22c55e', fontSize: '0.8rem' }}>Interviewer (HR)</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>
+                  <div style={{ fontWeight: 700, color: '#10b981', fontSize: '0.8rem' }}>Interviewer (HR)</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                     Sees candidate profile, evaluation sliders, AI suggested questions, and submits the final grade.
                   </div>
                 </div>
               </div>
-              <div style={roleCardStyle('#818cf8')}>
-                <UserCheck size={16} color="#818cf8" />
+              <div style={roleCardStyle('#0052ff')}>
+                <UserCheck size={16} color="#0052ff" />
                 <div>
-                  <div style={{ fontWeight: 700, color: '#818cf8', fontSize: '0.8rem' }}>Candidate (Student)</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>
+                  <div style={{ fontWeight: 700, color: '#0052ff', fontSize: '0.8rem' }}>Candidate (Student)</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                     Sees interview guidelines, AI proctor status, and a chat panel. Cannot see HR's grading.
                   </div>
                 </div>
@@ -170,7 +170,7 @@ const ScheduleInterviewModal: React.FC<ScheduleModalProps> = ({ applicant, onClo
             onClick={() => scheduleMutation.mutate()}
             disabled={scheduleMutation.isPending || !scheduledAt}
             className="hr-modal-btn primary"
-            style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', opacity: scheduledAt ? 1 : 0.5 }}
+            style={{ background: 'var(--gradient-primary)', opacity: scheduledAt ? 1 : 0.5 }}
           >
             {scheduleMutation.isPending ? 'Scheduling…' : (
               <><Calendar size={15} /> Schedule Interview</>
@@ -219,13 +219,13 @@ const DualLinkModal: React.FC<DualLinkModalProps> = ({ session, onClose }) => {
         <div className="hr-modal-header">
           <div>
             <div className="hr-modal-title-area">
-              <div className="hr-modal-icon-wrap" style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
+              <div className="hr-modal-icon-wrap" style={{ background: 'linear-gradient(135deg,var(--duo-green),var(--duo-green-hover))' }}>
                 <CheckCircle size={16} color="#fff" />
               </div>
               <h2 className="hr-modal-title">Interview Scheduled!</h2>
             </div>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b', marginTop: '0.25rem' }}>
-              Scheduled for <strong style={{ color: '#f8fafc' }}>{scheduledLabel}</strong>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Scheduled for <strong style={{ color: 'var(--text-primary)' }}>{scheduledLabel}</strong>
               {session.roundLabel && <span> · {session.roundLabel}</span>}
             </p>
           </div>
@@ -235,14 +235,14 @@ const DualLinkModal: React.FC<DualLinkModalProps> = ({ session, onClose }) => {
         {/* Links */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem 0' }}>
           {/* Interviewer link */}
-          <div style={linkCardStyle('#22c55e')}>
+          <div style={linkCardStyle('#10b981')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <UserCog size={16} color="#22c55e" />
-              <span style={{ fontWeight: 700, color: '#22c55e', fontSize: '0.875rem' }}>Your Link (Interviewer)</span>
-              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', background: 'rgba(34,197,94,0.12)', color: '#22c55e', padding: '0.15rem 0.5rem', borderRadius: 20, fontWeight: 600 }}>HR / Admin</span>
+              <UserCog size={16} color="#10b981" />
+              <span style={{ fontWeight: 700, color: '#10b981', fontSize: '0.875rem' }}>Your Link (Interviewer)</span>
+              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', background: 'rgba(16,185,129,0.12)', color: '#10b981', padding: '0.15rem 0.5rem', borderRadius: 20, fontWeight: 600 }}>HR / Admin</span>
             </div>
             <div style={linkUrlStyle}>{roomUrl}</div>
-            <div style={{ fontSize: '0.7rem', color: '#64748b', margin: '0.5rem 0' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.5rem 0' }}>
               You'll see the candidate's profile, evaluation sliders, and AI question guide.
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -264,14 +264,14 @@ const DualLinkModal: React.FC<DualLinkModalProps> = ({ session, onClose }) => {
           </div>
 
           {/* Candidate link */}
-          <div style={linkCardStyle('#818cf8')}>
+          <div style={linkCardStyle('#0052ff')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <UserCheck size={16} color="#818cf8" />
-              <span style={{ fontWeight: 700, color: '#818cf8', fontSize: '0.875rem' }}>Candidate Link (Share This)</span>
-              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', background: 'rgba(129,140,248,0.12)', color: '#818cf8', padding: '0.15rem 0.5rem', borderRadius: 20, fontWeight: 600 }}>Student</span>
+              <UserCheck size={16} color="#0052ff" />
+              <span style={{ fontWeight: 700, color: '#0052ff', fontSize: '0.875rem' }}>Candidate Link (Share This)</span>
+              <span style={{ marginLeft: 'auto', fontSize: '0.7rem', background: 'rgba(0,82,255,0.12)', color: '#0052ff', padding: '0.15rem 0.5rem', borderRadius: 20, fontWeight: 600 }}>Student</span>
             </div>
             <div style={linkUrlStyle}>{roomUrl}</div>
-            <div style={{ fontSize: '0.7rem', color: '#64748b', margin: '0.5rem 0' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '0.5rem 0' }}>
               Candidate will see interview guidelines and AI proctor panel. Cannot see your grading.
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -298,7 +298,7 @@ const DualLinkModal: React.FC<DualLinkModalProps> = ({ session, onClose }) => {
             </div>
           </div>
 
-          <p style={{ margin: 0, fontSize: '0.75rem', color: '#475569', textAlign: 'center' }}>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
             The candidate will also see this interview session automatically in their Placement Hub.
           </p>
         </div>
@@ -316,27 +316,27 @@ const DualLinkModal: React.FC<DualLinkModalProps> = ({ session, onClose }) => {
 // ── Shared mini-styles ─────────────────────────────────────────────
 const labelStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', fontSize: '0.8125rem',
-  fontWeight: 600, color: '#94a3b8', marginBottom: '0.5rem',
+  fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.5rem',
 };
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '0.625rem 0.875rem',
-  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 8, color: '#f8fafc', fontSize: '0.875rem', outline: 'none',
+  background: 'var(--surface-1)', border: '1px solid var(--border-default)',
+  borderRadius: 8, color: 'var(--text-primary)', fontSize: '0.875rem', outline: 'none',
   boxSizing: 'border-box',
 };
 const roleCardStyle = (accent: string): React.CSSProperties => ({
   display: 'flex', gap: '0.625rem', padding: '0.75rem',
-  background: `${accent}08`, border: `1px solid ${accent}20`,
+  background: `${accent}0a`, border: `1px solid ${accent}30`,
   borderRadius: 8,
 });
 const linkCardStyle = (accent: string): React.CSSProperties => ({
-  padding: '1rem', background: `${accent}08`,
-  border: `1px solid ${accent}20`, borderRadius: 10,
+  padding: '1rem', background: `${accent}0a`,
+  border: `1px solid ${accent}30`, borderRadius: 10,
 });
 const linkUrlStyle: React.CSSProperties = {
-  background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)',
+  background: 'var(--surface-2)', border: '1px solid var(--border-subtle)',
   borderRadius: 6, padding: '0.5rem 0.75rem',
-  fontFamily: 'monospace', fontSize: '0.75rem', color: '#94a3b8',
+  fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-primary)',
   wordBreak: 'break-all', lineHeight: 1.5,
 };
 
@@ -401,10 +401,10 @@ export const HRDashboard: React.FC = () => {
   const activeInterviewSessions = activeSessions.filter((session: any) => session.sessionType === 'live_interview');
 
   const stats = [
-    { label: 'Active Drives',    value: displayedDrives.length,                                              icon: <Briefcase size={20} />,    color: '#2dd4bf' },
-    { label: 'Total Applicants', value: applicants.length,                                                    icon: <Users size={20} />,        color: '#818cf8' },
-    { label: 'Shortlisted',      value: applicants.filter((a: any) => a.status === 'shortlisted').length,     icon: <CheckCircle size={20} />,  color: '#22c55e' },
-    { label: 'Active Rooms',     value: activeInterviewSessions.length,                                       icon: <CalendarCheck size={20} />, color: '#f59e0b' },
+    { label: 'Active Drives',    value: displayedDrives.length,                                              icon: <Briefcase size={20} />,    color: 'var(--primary)' },
+    { label: 'Total Applicants', value: applicants.length,                                                    icon: <Users size={20} />,        color: 'var(--duo-purple)' },
+    { label: 'Shortlisted',      value: applicants.filter((a: any) => a.status === 'shortlisted').length,     icon: <CheckCircle size={20} />,  color: 'var(--duo-green)' },
+    { label: 'Active Rooms',     value: activeInterviewSessions.length,                                       icon: <CalendarCheck size={20} />, color: 'var(--duo-orange)' },
   ];
 
   const selectedActiveSession = selectedApplicant
@@ -425,7 +425,7 @@ export const HRDashboard: React.FC = () => {
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '1rem' }}>UGSkill HR Portal</div>
-            <div style={{ fontSize: '0.7rem', color: '#2dd4bf', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Recruiter Dashboard</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Recruiter Dashboard</div>
           </div>
         </div>
 
@@ -435,7 +435,7 @@ export const HRDashboard: React.FC = () => {
           </button>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.fullName}</div>
-            <div style={{ fontSize: '0.75rem', color: '#475569' }}>{user?.email}</div>
+             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{user?.email}</div>
           </div>
           <button onClick={handleLogout} className="hr-btn-logout">
             <LogOut size={14} /> Logout
@@ -472,7 +472,7 @@ export const HRDashboard: React.FC = () => {
             </div>
 
             {applicants.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem 0', color: '#334155' }}>
+              <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-secondary)' }}>
                 <Users size={32} style={{ margin: '0 auto 0.75rem', display: 'block', opacity: 0.4 }} />
                 <p style={{ fontSize: '0.875rem' }}>No applicants yet.</p>
                 <p style={{ fontSize: '0.8125rem', marginTop: '0.375rem' }}>Post a placement drive to start receiving applications.</p>
@@ -503,7 +503,7 @@ export const HRDashboard: React.FC = () => {
             </div>
 
             {displayedDrives.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem 0', color: '#334155' }}>
+              <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-secondary)' }}>
                 <Briefcase size={32} style={{ margin: '0 auto 0.75rem', display: 'block', opacity: 0.4 }} />
                 <p style={{ fontSize: '0.875rem' }}>No placement drives yet.</p>
                 <p style={{ fontSize: '0.8125rem', marginTop: '0.375rem' }}>Contact the UGSkill admin team to set up your first drive.</p>
@@ -543,7 +543,7 @@ export const HRDashboard: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h2 className="hr-side-title">{selectedApplicant.student?.fullName}</h2>
-                <div className="hr-side-subtitle">Applied for: <span style={{ color: '#f8fafc', fontWeight: 500 }}>{selectedApplicant.drive?.name}</span></div>
+                <div className="hr-side-subtitle">Applied for: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{selectedApplicant.drive?.name}</span></div>
               </div>
               <button onClick={() => setSelectedApplicant(null)} className="hr-side-close"><X size={24} /></button>
             </div>
@@ -561,7 +561,7 @@ export const HRDashboard: React.FC = () => {
                 <FileText size={18} /> View Resume
               </button>
             ) : (
-              <div style={{ padding: '1rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: 8, color: '#64748b', fontSize: '0.875rem' }}>No resume attached to this application</div>
+              <div style={{ padding: '1rem', textAlign: 'center', background: 'var(--surface-2)', borderRadius: 8, color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No resume attached to this application</div>
             )}
 
             {/* Pipeline Actions */}
@@ -597,8 +597,8 @@ export const HRDashboard: React.FC = () => {
                       <div style={{
                         display: 'flex', gap: '0.5rem', alignItems: 'center',
                         padding: '0.75rem', borderRadius: 8,
-                        background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)',
-                        marginBottom: '0.75rem', fontSize: '0.8125rem', color: '#22c55e'
+                        background: 'var(--color-success-subtle)', border: '1px solid var(--border-emphasis)',
+                        marginBottom: '0.75rem', fontSize: '0.8125rem', color: 'var(--color-success)'
                       }}>
                         <CalendarCheck size={14} />
                         <span>
@@ -638,7 +638,7 @@ export const HRDashboard: React.FC = () => {
                         setSchedulingApplicant(selectedApplicant);
                       }}
                       className="hr-btn-video-room"
-                      style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)' }}
+                      style={{ background: 'var(--gradient-primary)' }}
                     >
                       <Calendar size={18} /> Schedule Interview
                     </button>
@@ -689,8 +689,8 @@ export const HRDashboard: React.FC = () => {
             </div>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.5' }}>
-                Are you sure you want to delete the placement drive <strong style={{ color: '#f8fafc' }}>{driveToDelete.name}</strong>?
+              <p style={{ margin: '0 0 1rem', fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                Are you sure you want to delete the placement drive <strong style={{ color: 'var(--text-primary)' }}>{driveToDelete.name}</strong>?
               </p>
               <div className="hr-modal-warning-box">
                 <strong>Warning:</strong> This action cannot be undone. All registrations, scheduled interviews, live slot bookings, and group discussions associated with this drive will be permanently deleted.
