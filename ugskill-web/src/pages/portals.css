@@ -369,7 +369,7 @@
   display: flex;
   position: relative;
   overflow: hidden;
-  background: #060b14;
+  background: var(--bg-app);
 }
 
 .hr-portal-left {
@@ -380,12 +380,13 @@
   padding: 4rem 5rem;
   position: relative;
   z-index: 1;
+  border-right: 1px solid var(--border-subtle);
 }
 
 .hr-portal-bg-dots {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(20, 184, 166, 0.12) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0, 82, 255, 0.05) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;
 }
@@ -396,7 +397,7 @@
   right: -5%;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.07) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(0, 82, 255, 0.04) 0%, transparent 65%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -407,7 +408,7 @@
   left: -10%;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.04) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.03) 0%, transparent 65%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -417,12 +418,12 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.375rem 0.875rem;
-  background: rgba(20, 184, 166, 0.1);
-  border: 1px solid rgba(20, 184, 166, 0.25);
+  background: var(--primary-subtle);
+  border: 1px solid var(--border-emphasis);
   border-radius: 100px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #2dd4bf;
+  color: var(--primary);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 2rem;
@@ -433,17 +434,17 @@
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.03em;
-  color: #eff6ff;
+  color: var(--text-primary);
   margin-bottom: 1.25rem;
 }
 
 .hr-portal-tagline span {
-  color: #2dd4bf;
+  color: var(--primary);
 }
 
 .hr-portal-desc {
   font-size: 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   line-height: 1.7;
   max-width: 400px;
   margin-bottom: 3rem;
@@ -460,19 +461,19 @@
   align-items: center;
   gap: 0.875rem;
   font-size: 0.9375rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .hr-feature-icon {
   width: 36px;
   height: 36px;
-  background: rgba(20, 184, 166, 0.1);
-  border: 1px solid rgba(20, 184, 166, 0.2);
+  background: var(--primary-subtle);
+  border: 1px solid var(--border-emphasis);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2dd4bf;
+  color: var(--primary);
   flex-shrink: 0;
 }
 
@@ -484,8 +485,8 @@
   align-items: center;
   justify-content: center;
   padding: 2.5rem;
-  background: rgba(8, 12, 20, 0.97);
-  border-left: 1px solid rgba(20, 184, 166, 0.08);
+  background: var(--surface-1);
+  border-left: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
@@ -499,7 +500,7 @@
 .hr-portal-logo-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  background: var(--gradient-primary);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -510,7 +511,7 @@
 
 .hr-portal-logo-sub {
   font-size: 0.7rem;
-  color: #2dd4bf;
+  color: var(--primary);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -518,14 +519,14 @@
 
 .hr-portal-heading {
   font-size: 1.75rem;
-  font-weight: 700;
-  color: #eff6ff;
+  font-weight: 800;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
 .hr-portal-subheading {
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--text-secondary);
   margin-top: 0.375rem;
   line-height: 1.5;
 }
@@ -533,33 +534,34 @@
 .hr-input {
   width: 100%;
   padding: 0.75rem 0.875rem 0.75rem 2.625rem;
-  background: rgba(240, 249, 255, 0.04);
-  border: 1px solid rgba(240, 249, 255, 0.08);
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
   font-size: 0.9375rem;
-  color: #eff6ff;
+  color: var(--text-primary);
   outline: none;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
 .hr-input:focus {
-  border-color: rgba(20, 184, 166, 0.5);
-  background: rgba(20, 184, 166, 0.03);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+  background: var(--surface-1);
 }
 
 .hr-input::placeholder {
-  color: #1e293b;
+  color: var(--text-tertiary);
 }
 
 .hr-submit-btn {
   margin-top: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dim) 100%);
   border: none;
   border-radius: 8px;
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
   cursor: pointer;
   display: flex;
@@ -571,8 +573,8 @@
 }
 
 .hr-submit-btn:hover:not(:disabled) {
-  opacity: 0.9;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--primary-glow);
 }
 
 .hr-submit-btn:disabled {
@@ -585,16 +587,16 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
-  background: rgba(20, 184, 166, 0.06);
-  border: 1px solid rgba(20, 184, 166, 0.15);
+  background: var(--primary-subtle);
+  border: 1px solid var(--border-emphasis);
   border-radius: 8px;
   font-size: 0.8125rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .hr-portal-notice-icon {
-  color: #2dd4bf;
+  color: var(--primary);
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -602,14 +604,14 @@
 .hr-portal-back-link {
   text-align: center;
   font-size: 0.8125rem;
-  color: #334155;
+  color: var(--text-secondary);
   margin-top: 0.5rem;
 }
 
 .hr-portal-back-link a {
-  color: #2dd4bf;
+  color: var(--primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .hr-portal-back-link a:hover {
@@ -618,24 +620,35 @@
 
 .hr-invite-form-header {
   padding: 1rem;
-  background: rgba(20, 184, 166, 0.07);
-  border: 1px solid rgba(20, 184, 166, 0.2);
+  background: var(--primary-subtle);
+  border: 1px solid var(--border-emphasis);
   border-radius: 8px;
 }
 
 .hr-invite-company {
   font-size: 0.75rem;
-  color: #2dd4bf;
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .hr-invite-email {
   font-size: 1rem;
-  font-weight: 600;
-  color: #eff6ff;
+  font-weight: 700;
+  color: var(--text-primary);
   margin-top: 0.25rem;
+}
+
+/* Custom Overrides for Admin Classes inside HR Login Page */
+.hr-portal-page .admin-portal-logo-name {
+  color: var(--text-primary);
+}
+
+.hr-portal-page .admin-portal-error {
+  background: var(--color-error-subtle);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--color-error);
 }
 
 /* Mobile */
